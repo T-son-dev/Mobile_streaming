@@ -7,6 +7,7 @@ import {
   ViewStyle,
   TextStyle,
 } from 'react-native';
+import { PlatformIcon, PlatformType } from './PlatformIcon';
 
 // Color system
 export const Colors = {
@@ -23,10 +24,9 @@ export const Colors = {
 // Platform Button Component
 interface PlatformButtonProps {
   platform: {
-    id: string;
+    id: PlatformType;
     name: string;
     color: string;
-    icon: string;
     description: string;
     badge: string;
   };
@@ -49,7 +49,7 @@ export const PlatformButton: React.FC<PlatformButtonProps> = ({
     <View style={styles.platformBadge}>
       <Text style={styles.badgeText}>{platform.badge}</Text>
     </View>
-    <Text style={styles.platformIcon}>{platform.icon}</Text>
+    <PlatformIcon platform={platform.id} size={32} />
     <Text style={styles.platformName}>{platform.name}</Text>
     <Text style={styles.platformDescription}>{platform.description}</Text>
   </TouchableOpacity>
@@ -229,11 +229,6 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: 'bold',
     color: Colors.background,
-  },
-  platformIcon: {
-    fontSize: 24,
-    marginBottom: 8,
-    textAlign: 'center',
   },
   platformName: {
     color: Colors.text,

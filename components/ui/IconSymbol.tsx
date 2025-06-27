@@ -18,6 +18,27 @@ const MAPPING = {
   'paperplane.fill': 'send',
   'chevron.left.forwardslash.chevron.right': 'code',
   'chevron.right': 'chevron-right',
+  'video.fill': 'videocam',
+  'mic.fill': 'mic',
+  'bolt.fill': 'flash-on',
+  'lock.fill': 'lock',
+  'xmark': 'close',
+  'text.alignleft': 'text-fields',
+  'photo.fill': 'image',
+  'globe': 'language',
+  'play.rectangle.fill': 'ondemand-video',
+  'plus': 'add',
+  'trash': 'delete',
+  'pencil': 'edit',
+  'eye.fill': 'visibility',
+  'eye.slash.fill': 'visibility-off',
+  // Platform icons
+  'play.tv': 'play-arrow',
+  'person.2.square.stack': 'groups',
+  'camera.fill': 'camera-alt',
+  'gamecontroller.fill': 'sports-esports',
+  'antenna.radiowaves.left.and.right': 'wifi',
+  'rocket.fill': 'speed',
 } as IconMapping;
 
 /**

@@ -7,17 +7,19 @@ import {
   ScrollView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { PlatformIcon, PlatformType } from '@/components/ui/PlatformIcon';
+import { IconSymbol } from '@/components/ui/IconSymbol';
 
 const HomeScreen: React.FC = () => {
   const router = useRouter();
 
   const platforms = [
-    {id: 'youtube', name: 'YouTube', color: '#FF0000', icon: '📺'},
-    {id: 'facebook', name: 'Facebook', color: '#1877F2', icon: '📘'},
-    {id: 'instagram', name: 'Instagram', color: '#E4405F', icon: '📷'},
-    {id: 'twitch', name: 'Twitch', color: '#9146FF', icon: '🎮'},
-    {id: 'rtmp', name: 'RTMP', color: '#00ff88', icon: '📡'},
-    {id: 'srt', name: 'SRT', color: '#FFA500', icon: '🚀'},
+    {id: 'youtube' as PlatformType, name: 'YouTube', color: '#FF0000'},
+    {id: 'facebook' as PlatformType, name: 'Facebook', color: '#1877F2'},
+    {id: 'instagram' as PlatformType, name: 'Instagram', color: '#E4405F'},
+    {id: 'twitch' as PlatformType, name: 'Twitch', color: '#9146FF'},
+    {id: 'rtmp' as PlatformType, name: 'RTMP', color: '#00ff88'},
+    {id: 'srt' as PlatformType, name: 'SRT', color: '#FFA500'},
   ];
 
   const handlePlatformSelect = (platform: string) => {
@@ -57,7 +59,7 @@ const HomeScreen: React.FC = () => {
                 key={platform.id}
                 style={[styles.platformButton, {borderColor: platform.color}]}
                 onPress={() => handlePlatformSelect(platform.id)}>
-                <Text style={styles.platformIcon}>{platform.icon}</Text>
+                <PlatformIcon platform={platform.id} size={32} />
                 <Text style={styles.platformName}>{platform.name}</Text>
               </TouchableOpacity>
             ))}
@@ -69,17 +71,17 @@ const HomeScreen: React.FC = () => {
           <Text style={styles.sectionTitle}>Quick Actions</Text>
           
           <TouchableOpacity style={styles.actionButton} onPress={navigateToSettings}>
-            <Text style={styles.actionIcon}>⚙️</Text>
+            <IconSymbol name="bolt.fill" size={24} color="#00ff88" style={styles.actionIcon} />
             <Text style={styles.actionText}>Settings</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.actionButton} onPress={navigateToOverlay}>
-            <Text style={styles.actionIcon}>🎨</Text>
+            <IconSymbol name="photo.fill" size={24} color="#00ff88" style={styles.actionIcon} />
             <Text style={styles.actionText}>Manage Overlays</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.actionButton} onPress={navigateToReplay}>
-            <Text style={styles.actionIcon}>🔄</Text>
+            <IconSymbol name="globe" size={24} color="#00ff88" style={styles.actionIcon} />
             <Text style={styles.actionText}>Relay Gallery</Text>
           </TouchableOpacity>
         </View>
@@ -134,10 +136,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 15,
   },
-  platformIcon: {
-    fontSize: 24,
-    marginBottom: 8,
-  },
   platformName: {
     color: '#ffffff',
     fontSize: 14,
@@ -157,7 +155,6 @@ const styles = StyleSheet.create({
     borderLeftColor: '#00ff88',
   },
   actionIcon: {
-    fontSize: 20,
     marginRight: 15,
   },
   actionText: {
