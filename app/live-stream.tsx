@@ -1,101 +1,69 @@
-import React, {useState, useEffect, useRef} from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
-  StyleSheet,
   TouchableOpacity,
+  StyleSheet,
   StatusBar,
-  Modal,
+  Dimensions,
+  ImageBackground,
   Alert,
-  ScrollView,
-  SafeAreaView,
-  Animated,
 } from 'react-native';
-import {useRouter, useLocalSearchParams} from 'expo-router';
-import * as Haptics from 'expo-haptics';
-import {
-  BrandColors,
-  BackgroundColors,
-  TextColors,
-  AnimationConfig,
-  Spacing,
-  Typography,
-  Shadows,
-} from '@/constants/Colors';
+import { useRouter, useLocalSearchParams } from 'expo-router';
+import { IconSymbol } from '@/components/ui/IconSymbol';
 
-// Removed dimensions as they're not used in this component
+const { width, height } = Dimensions.get('window');
+
+// Colors matching the screenshot exactly
+const Colors = {
+  background: '#1a1a2e',
+  surface: '#2a2a3e',
+  primary: '#7ED321', // Bright green matching screenshot
+  text: '#ffffff',
+  textSecondary: '#a0a0a0',
+  danger: '#ff4757',
+  warning: '#ffa502',
+  success: '#26de81',
+  border: '#404040',
+  greenBorder: '#7ED321', // Bright green border
+};
 
 const LiveStreamScreen: React.FC = () => {
   const router = useRouter();
-  const {platform, streamUrl} = useLocalSearchParams<{
-    platform?: string;
-    streamUrl?: string;
-  }>();
-
+  const params = useLocalSearchParams();
+  
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamDuration, setStreamDuration] = useState(0);
-  const [viewerCount, setViewerCount] = useState(0);
-  const [showSettings, setShowSettings] = useState(false);
-  const [showPerformanceStats, setShowPerformanceStats] = useState(false);
+  const [audioEnabled, setAudioEnabled] = useState(true);
+  const [cameraEnabled, setCameraEnabled] = useState(true);
+  const [showCameraControls, setShowCameraControls] = useState(false);
   const [showOverlayMenu, setShowOverlayMenu] = useState(false);
-  const [showReplayMenu, setShowReplayMenu] = useState(false);
-  const [showCameraMenu, setShowCameraMenu] = useState(false);
-  const [showAudioMenu, setShowAudioMenu] = useState(false);
-  const [cameraFacing, setCameraFacing] = useState<'front' | 'back'>('back');
-  const [micEnabled, setMicEnabled] = useState(true);
-  const [selectedCamera, setSelectedCamera] = useState('CAMERA CELULAR');
-
-  // Performance monitoring
-  const [performanceStats, setPerformanceStats] = useState({
-    cpu: 45,
-    memory: 62,
-    network: 8.5,
-    fps: 30,
-    bitrate: 6000,
-    droppedFrames: 0,
-    temperature: 42,
+  const [cameraSettings, setCameraSettings] = useState({
+    distance: '0.3m',
+    zoom: '1x',
+    iso: '622',
+    aperture: '0',
+    shutter: '1/125',
+    whiteBalance: 'AWB'
   });
 
-  // Zoom control with spring animation
-  const [zoomLevel, setZoomLevel] = useState(1.0);
-  const zoomAnimation = useRef(new Animated.Value(1.0)).current;
-
-  // Camera options
-  const cameraOptions = [
-    'CAMERA CELULAR',
-    'CAMERA USB',
-    'NAVEGADOR WEB - SINGULAR',
-    'XXXX'
+  // Camera sources exactly matching screenshot
+  const cameraSources = [
+    { name: 'CAMERA CELULAR', status: 'NO AR', active: true },
+    { name: 'CAMERA USB', status: 'NO AR', active: false },
+    { name: 'NAVEGADOR\nWEB - SINGULAR', status: 'NO AR', active: false },
+    { name: 'XXXX', status: 'NO AR', active: false },
   ];
 
+  // Stream duration timer
   useEffect(() => {
     let interval: NodeJS.Timeout;
-    let performanceInterval: NodeJS.Timeout;
-    
     if (isStreaming) {
       interval = setInterval(() => {
         setStreamDuration(prev => prev + 1);
-        setViewerCount(prev => Math.max(0, prev + Math.floor(Math.random() * 3) - 1));
       }, 1000);
-
-      // Performance stats update
-      performanceInterval = setInterval(() => {
-        setPerformanceStats(prev => ({
-          cpu: Math.max(20, Math.min(90, prev.cpu + (Math.random() - 0.5) * 10)),
-          memory: Math.max(30, Math.min(85, prev.memory + (Math.random() - 0.5) * 5)),
-          network: Math.max(1, Math.min(20, prev.network + (Math.random() - 0.5) * 2)),
-          fps: Math.random() > 0.95 ? Math.floor(Math.random() * 5) + 25 : 30,
-          bitrate: Math.max(4000, Math.min(8000, prev.bitrate + (Math.random() - 0.5) * 500)),
-          droppedFrames: prev.droppedFrames + (Math.random() > 0.9 ? 1 : 0),
-          temperature: Math.max(35, Math.min(65, prev.temperature + (Math.random() - 0.5) * 2)),
-        }));
-      }, 2000);
     }
-    
-    return () => {
-      clearInterval(interval);
-      clearInterval(performanceInterval);
-    };
+    return () => clearInterval(interval);
   }, [isStreaming]);
 
   const formatDuration = (seconds: number) => {
@@ -105,342 +73,334 @@ const LiveStreamScreen: React.FC = () => {
     return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const handleStartStopStream = () => {
+  const handleStreamToggle = () => {
     if (isStreaming) {
       Alert.alert(
         'Encerrar Transmissão',
-        'Tem certeza que deseja parar a transmissão?',
+        'Tem certeza que deseja encerrar a transmissão?',
         [
-          {text: 'Cancelar', style: 'cancel'},
-          {
-            text: 'Encerrar',
+          { text: 'Cancelar', style: 'cancel' },
+          { 
+            text: 'Encerrar', 
             style: 'destructive',
             onPress: () => {
               setIsStreaming(false);
               setStreamDuration(0);
-              setViewerCount(0);
-            },
-          },
+            }
+          }
         ]
       );
     } else {
       setIsStreaming(true);
-      setViewerCount(Math.floor(Math.random() * 10) + 1);
     }
   };
 
-  const handleCameraSwitch = () => {
-    setCameraFacing(prev => prev === 'front' ? 'back' : 'front');
+  const handleBackToHome = () => {
+    router.back();
   };
 
-  const handleMicToggle = () => {
-    setMicEnabled(prev => !prev);
+  const handleSettings = () => {
+    router.push('/settings');
   };
 
-  const handleZoomChange = async (delta: number) => {
-    const newZoom = Math.max(0.5, Math.min(3.0, zoomLevel + delta));
-    setZoomLevel(newZoom);
-    
-    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    
-    Animated.spring(zoomAnimation, {
-      toValue: newZoom,
-      ...AnimationConfig.spring,
-      useNativeDriver: false,
-    }).start();
-  };
-
-  const renderPerformanceStats = () => (
-    <Modal
-      visible={showPerformanceStats}
-      animationType="fade"
-      transparent={true}
-      onRequestClose={() => setShowPerformanceStats(false)}>
-      <View style={styles.performanceModalContainer}>
-        <View style={[styles.performanceModal, Shadows.large]}>
-          <View style={styles.performanceHeader}>
-            <Text style={styles.performanceTitle}>📊 Performance Monitor</Text>
-            <TouchableOpacity 
-              style={styles.performanceCloseButton} 
-              onPress={() => setShowPerformanceStats(false)}>
-              <Text style={styles.performanceCloseText}>✕</Text>
-            </TouchableOpacity>
-          </View>
-          
-          <ScrollView style={styles.performanceContent}>
-            <View style={styles.statRow}>
-              <Text style={styles.statLabel}>CPU Usage</Text>
-              <View style={styles.statBarContainer}>
-                <View style={[styles.statBar, {width: `${performanceStats.cpu}%`, backgroundColor: performanceStats.cpu > 80 ? TextColors.error : BrandColors.primary}]} />
-                <Text style={styles.statValue}>{performanceStats.cpu.toFixed(0)}%</Text>
-              </View>
-            </View>
-            
-            <View style={styles.statRow}>
-              <Text style={styles.statLabel}>Memory</Text>
-              <View style={styles.statBarContainer}>
-                <View style={[styles.statBar, {width: `${performanceStats.memory}%`, backgroundColor: performanceStats.memory > 75 ? TextColors.warning : BrandColors.primary}]} />
-                <Text style={styles.statValue}>{performanceStats.memory.toFixed(0)}%</Text>
-              </View>
-            </View>
-            
-            <View style={styles.statRow}>
-              <Text style={styles.statLabel}>Network</Text>
-              <Text style={styles.statValue}>{performanceStats.network.toFixed(1)} MB/s</Text>
-            </View>
-            
-            <View style={styles.statRow}>
-              <Text style={styles.statLabel}>FPS</Text>
-              <Text style={[styles.statValue, {color: performanceStats.fps < 30 ? TextColors.error : TextColors.success}]}>
-                {performanceStats.fps}
-              </Text>
-            </View>
-            
-            <View style={styles.statRow}>
-              <Text style={styles.statLabel}>Bitrate</Text>
-              <Text style={styles.statValue}>{performanceStats.bitrate.toFixed(0)} kbps</Text>
-            </View>
-            
-            <View style={styles.statRow}>
-              <Text style={styles.statLabel}>Dropped Frames</Text>
-              <Text style={[styles.statValue, {color: performanceStats.droppedFrames > 10 ? TextColors.error : TextColors.primary}]}>
-                {performanceStats.droppedFrames}
-              </Text>
-            </View>
-            
-            <View style={styles.statRow}>
-              <Text style={styles.statLabel}>Temperature</Text>
-              <Text style={[styles.statValue, {color: performanceStats.temperature > 55 ? TextColors.error : TextColors.primary}]}>
-                {performanceStats.temperature.toFixed(0)}°C
-              </Text>
-            </View>
-          </ScrollView>
-        </View>
-      </View>
-    </Modal>
-  );
-
-  const renderTopBar = () => (
-    <View style={styles.topBar}>
-      {/* User Profile */}
-      <TouchableOpacity style={styles.profileButton}>
-        <View style={styles.profileIcon} />
-      </TouchableOpacity>
-
-      {/* Controls */}
-      <View style={styles.topControls}>
-        <TouchableOpacity 
-          style={styles.topButton}
-          onPress={() => setShowPerformanceStats(true)}>
-          <Text style={styles.topButtonIcon}>📊</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.topButton}>
-          <Text style={styles.topButtonIcon}>🔧</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.topButton}>
-          <Text style={styles.topButtonIcon}>❗</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.topButton} onPress={() => setShowCameraMenu(true)}>
-          <Text style={styles.topButtonIcon}>📷</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.topButton} onPress={() => setShowSettings(true)}>
-          <Text style={styles.topButtonIcon}>⚙️</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
-
-  const renderCameraSelector = () => (
-    <View style={styles.cameraSelector}>
-      {cameraOptions.map((camera, index) => (
-        <TouchableOpacity
-          key={index}
-          style={[
-            styles.cameraOption,
-            selectedCamera === camera && styles.selectedCameraOption,
-            camera === 'XXXX' && styles.disabledCameraOption
-          ]}
-          onPress={() => setSelectedCamera(camera)}
-          disabled={camera === 'XXXX'}>
-          <View style={styles.cameraIconContainer}>
-            <Text style={styles.cameraIcon}>📷</Text>
-          </View>
-          <Text style={[
-            styles.cameraOptionText,
-            selectedCamera === camera && styles.selectedCameraText,
-            camera === 'XXXX' && styles.disabledCameraText
-          ]}>
-            {camera}
-          </Text>
-          {camera === 'XXXX' && (
-            <View style={styles.disabledBadge}>
-              <Text style={styles.disabledBadgeText}>NO AR</Text>
-            </View>
-          )}
-        </TouchableOpacity>
-      ))}
-    </View>
-  );
-
-  const renderStreamControls = () => (
-    <View style={styles.streamControls}>
-      {/* Audio Level */}
-      <View style={styles.audioLevel}>
-        <View style={[styles.audioLevelBar, {width: Math.min(20, performanceStats.network * 2)}]} />
-        <Text style={styles.audioLevelText}>
-          🎤 {performanceStats.bitrate}kbps {performanceStats.fps}fps
-        </Text>
-      </View>
-
-      {/* Main Stream Button */}
-      <TouchableOpacity
-        style={[
-          styles.streamButton,
-          isStreaming ? styles.streamButtonStop : styles.streamButtonStart
-        ]}
-        onPress={handleStartStopStream}>
-        <Text style={styles.streamButtonText}>
-          {isStreaming ? 'ENCERRAR TRANSMISSÃO' : 'INICIAR TRANSMISSÃO'}
-        </Text>
-      </TouchableOpacity>
-    </View>
-  );
+  // Basketball court background SVG exactly matching screenshot
+  const basketballCourtSVG = `
+    <svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+      <!-- Wood floor background -->
+      <rect width="400" height="300" fill="#DEB887"/>
+      
+      <!-- Court outline -->
+      <rect x="30" y="40" width="340" height="220" fill="none" stroke="#654321" stroke-width="3"/>
+      
+      <!-- Center circle -->
+      <circle cx="200" cy="150" r="50" fill="none" stroke="#228B22" stroke-width="4"/>
+      <circle cx="200" cy="150" r="6" fill="#000"/>
+      
+      <!-- Left basket area -->
+      <rect x="30" y="110" width="60" height="80" fill="none" stroke="#228B22" stroke-width="4"/>
+      <path d="M 30 120 Q 60 120 90 150 Q 60 180 30 180" fill="none" stroke="#228B22" stroke-width="4"/>
+      
+      <!-- Right basket area -->
+      <rect x="310" y="110" width="60" height="80" fill="none" stroke="#228B22" stroke-width="4"/>
+      <path d="M 370 120 Q 340 120 310 150 Q 340 180 370 180" fill="none" stroke="#228B22" stroke-width="4"/>
+      
+      <!-- Center line -->
+      <line x1="200" y1="40" x2="200" y2="260" stroke="#228B22" stroke-width="4"/>
+      
+      <!-- Wood grain effect -->
+      <g stroke="#CD853F" stroke-width="1" opacity="0.3">
+        <line x1="0" y1="50" x2="400" y2="50"/>
+        <line x1="0" y1="100" x2="400" y2="100"/>
+        <line x1="0" y1="150" x2="400" y2="150"/>
+        <line x1="0" y1="200" x2="400" y2="200"/>
+        <line x1="0" y1="250" x2="400" y2="250"/>
+      </g>
+      
+      <!-- Side areas (blue) -->
+      <rect x="0" y="0" width="30" height="300" fill="#4169E1"/>
+      <rect x="370" y="0" width="30" height="300" fill="#4169E1"/>
+      <rect x="30" y="0" width="340" height="40" fill="#4169E1"/>
+      <rect x="30" y="260" width="340" height="40" fill="#4169E1"/>
+      
+      <!-- Bleachers effect -->
+      <g fill="#8B4513">
+        <rect x="0" y="0" width="30" height="10"/>
+        <rect x="0" y="15" width="30" height="10"/>
+        <rect x="0" y="30" width="30" height="10"/>
+        <rect x="370" y="0" width="30" height="10"/>
+        <rect x="370" y="15" width="30" height="10"/>
+        <rect x="370" y="30" width="30" height="10"/>
+      </g>
+      
+      <!-- Player silhouette -->
+      <g transform="translate(320, 180)">
+        <ellipse cx="0" cy="15" rx="8" ry="3" fill="#000" opacity="0.3"/>
+        <rect x="-3" y="0" width="6" height="15" fill="#000"/>
+        <circle cx="0" cy="-5" r="4" fill="#000"/>
+        <rect x="-2" y="-2" width="4" height="8" fill="#000"/>
+      </g>
+    </svg>
+  `;
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#000000" hidden />
-      
-      <SafeAreaView style={styles.safeArea}>
-        {/* Top Bar */}
-        {renderTopBar()}
+      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
 
-        {/* Camera Preview Area */}
-        <View style={styles.cameraContainer}>
-          {/* Camera Selector */}
-          {renderCameraSelector()}
+      {/* Main container with green border exactly matching screenshot */}
+      <View style={styles.mainContainer}>
+        
+        {/* User avatar in top left corner */}
+        <View style={styles.userAvatar}>
+          <View style={styles.avatarCircle}>
+            <IconSymbol name="person.2.square.stack" size={20} color={Colors.primary} />
+          </View>
+        </View>
 
-          {/* Main Camera Preview */}
-          <View style={styles.cameraPreview}>
-            <Text style={styles.cameraPlaceholderText}>Camera Preview</Text>
-            <Text style={styles.cameraNote}>🏀 Basketball Court View</Text>
-            
-            {/* Stream Status Overlay */}
-            {isStreaming && (
-              <View style={styles.streamOverlay}>
-                <View style={styles.liveIndicator}>
-                  <View style={styles.liveDot} />
-                  <Text style={styles.liveText}>NO AR</Text>
+        {/* Main streaming area with preview border */}
+        <View style={styles.streamingArea}>
+          {/* Preview area border */}
+          <View style={styles.previewBorder}>
+            <ImageBackground
+              source={{
+                uri: `data:image/svg+xml;utf8,${encodeURIComponent(basketballCourtSVG)}`
+              }}
+              style={styles.backgroundImage}
+              resizeMode="cover"
+            >
+            {/* Camera Sources Panel - exact position as screenshot */}
+            <View style={styles.cameraPanel}>
+              {cameraSources.map((camera, index) => (
+                <View key={index} style={styles.cameraSource}>
+                  <View style={styles.cameraStatusRow}>
+                    <View style={styles.statusIndicator}>
+                      <Text style={styles.statusText}>{camera.status}</Text>
+                    </View>
+                  </View>
+                  <View style={styles.cameraInfo}>
+                    <View style={styles.cameraIcon}>
+                      <IconSymbol name="video.fill" size={16} color={Colors.text} />
+                    </View>
+                    <Text style={styles.cameraName}>{camera.name}</Text>
+                  </View>
                 </View>
+              ))}
+            </View>
+
+            {/* Top Control Buttons - exact position as screenshot */}
+            <View style={styles.topControls}>
+              <TouchableOpacity style={[styles.controlButton, styles.playButton]}>
+                <IconSymbol name="play.tv" size={20} color={Colors.text} />
+              </TouchableOpacity>
+
+              <TouchableOpacity style={[styles.controlButton, styles.fxButton]}>
+                <Text style={styles.fxText}>fx</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={[styles.controlButton, styles.micButton]}>
+                <IconSymbol name="mic.fill" size={20} color={Colors.text} />
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={[styles.controlButton, styles.cameraButton]}
+                onPress={() => setShowCameraControls(!showCameraControls)}
+              >
+                <IconSymbol name="camera.fill" size={20} color={Colors.text} />
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={[styles.controlButton, styles.menuButton]}
+                onPress={() => setShowOverlayMenu(!showOverlayMenu)}
+              >
+                <View style={styles.menuIcon}>
+                  <View style={styles.menuLine} />
+                  <View style={styles.menuLine} />
+                  <View style={styles.menuLine} />
+                </View>
+              </TouchableOpacity>
+            </View>
+
+            {/* Overlay Menu - shows when menu button is pressed */}
+            {showOverlayMenu && (
+              <View style={styles.overlayMenu}>
+                <TouchableOpacity style={styles.closeButton} onPress={() => setShowOverlayMenu(false)}>
+                  <Text style={styles.closeButtonText}>×</Text>
+                </TouchableOpacity>
                 
-                <View style={styles.streamInfo}>
-                  <Text style={styles.streamTime}>{formatDuration(streamDuration)}</Text>
-                  <Text style={styles.viewerCount}>👥 {viewerCount}</Text>
+                <View style={styles.menuGrid}>
+                  {/* Top Row */}
+                  <TouchableOpacity style={styles.menuItem}>
+                    <View style={styles.menuIcon}>
+                      <Text style={styles.menuIconText}>#</Text>
+                    </View>
+                    <Text style={styles.menuLabel}>Grade</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity style={styles.menuItem}>
+                    <View style={styles.menuIcon}>
+                      <Text style={styles.menuIconText}>🔦</Text>
+                    </View>
+                    <Text style={styles.menuLabel}>Lanterna</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity style={styles.menuItem}>
+                    <View style={[styles.menuIcon, styles.proIcon]}>
+                      <Text style={styles.proText}>PRO</Text>
+                    </View>
+                    <Text style={styles.menuLabel}>Modo PRO</Text>
+                  </TouchableOpacity>
+
+                  {/* Bottom Row */}
+                  <TouchableOpacity style={styles.menuItem}>
+                    <View style={[styles.menuIcon, styles.telaInicioIcon]}>
+                      <View style={styles.screenIcon} />
+                    </View>
+                    <Text style={styles.menuLabel}>Tela Início</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity style={styles.menuItem}>
+                    <View style={styles.menuIcon}>
+                      <Text style={styles.menuIconText}>🎤</Text>
+                    </View>
+                    <Text style={styles.menuLabel}>Mutar</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity 
+                    style={styles.menuItem}
+                    onPress={() => {
+                      setShowOverlayMenu(false);
+                      handleSettings();
+                    }}
+                  >
+                    <View style={styles.menuIcon}>
+                      <Text style={styles.menuIconText}>⚙️</Text>
+                    </View>
+                    <Text style={styles.menuLabel}>Configurações</Text>
+                  </TouchableOpacity>
                 </View>
               </View>
             )}
 
-            {/* Zoom Controls */}
-            <Animated.View 
-              style={[
-                styles.zoomControls,
-                { transform: [{ scale: zoomAnimation }] }
-              ]}>
-              <TouchableOpacity
-                style={[styles.zoomButton, Shadows.small]}
-                onPress={() => handleZoomChange(-0.1)}>
-                <Text style={styles.zoomButtonText}>-</Text>
-              </TouchableOpacity>
-              <Text style={styles.zoomText}>{zoomLevel.toFixed(1)}x</Text>
-              <TouchableOpacity
-                style={[styles.zoomButton, Shadows.small]}
-                onPress={() => handleZoomChange(0.1)}>
-                <Text style={styles.zoomButtonText}>+</Text>
-              </TouchableOpacity>
-            </Animated.View>
-          </View>
+            {/* Camera Controls Panel - shows when camera button is pressed */}
+            {showCameraControls && (
+              <View style={styles.cameraControlsPanel}>
+                <View style={styles.cameraControl}>
+                  <View style={styles.cameraControlIcon}>
+                    <Text style={styles.controlIconText}>↻</Text>
+                  </View>
+                  <Text style={styles.cameraControlValue}>{cameraSettings.distance}</Text>
+                </View>
 
-          {/* Stream Controls */}
-          {renderStreamControls()}
+                <View style={styles.cameraControl}>
+                  <View style={styles.cameraControlIcon}>
+                    <Text style={styles.controlIconText}>+</Text>
+                  </View>
+                  <Text style={styles.cameraControlValue}>{cameraSettings.zoom}</Text>
+                </View>
+
+                <View style={styles.cameraControl}>
+                  <Text style={styles.cameraControlLabel}>ISO</Text>
+                  <Text style={styles.cameraControlValue}>{cameraSettings.iso}</Text>
+                </View>
+
+                <View style={styles.cameraControl}>
+                  <View style={styles.cameraControlIcon}>
+                    <Text style={styles.controlIconText}>○</Text>
+                  </View>
+                  <Text style={styles.cameraControlValue}>{cameraSettings.aperture}</Text>
+                </View>
+
+                <View style={styles.cameraControl}>
+                  <View style={styles.cameraControlIcon}>
+                    <Text style={styles.controlIconText}>⚡</Text>
+                  </View>
+                  <Text style={styles.cameraControlValue}>{cameraSettings.shutter}</Text>
+                </View>
+
+                <View style={styles.cameraControl}>
+                  <Text style={styles.cameraControlLabel}>WB</Text>
+                  <Text style={styles.cameraControlValue}>{cameraSettings.whiteBalance}</Text>
+                </View>
+
+                <TouchableOpacity style={styles.cameraControl}>
+                  <View style={styles.cameraControlIcon}>
+                    <Text style={styles.controlIconText}>↺</Text>
+                  </View>
+                  <Text style={styles.cameraControlValue}>Reset</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {/* Zoom control slider - vertical on right side */}
+            <View style={styles.zoomSlider}>
+              <View style={styles.zoomTrack}>
+                <View style={styles.zoomDots}>
+                  {Array.from({ length: 20 }, (_, i) => (
+                    <View key={i} style={styles.zoomDot} />
+                  ))}
+                </View>
+                <View style={styles.zoomHandle}>
+                  <IconSymbol name="plus" size={16} color={Colors.text} />
+                </View>
+              </View>
+            </View>
+
+            </ImageBackground>
+          </View>
         </View>
 
-        {/* Navigation Buttons */}
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}>
-          <Text style={styles.backButtonText}>← Voltar</Text>
-        </TouchableOpacity>
-      </SafeAreaView>
-
-      {/* Performance Stats Modal */}
-      {renderPerformanceStats()}
-
-      {/* Settings Modal */}
-      <Modal
-        visible={showSettings}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={() => setShowSettings(false)}>
-        <View style={styles.modalContainer}>
-          <View style={styles.modalHeader}>
-            <TouchableOpacity onPress={() => setShowSettings(false)}>
-              <Text style={styles.modalCancel}>Fechar</Text>
-            </TouchableOpacity>
-            <Text style={styles.modalTitle}>Configurações</Text>
-            <View style={{width: 50}} />
+        {/* Audio level indicator - bottom left */}
+        <View style={styles.audioIndicator}>
+          <IconSymbol name="mic.fill" size={16} color={Colors.text} />
+          <View style={styles.audioLevel}>
+            <View style={[styles.audioBar, { backgroundColor: Colors.primary }]} />
+            <View style={[styles.audioBar, { backgroundColor: '#ffeb3b' }]} />
+            <View style={[styles.audioBar, { backgroundColor: '#ff9800' }]} />
+            <View style={[styles.audioBar, { backgroundColor: Colors.danger }]} />
           </View>
-          
-          <ScrollView style={styles.modalContent}>
-            <Text style={styles.modalSectionTitle}>INFORMAÇÃO</Text>
-            
-            <View style={styles.infoSection}>
-              <Text style={styles.infoItem}>Centro de ajuda 🏠</Text>
-              <Text style={styles.infoItem}>COMENTÁRIOS</Text>
-              <Text style={styles.infoItem}>Informação do sistema</Text>
-              <Text style={styles.infoItem}>Sobre nós</Text>
-              <Text style={styles.infoItem}>Política de Privacidade</Text>
-              <Text style={styles.infoItem}>Termos de Utilização</Text>
-            </View>
-
-            <Text style={styles.modalSectionTitle}>SERVIDOR</Text>
-            <View style={styles.serverSection}>
-              <Text style={styles.serverItem}>Endereço da transmissão</Text>
-              <Text style={styles.serverValue}>rtmp://a.rtmp.youtube.com/live2/xxb7m4a7-nd57</Text>
-            </View>
-
-            <Text style={styles.modalSectionTitle}>STREAM</Text>
-            <View style={styles.streamSection}>
-              <View style={styles.streamRow}>
-                <Text style={styles.streamLabel}>Resolução</Text>
-                <Text style={styles.streamValue}>720p (HD)</Text>
-              </View>
-              <View style={styles.streamRow}>
-                <Text style={styles.streamLabel}>Velocidade de quadros por segundo (fps)</Text>
-                <Text style={styles.streamValue}>30 FPS</Text>
-              </View>
-              <View style={styles.streamRow}>
-                <Text style={styles.streamLabel}>Qualidade</Text>
-                <Text style={styles.streamValue}>Ultra alto</Text>
-              </View>
-            </View>
-
-            <Text style={styles.modalSectionTitle}>CÂMERA</Text>
-            <View style={styles.cameraSection}>
-              <View style={styles.streamRow}>
-                <Text style={styles.streamLabel}>Foco automático</Text>
-                <Text style={styles.streamValue}>Manual</Text>
-              </View>
-            </View>
-
-            <Text style={styles.modalSectionTitle}>ÁUDIO</Text>
-            <View style={styles.audioSection}>
-              <View style={styles.streamRow}>
-                <Text style={styles.streamLabel}>Fonte de MIC</Text>
-                <Text style={styles.streamValue}>Microfone</Text>
-              </View>
-            </View>
-          </ScrollView>
         </View>
-      </Modal>
+
+        {/* Status indicators - bottom left */}
+        <View style={styles.statusIndicators}>
+          <View style={styles.statusItem}>
+            <IconSymbol name="antenna.radiowaves.left.and.right" size={16} color={Colors.text} />
+            <Text style={styles.statusValue}>6000kbps</Text>
+          </View>
+          <View style={styles.statusItem}>
+            <Text style={styles.statusValue}>30fps</Text>
+          </View>
+        </View>
+
+        {/* Stream button - exactly matching screenshot */}
+        <View style={styles.streamButtonContainer}>
+          <TouchableOpacity
+            style={styles.streamButton}
+            onPress={handleStreamToggle}
+          >
+            <Text style={styles.streamButtonText}>INICIAR TRANSMISSÃO</Text>
+          </TouchableOpacity>
+        </View>
+
+      </View>
     </View>
   );
 };
@@ -449,410 +409,370 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#000000',
+    paddingTop: StatusBar.currentHeight || 0,
   },
-  safeArea: {
+  mainContainer: {
     flex: 1,
+    margin: 8,
+    borderWidth: 3,
+    borderColor: Colors.greenBorder,
+    borderRadius: 12,
+    position: 'relative',
+    overflow: 'hidden',
   },
-  topBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-  },
-  profileButton: {
-    padding: 5,
-  },
-  profileIcon: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: '#7ED321',
-  },
-  topControls: {
-    flexDirection: 'row',
-  },
-  topButton: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: '#7ED321',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginHorizontal: 2,
-  },
-  topButtonIcon: {
-    fontSize: 14,
-    color: '#000',
-  },
-  accountButton: {
-    alignItems: 'center',
-  },
-  cameraContainer: {
-    flex: 1,
-  },
-  cameraSelector: {
+  userAvatar: {
     position: 'absolute',
-    left: 10,
-    top: 20,
+    top: 16,
+    left: 16,
     zIndex: 10,
   },
-  cameraOption: {
-    backgroundColor: '#2a2a3e',
+  avatarCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: Colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: Colors.greenBorder,
+  },
+  streamingArea: {
+    flex: 1,
+    margin: 4,
+  },
+  previewBorder: {
+    flex: 1,
+    borderWidth: 2,
+    borderColor: Colors.greenBorder,
     borderRadius: 8,
-    padding: 10,
-    marginBottom: 5,
-    minWidth: 120,
+    overflow: 'hidden',
+    margin: 2,
+  },
+  backgroundImage: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  selectedCameraOption: {
-    backgroundColor: '#7ED321',
+  cameraPanel: {
+    position: 'absolute',
+    left: 8,
+    top: 60,
+    width: 160,
   },
-  disabledCameraOption: {
-    backgroundColor: '#1a1a2e',
+  cameraSource: {
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    borderRadius: 4,
+    padding: 8,
+    marginBottom: 4,
+    borderWidth: 1,
+    borderColor: '#333',
   },
-  cameraIconContainer: {
-    marginBottom: 5,
+  cameraStatusRow: {
+    marginBottom: 4,
   },
-  cameraIcon: {
-    fontSize: 16,
-  },
-  cameraOptionText: {
-    color: '#ffffff',
-    fontSize: 10,
-    textAlign: 'center',
-    fontWeight: '600',
-  },
-  selectedCameraText: {
-    color: '#000000',
-  },
-  disabledCameraText: {
-    color: '#666',
-  },
-  disabledBadge: {
-    backgroundColor: '#FF0000',
+  statusIndicator: {
+    backgroundColor: Colors.danger,
     paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: 4,
-    marginTop: 4,
+    borderRadius: 2,
+    alignSelf: 'flex-start',
   },
-  disabledBadgeText: {
-    color: '#ffffff',
-    fontSize: 8,
+  statusText: {
+    color: Colors.text,
+    fontSize: 10,
     fontWeight: 'bold',
   },
-  cameraPreview: {
+  cameraInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  cameraIcon: {
+    marginRight: 6,
+  },
+  cameraName: {
+    color: Colors.text,
+    fontSize: 12,
+    fontWeight: '500',
     flex: 1,
-    backgroundColor: '#1a1a2e',
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'relative',
   },
-  cameraPlaceholderText: {
-    color: '#ffffff',
-    fontSize: 18,
-    marginBottom: 10,
-  },
-  cameraNote: {
-    color: '#888',
-    fontSize: 14,
-  },
-  streamOverlay: {
+  topControls: {
     position: 'absolute',
-    top: 20,
-    left: 150,
+    top: 16,
+    right: 16,
     flexDirection: 'row',
+    gap: 8,
+  },
+  controlButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 2,
+    borderColor: Colors.greenBorder,
   },
-  liveIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FF0000',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    marginRight: 10,
+  playButton: {
+    backgroundColor: Colors.primary,
   },
-  liveDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#ffffff',
-    marginRight: 4,
+  fxButton: {
+    backgroundColor: '#ffeb3b',
   },
-  liveText: {
-    color: '#ffffff',
-    fontSize: 10,
+  micButton: {
+    backgroundColor: Colors.primary,
+  },
+  cameraButton: {
+    backgroundColor: Colors.primary,
+  },
+  menuButton: {
+    backgroundColor: Colors.primary,
+  },
+  fxText: {
+    color: '#000',
+    fontSize: 14,
     fontWeight: 'bold',
   },
-  streamInfo: {
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
+  menuIcon: {
+    gap: 2,
   },
-  streamTime: {
-    color: '#ffffff',
-    fontSize: 10,
-    fontWeight: '600',
-    textAlign: 'center',
+  menuLine: {
+    width: 16,
+    height: 2,
+    backgroundColor: Colors.text,
+    borderRadius: 1,
   },
-  viewerCount: {
-    color: '#7ED321',
-    fontSize: 9,
-    textAlign: 'center',
-  },
-  zoomControls: {
+  overlayMenu: {
     position: 'absolute',
-    top: 20,
-    right: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    borderRadius: 15,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-  },
-  zoomButton: {
-    width: 25,
-    height: 25,
+    top: '20%',
+    left: '20%',
+    right: '20%',
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
     borderRadius: 12,
-    backgroundColor: '#7ED321',
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 10,
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 8,
+    right: 12,
+    width: 24,
+    height: 24,
+    justifyContent: 'center',
     alignItems: 'center',
+  },
+  closeButtonText: {
+    fontSize: 20,
+    color: '#666',
+    fontWeight: 'bold',
+  },
+  menuGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    paddingTop: 20,
+  },
+  menuItem: {
+    width: '30%',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  menuIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#f0f0f0',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  menuIconText: {
+    fontSize: 20,
+  },
+  proIcon: {
+    backgroundColor: '#333',
+  },
+  proText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  telaInicioIcon: {
+    backgroundColor: '#4a90e2',
+  },
+  screenIcon: {
+    width: 24,
+    height: 16,
+    backgroundColor: '#fff',
+    borderRadius: 2,
+  },
+  menuLabel: {
+    fontSize: 12,
+    color: '#333',
+    textAlign: 'center',
+    fontWeight: '500',
+  },
+    position: 'absolute',
+    left: 8,
+    top: 60,
+    bottom: 100,
+    width: 60,
+    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+    borderRadius: 8,
+    paddingVertical: 16,
+    paddingHorizontal: 8,
+    justifyContent: 'space-evenly',
+    alignItems: 'center',
+  },
+  cameraControl: {
+    alignItems: 'center',
+    marginVertical: 8,
+    minHeight: 40,
     justifyContent: 'center',
   },
-  zoomButtonText: {
-    color: '#000',
+  cameraControlIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  controlIconText: {
+    color: Colors.text,
     fontSize: 16,
     fontWeight: 'bold',
   },
-  zoomText: {
-    color: '#ffffff',
+  cameraControlLabel: {
+    color: Colors.text,
     fontSize: 12,
-    marginHorizontal: 10,
-    fontWeight: '600',
+    fontWeight: 'bold',
+    marginBottom: 4,
   },
-  streamControls: {
-    backgroundColor: '#0f0f23',
+  cameraControlValue: {
+    color: Colors.text,
+    fontSize: 11,
+    fontWeight: '500',
+    textAlign: 'center',
+  },
+  zoomSlider: {
+    position: 'absolute',
+    right: 8,
+    top: 60,
+    bottom: 100,
+    width: 40,
+    alignItems: 'center',
+  },
+  zoomTrack: {
+    flex: 1,
+    width: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    borderRadius: 10,
+    position: 'relative',
+    alignItems: 'center',
     paddingVertical: 10,
-    paddingHorizontal: 20,
+  },
+  zoomDots: {
+    flex: 1,
+    justifyContent: 'space-evenly',
+    alignItems: 'center',
+    width: '100%',
+  },
+  zoomDot: {
+    width: 2,
+    height: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.6)',
+    borderRadius: 1,
+  },
+  zoomHandle: {
+    position: 'absolute',
+    top: '60%',
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: Colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  audioIndicator: {
+    position: 'absolute',
+    bottom: 80,
+    left: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
   },
   audioLevel: {
     flexDirection: 'row',
+    marginLeft: 8,
+    gap: 2,
+  },
+  audioBar: {
+    width: 3,
+    height: 16,
+    borderRadius: 1,
+  },
+  statusIndicators: {
+    position: 'absolute',
+    bottom: 80,
+    left: 120,
+    flexDirection: 'row',
+    gap: 16,
+  },
+  statusItem: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 10,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
   },
-  audioLevelBar: {
-    width: 20,
-    height: 4,
-    backgroundColor: '#7ED321',
-    borderRadius: 2,
-    marginRight: 10,
-  },
-  audioLevelText: {
-    color: '#ffffff',
+  statusValue: {
+    color: Colors.text,
     fontSize: 12,
+    fontWeight: '600',
+    marginLeft: 4,
+  },
+  streamButtonContainer: {
+    position: 'absolute',
+    bottom: 16,
+    left: 16,
+    right: 16,
+    alignItems: 'center',
   },
   streamButton: {
-    height: 50,
-    borderRadius: 25,
+    backgroundColor: Colors.primary,
+    paddingHorizontal: 32,
+    paddingVertical: 12,
+    borderRadius: 8,
+    minWidth: 200,
     alignItems: 'center',
-    justifyContent: 'center',
-  },
-  streamButtonStart: {
-    backgroundColor: '#7ED321',
-  },
-  streamButtonStop: {
-    backgroundColor: '#FF0000',
   },
   streamButtonText: {
-    color: '#ffffff',
+    color: '#000',
     fontSize: 16,
     fontWeight: 'bold',
-  },
-  backButton: {
-    position: 'absolute',
-    top: 50,
-    left: 20,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    paddingHorizontal: 15,
-    paddingVertical: 8,
-    borderRadius: 20,
-  },
-  backButtonText: {
-    color: '#7ED321',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  modalContainer: {
-    flex: 1,
-    backgroundColor: '#0f0f23',
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 20,
-    paddingTop: 60,
-    borderBottomWidth: 1,
-    borderBottomColor: '#2a2a3e',
-  },
-  modalCancel: {
-    color: '#7ED321',
-    fontSize: 16,
-  },
-  modalTitle: {
-    color: '#ffffff',
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  modalContent: {
-    flex: 1,
-    padding: 20,
-  },
-  modalSectionTitle: {
-    color: '#7ED321',
-    fontSize: 14,
-    fontWeight: 'bold',
-    marginTop: 20,
-    marginBottom: 10,
-  },
-  infoSection: {
-    backgroundColor: '#2a2a3e',
-    borderRadius: 8,
-    padding: 15,
-  },
-  infoItem: {
-    color: '#ffffff',
-    fontSize: 14,
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#1a1a2e',
-  },
-  serverSection: {
-    backgroundColor: '#2a2a3e',
-    borderRadius: 8,
-    padding: 15,
-  },
-  serverItem: {
-    color: '#ffffff',
-    fontSize: 14,
-    marginBottom: 5,
-  },
-  serverValue: {
-    color: '#888',
-    fontSize: 12,
-  },
-  streamSection: {
-    backgroundColor: '#2a2a3e',
-    borderRadius: 8,
-    padding: 15,
-  },
-  streamRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#1a1a2e',
-  },
-  streamLabel: {
-    color: '#ffffff',
-    fontSize: 14,
-    flex: 1,
-  },
-  streamValue: {
-    color: '#7ED321',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  cameraSection: {
-    backgroundColor: '#2a2a3e',
-    borderRadius: 8,
-    padding: 15,
-  },
-  audioSection: {
-    backgroundColor: BackgroundColors.tertiary,
-    borderRadius: 8,
-    padding: 15,
-  },
-  // Performance Stats Modal Styles
-  performanceModalContainer: {
-    flex: 1,
-    backgroundColor: BackgroundColors.overlay,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: Spacing.lg,
-  },
-  performanceModal: {
-    backgroundColor: BackgroundColors.tertiary,
-    borderRadius: 12,
-    width: '100%',
-    maxHeight: '80%',
-    borderWidth: 2,
-    borderColor: BrandColors.primary,
-  },
-  performanceHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: Spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: BackgroundColors.secondary,
-  },
-  performanceTitle: {
-    ...Typography.subtitle,
-    color: TextColors.primary,
-    fontWeight: 'bold',
-  },
-  performanceCloseButton: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: TextColors.error,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  performanceCloseText: {
-    color: TextColors.primary,
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  performanceContent: {
-    padding: Spacing.lg,
-  },
-  statRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: Spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: BackgroundColors.secondary,
-  },
-  statLabel: {
-    ...Typography.body,
-    color: TextColors.primary,
-    flex: 1,
-  },
-  statBarContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-    marginLeft: Spacing.md,
-  },
-  statBar: {
-    height: 8,
-    borderRadius: 4,
-    flex: 1,
-    marginRight: Spacing.sm,
-  },
-  statValue: {
-    ...Typography.caption,
-    color: TextColors.accent,
-    fontWeight: 'bold',
-    minWidth: 50,
-    textAlign: 'right',
   },
 });
 

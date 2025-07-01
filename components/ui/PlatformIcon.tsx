@@ -1,103 +1,150 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
-import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { Colors } from '@/constants/Colors';
+import { StyleSheet, Text, View } from 'react-native';
 
-export type PlatformType = 'youtube' | 'facebook' | 'instagram' | 'twitch' | 'rtmp' | 'srt';
+export type PlatformType = 'youtube' | 'facebook' | 'instagram' | 'twitch' | 'rtmp' | 'srt' | 'recording';
 
 interface PlatformIconProps {
   platform: PlatformType;
   size?: number;
   color?: string;
-  style?: any;
 }
 
-const getPlatformColor = (platform: PlatformType): string => {
-  switch (platform) {
-    case 'youtube': return '#FF0000';
-    case 'facebook': return '#1877F2';
-    case 'instagram': return '#E4405F';
-    case 'twitch': return '#9146FF';
-    case 'rtmp': return '#00ff88';
-    case 'srt': return '#FFA500';
-    default: return Colors.dark.tint;
-  }
-};
-
-export const PlatformIcon: React.FC<PlatformIconProps> = ({
-  platform,
-  size = 24,
-  color,
-  style,
+export const PlatformIcon: React.FC<PlatformIconProps> = ({ 
+  platform, 
+  size = 24, 
+  color = '#ffffff' 
 }) => {
-  const iconColor = color || getPlatformColor(platform);
+  const iconSize = size;
+  const fontSize = size * 0.6;
 
   const renderIcon = () => {
     switch (platform) {
       case 'youtube':
         return (
-          <FontAwesome5 
-            name="youtube" 
-            size={size} 
-            color={iconColor} 
-            style={style}
-          />
+          <View style={[styles.iconContainer, { width: iconSize, height: iconSize }]}>
+            <View style={[styles.playIcon, { 
+              borderLeftWidth: fontSize * 0.4,
+              borderTopWidth: fontSize * 0.25,
+              borderBottomWidth: fontSize * 0.25,
+            }]} />
+          </View>
         );
+
       case 'facebook':
         return (
-          <FontAwesome5 
-            name="facebook" 
-            size={size} 
-            color={iconColor} 
-            style={style}
-          />
+          <View style={[styles.iconContainer, { 
+            width: iconSize, 
+            height: iconSize, 
+            backgroundColor: '#ffffff',
+            borderRadius: 6,
+          }]}>
+            <Text style={[styles.facebookIcon, { 
+              fontSize: fontSize,
+              color: '#1877F2'
+            }]}>
+              f
+            </Text>
+          </View>
         );
+
       case 'instagram':
         return (
-          <FontAwesome5 
-            name="instagram" 
-            size={size} 
-            color={iconColor} 
-            style={style}
-          />
+          <View style={[styles.iconContainer, { width: iconSize, height: iconSize }]}>
+            <View style={[styles.cameraBody, { 
+              width: fontSize * 0.8,
+              height: fontSize * 0.6,
+              borderRadius: fontSize * 0.1,
+            }]}>
+              <View style={[styles.cameraLens, {
+                width: fontSize * 0.3,
+                height: fontSize * 0.3,
+                borderRadius: fontSize * 0.15,
+              }]} />
+            </View>
+          </View>
         );
+
       case 'twitch':
         return (
-          <FontAwesome5 
-            name="twitch" 
-            size={size} 
-            color={iconColor} 
-            style={style}
-          />
+          <View style={[styles.iconContainer, { width: iconSize, height: iconSize }]}>
+            <View style={[styles.gamepadBody, {
+              width: fontSize * 0.9,
+              height: fontSize * 0.6,
+              borderRadius: fontSize * 0.1,
+            }]}>
+              <View style={styles.gamepadButtons}>
+                <View style={[styles.gamepadButton, {
+                  width: fontSize * 0.15,
+                  height: fontSize * 0.15,
+                }]} />
+                <View style={[styles.gamepadButton, {
+                  width: fontSize * 0.15,
+                  height: fontSize * 0.15,
+                }]} />
+              </View>
+            </View>
+          </View>
         );
+
       case 'rtmp':
         return (
-          <MaterialIcons 
-            name="wifi" 
-            size={size} 
-            color={iconColor} 
-            style={style}
-          />
+          <View style={[styles.iconContainer, { width: iconSize, height: iconSize }]}>
+            <View style={styles.wifiContainer}>
+              <View style={[styles.wifiArc1, {
+                width: fontSize * 0.8,
+                height: fontSize * 0.4,
+                borderRadius: fontSize * 0.4,
+                borderWidth: 2,
+              }]} />
+              <View style={[styles.wifiArc2, {
+                width: fontSize * 0.6,
+                height: fontSize * 0.3,
+                borderRadius: fontSize * 0.3,
+                borderWidth: 2,
+              }]} />
+              <View style={[styles.wifiDot, {
+                width: fontSize * 0.15,
+                height: fontSize * 0.15,
+                borderRadius: fontSize * 0.075,
+              }]} />
+            </View>
+          </View>
         );
+
       case 'srt':
         return (
-          <MaterialIcons 
-            name="speed" 
-            size={size} 
-            color={iconColor} 
-            style={style}
-          />
+          <View style={[styles.iconContainer, { width: iconSize, height: iconSize }]}>
+            <View style={[styles.lightningBolt, {
+              width: fontSize * 0.5,
+              height: fontSize * 0.8,
+            }]}>
+              <Text style={[styles.lightningText, { fontSize: fontSize * 0.8 }]}>⚡</Text>
+            </View>
+          </View>
         );
+
+      case 'recording':
+        return (
+          <View style={[styles.iconContainer, { width: iconSize, height: iconSize }]}>
+            <View style={[styles.recordDot, {
+              width: fontSize * 0.8,
+              height: fontSize * 0.8,
+              borderRadius: fontSize * 0.4,
+            }]} />
+            <View style={[styles.recordRing, {
+              width: fontSize,
+              height: fontSize,
+              borderRadius: fontSize * 0.5,
+              borderWidth: 2,
+            }]} />
+          </View>
+        );
+
       default:
         return (
-          <MaterialIcons 
-            name="live-tv" 
-            size={size} 
-            color={iconColor} 
-            style={style}
-          />
+          <View style={[styles.iconContainer, { width: iconSize, height: iconSize }]}>
+            <Text style={[styles.defaultIcon, { fontSize: fontSize }]}>?</Text>
+          </View>
         );
     }
   };
@@ -105,48 +152,108 @@ export const PlatformIcon: React.FC<PlatformIconProps> = ({
   return renderIcon();
 };
 
-// Platform data with proper typing
-export const platforms = [
-  {
-    id: 'youtube',
-    name: 'YouTube Live',
-    color: '#FF0000',
-    description: 'Stream to YouTube Live',
-    badge: 'POPULAR',
+const styles = StyleSheet.create({
+  iconContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
   },
-  {
-    id: 'facebook',
-    name: 'Facebook Live',
-    color: '#1877F2',
-    description: 'Broadcast on Facebook',
-    badge: 'SOCIAL',
+  
+  // YouTube Play Icon
+  playIcon: {
+    width: 0,
+    height: 0,
+    backgroundColor: 'transparent',
+    borderStyle: 'solid',
+    borderLeftColor: '#ffffff',
+    borderTopColor: 'transparent',
+    borderBottomColor: 'transparent',
+    borderRightWidth: 0,
   },
-  {
-    id: 'instagram',
-    name: 'Instagram Live',
-    color: '#E4405F',
-    description: 'Go live on Instagram',
-    badge: 'SOCIAL',
+  
+  // Facebook Icon
+  facebookIcon: {
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
-  {
-    id: 'twitch',
-    name: 'Twitch',
-    color: '#9146FF',
-    description: 'Stream to Twitch',
-    badge: 'GAMING',
+  
+  // Instagram Camera Icon
+  cameraBody: {
+    backgroundColor: '#ffffff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
   },
-  {
-    id: 'rtmp',
-    name: 'Custom RTMP',
-    color: '#00ff88',
-    description: 'Use custom RTMP server',
-    badge: 'CUSTOM',
+  cameraLens: {
+    backgroundColor: '#E4405F',
+    borderWidth: 1,
+    borderColor: '#ffffff',
   },
-  {
-    id: 'srt',
-    name: 'SRT Protocol',
-    color: '#FFA500',
-    description: 'Low-latency SRT streaming',
-    badge: 'PRO',
+  
+  // Twitch Gamepad Icon
+  gamepadBody: {
+    backgroundColor: '#ffffff',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-] as const;
+  gamepadButtons: {
+    flexDirection: 'row',
+    gap: 4,
+  },
+  gamepadButton: {
+    backgroundColor: '#9146FF',
+    borderRadius: 2,
+  },
+  
+  // RTMP WiFi Icon
+  wifiContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  wifiArc1: {
+    borderColor: '#ffffff',
+    borderBottomWidth: 0,
+    position: 'absolute',
+    bottom: 8,
+  },
+  wifiArc2: {
+    borderColor: '#ffffff',
+    borderBottomWidth: 0,
+    position: 'absolute',
+    bottom: 6,
+  },
+  wifiDot: {
+    backgroundColor: '#ffffff',
+    position: 'absolute',
+    bottom: 2,
+  },
+  
+  // SRT Lightning Icon
+  lightningBolt: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  lightningText: {
+    color: '#ffffff',
+  },
+  
+  // Recording Icon
+  recordDot: {
+    backgroundColor: '#ffffff',
+    position: 'absolute',
+  },
+  recordRing: {
+    borderColor: '#ffffff',
+    backgroundColor: 'transparent',
+  },
+  
+  // Default Icon
+  defaultIcon: {
+    color: '#ffffff',
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+});
+
+export default PlatformIcon;
