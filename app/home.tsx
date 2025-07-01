@@ -1,266 +1,388 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
   ScrollView,
-  Modal,
   TextInput,
+  Modal,
   Dimensions,
+  StatusBar,
+  Animated,
+  Easing,
 } from 'react-native';
-import {useNavigation} from '@react-navigation/native';
-import {StackNavigationProp} from '@react-navigation/stack';
-import {RootStackParamList} from '../../App';
-
-type HomeScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Home'>;
+import {useRouter} from 'expo-router';
+import * as Haptics from 'expo-haptics';
+import {
+  BrandColors,
+  BackgroundColors,
+  TextColors,
+  PlatformColors,
+  AnimationConfig,
+  Spacing,
+  Typography,
+  Shadows,
+} from '@/constants/Colors';
 
 const {width} = Dimensions.get('window');
 
+const platforms = [
+  {
+    id: 'youtube',
+    name: 'Youtube',
+    color: PlatformColors.youtube,
+    bgColor: PlatformColors.youtube,
+  },
+  {
+    id: 'facebook',
+    name: 'Facebook',
+    color: PlatformColors.facebook,
+    bgColor: PlatformColors.facebook,
+  },
+  {
+    id: 'instagram',
+    name: 'Instagram',
+    color: PlatformColors.instagram,
+    bgColor: 'linear-gradient(45deg, #f09433 0%,#e6683c 25%,#dc2743 50%,#cc2366 75%,#bc1888 100%)',
+  },
+  {
+    id: 'twitch',
+    name: 'Twitch',
+    color: PlatformColors.twitch,
+    bgColor: PlatformColors.twitch,
+  },
+  {
+    id: 'rtmp',
+    name: 'RTMP',
+    color: PlatformColors.rtmp,
+    bgColor: PlatformColors.rtmp,
+  },
+  {
+    id: 'srt',
+    name: 'SRT',
+    color: PlatformColors.srt,
+    bgColor: PlatformColors.srt,
+  },
+  {
+    id: 'gravacao',
+    name: 'Gravação',
+    color: PlatformColors.youtube,
+    bgColor: PlatformColors.youtube,
+  },
+];
+
 const HomeScreen: React.FC = () => {
-  const navigation = useNavigation<HomeScreenNavigationProp>();
-  const [rtmpModalVisible, setRtmpModalVisible] = useState(false);
-  const [rtmpUrl, setRtmpUrl] = useState('');
+  const router = useRouter();
+  const [showRTMPModal, setShowRTMPModal] = useState(false);
+  const [rtmpUrl, setRtmpUrl] = useState('rtmp://a.rtmp.youtube.com/live2');
   const [streamKey, setStreamKey] = useState('');
+  const [selectedTab, setSelectedTab] = useState<'login' | 'cadastro'>('login');
+  const [validationErrors, setValidationErrors] = useState<{rtmpUrl?: string; streamKey?: string}>({});
+  
+  // Animation values
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(50)).current;
+  const scaleAnim = useRef(new Animated.Value(0.9)).current;
+  const platformAnimations = useRef(platforms.map(() => new Animated.Value(0))).current;
 
-  const platforms = [
-    {
-      id: 'youtube' as const,
-      name: 'YouTube Live',
-      color: '#FF0000',
-      description: 'Stream to YouTube Live',
-      badge: 'POPULAR',
-    },
-    {
-      id: 'facebook' as const,
-      name: 'Facebook Live',
-      color: '#1877F2',
-      description: 'Broadcast on Facebook',
-      badge: 'SOCIAL',
-    },
-    {
-      id: 'instagram' as const,
-      name: 'Instagram Live',
-      color: '#E4405F',
-      description: 'Go live on Instagram',
-      badge: 'SOCIAL',
-    },
-    {
-      id: 'twitch' as const,
-      name: 'Twitch',
-      color: '#9146FF',
-      description: 'Stream to Twitch',
-      badge: 'GAMING',
-    },
-    {
-      id: 'rtmp' as const,
-      name: 'Custom RTMP',
-      color: '#00ff88',
-      description: 'Use custom RTMP server',
-      badge: 'CUSTOM',
-    },
-    {
-      id: 'srt' as const,
-      name: 'SRT Protocol',
-      color: '#FFA500',
-      description: 'Low-latency SRT streaming',
-      badge: 'PRO',
-    },
-  ];
+  // Initialize entrance animations
+  useEffect(() => {
+    const entranceAnimation = Animated.sequence([
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: AnimationConfig.fade.duration,
+          useNativeDriver: AnimationConfig.fade.useNativeDriver,
+        }),
+        Animated.timing(slideAnim, {
+          toValue: 0,
+          duration: AnimationConfig.timing.duration,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: AnimationConfig.timing.useNativeDriver,
+        }),
+        Animated.spring(scaleAnim, {
+          toValue: 1,
+          ...AnimationConfig.spring,
+          useNativeDriver: true,
+        }),
+      ]),
+      Animated.stagger(50, 
+        platformAnimations.map(anim => 
+          Animated.spring(anim, {
+            toValue: 1,
+            ...AnimationConfig.spring,
+            useNativeDriver: true,
+          })
+        )
+      ),
+    ]);
 
-  const quickStats = [
-    {label: 'Total Streams', value: '24', icon: '📊'},
-    {label: 'Hours Streamed', value: '156', icon: '⏱️'},
-    {label: 'Total Viewers', value: '2.4K', icon: '👥'},
-  ];
+    entranceAnimation.start();
+  }, [fadeAnim, slideAnim, scaleAnim, platformAnimations]);
 
-  const quickActions = [
-    {
-      id: 'settings',
-      title: 'Stream Settings',
-      description: 'Configure video quality and preferences',
-      icon: '⚙️',
-      action: () => navigation.navigate('Settings'),
-    },
-    {
-      id: 'overlay',
-      title: 'Overlay Manager',
-      description: 'Add graphics and widgets to your stream',
-      icon: '🎨',
-      action: () => navigation.navigate('Overlay'),
-    },
-    {
-      id: 'replay',
-      title: 'Replay Gallery',
-      description: 'View and manage recorded streams',
-      icon: '🔄',
-      action: () => navigation.navigate('Replay'),
-    },
-  ];
-
-  const recentActivities = [
-    {id: 1, platform: 'YouTube', duration: '2h 15m', viewers: '847', date: '2 hours ago'},
-    {id: 2, platform: 'Twitch', duration: '3h 42m', viewers: '1.2K', date: '1 day ago'},
-    {id: 3, platform: 'Facebook', duration: '1h 33m', viewers: '394', date: '2 days ago'},
-  ];
-
-  const handlePlatformSelect = (platform: string) => {
-    if (platform === 'rtmp') {
-      setRtmpModalVisible(true);
-      return;
+  // Validation functions
+  const validateRTMPUrl = (url: string) => {
+    if (!url.trim()) return 'URL RTMP é obrigatória';
+    if (!url.startsWith('rtmp://') && !url.startsWith('rtmps://')) {
+      return 'URL deve começar com rtmp:// ou rtmps://';
     }
-    navigation.navigate('LiveStream', {
-      platform: platform as any,
-    });
+    return null;
   };
 
-  const handleRtmpConfirm = () => {
-    if (rtmpUrl && streamKey) {
-      setRtmpModalVisible(false);
-      navigation.navigate('LiveStream', {
-        platform: 'rtmp',
-        rtmpUrl,
-        streamKey,
+  const validateStreamKey = (key: string) => {
+    if (!key.trim()) return 'Chave de transmissão é obrigatória';
+    if (key.length < 4) return 'Chave muito curta';
+    return null;
+  };
+
+  const handlePlatformSelect = async (platform: any) => {
+    // Haptic feedback
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    
+    if (platform.id === 'rtmp') {
+      setShowRTMPModal(true);
+    } else {
+      router.push({
+        pathname: '/live-stream',
+        params: {
+          platform: platform.id,
+        }
       });
     }
   };
 
+  const handleRTMPConnect = async () => {
+    const urlError = validateRTMPUrl(rtmpUrl);
+    const keyError = validateStreamKey(streamKey);
+    
+    const errors = {
+      rtmpUrl: urlError || undefined,
+      streamKey: keyError || undefined,
+    };
+    
+    setValidationErrors(errors);
+    
+    if (urlError || keyError) {
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      return;
+    }
+    
+    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    setShowRTMPModal(false);
+    router.push({
+      pathname: '/live-stream',
+      params: {
+        platform: 'rtmp',
+        streamUrl: rtmpUrl,
+        streamKey: streamKey,
+      }
+    });
+  };
+
+  const navigateToSettings = () => {
+    router.push('/settings');
+  };
+
+  const navigateToOverlay = () => {
+    router.push('/overlay');
+  };
+
+  const navigateToReplay = () => {
+    router.push('/relay');
+  };
+
   return (
     <View style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Header Section with StreamCast Branding */}
-        <View style={styles.header}>
-          <Text style={styles.logo}>StreamCast</Text>
-          <Text style={styles.tagline}>Professional Mobile Streaming</Text>
-        </View>
+      <StatusBar barStyle="light-content" backgroundColor={BackgroundColors.secondary} />
+      
+      <Animated.View 
+        style={[
+          styles.animatedContainer,
+          {
+            opacity: fadeAnim,
+            transform: [
+              { translateY: slideAnim },
+              { scale: scaleAnim }
+            ]
+          }
+        ]}
+      >
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+          {/* Main Card */}
+          <View style={[styles.mainCard, Shadows.medium]}>
+          {/* Header */}
+          <View style={styles.header}>
+            <Text style={styles.title}>APLICATIVO{'\n'}TRANSMISSÃO</Text>
+          </View>
 
-        {/* Quick Stats Dashboard */}
-        <View style={styles.statsContainer}>
-          {quickStats.map((stat, index) => (
-            <View key={index} style={styles.statCard}>
-              <Text style={styles.statIcon}>{stat.icon}</Text>
-              <Text style={styles.statValue}>{stat.value}</Text>
-              <Text style={styles.statLabel}>{stat.label}</Text>
-            </View>
-          ))}
-        </View>
+          {/* Platform Question */}
+          <Text style={styles.questionText}>Onde você vai transmitir?</Text>
 
-        {/* Platform Selection with Enhanced Design */}
-        <View style={styles.platformContainer}>
-          <Text style={styles.sectionTitle}>Choose Your Platform</Text>
+          {/* Platform Grid */}
           <View style={styles.platformGrid}>
-            {platforms.map((platform) => (
-              <TouchableOpacity
+            {platforms.map((platform, index) => (
+              <Animated.View
                 key={platform.id}
-                style={[styles.platformButton, {borderColor: platform.color}]}
-                onPress={() => handlePlatformSelect(platform.id)}>
-                <View style={styles.platformBadge}>
-                  <Text style={styles.badgeText}>{platform.badge}</Text>
-                </View>
-                <Text style={styles.platformIcon}>{platform.icon}</Text>
-                <Text style={styles.platformName}>{platform.name}</Text>
-                <Text style={styles.platformDescription}>{platform.description}</Text>
-              </TouchableOpacity>
+                style={{
+                  opacity: platformAnimations[index],
+                  transform: [{
+                    scale: platformAnimations[index]
+                  }]
+                }}
+              >
+                <TouchableOpacity
+                  style={[styles.platformButton, {backgroundColor: platform.bgColor}, Shadows.small]}
+                  onPress={() => handlePlatformSelect(platform)}
+                  activeOpacity={0.8}>
+                  <Text style={styles.platformText}>{platform.name}</Text>
+                </TouchableOpacity>
+              </Animated.View>
             ))}
           </View>
-        </View>
 
-        {/* Enhanced Quick Actions */}
-        <View style={styles.actionsContainer}>
-          <Text style={styles.sectionTitle}>Quick Actions</Text>
-          {quickActions.map((action) => (
+          {/* Login/Cadastro Tabs */}
+          <View style={styles.tabContainer}>
             <TouchableOpacity
-              key={action.id}
-              style={styles.actionButton}
-              onPress={action.action}>
-              <Text style={styles.actionIcon}>{action.icon}</Text>
-              <View style={styles.actionContent}>
-                <Text style={styles.actionTitle}>{action.title}</Text>
-                <Text style={styles.actionDescription}>{action.description}</Text>
-              </View>
-              <Text style={styles.actionArrow}>→</Text>
+              style={[styles.tab, selectedTab === 'login' && styles.activeTab]}
+              onPress={() => setSelectedTab('login')}>
+              <Text style={[styles.tabText, selectedTab === 'login' && styles.activeTabText]}>
+                login
+              </Text>
             </TouchableOpacity>
-          ))}
+            <TouchableOpacity
+              style={[styles.tab, selectedTab === 'cadastro' && styles.activeTab]}
+              onPress={() => setSelectedTab('cadastro')}>
+              <Text style={[styles.tabText, selectedTab === 'cadastro' && styles.activeTabText]}>
+                cadastro
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Start Button */}
+          <TouchableOpacity
+            style={styles.startButton}
+            onPress={() => router.push('/live-stream')}>
+            <Text style={styles.startButtonText}>INICIAR</Text>
+          </TouchableOpacity>
         </View>
 
-        {/* Recent Activity Section */}
-        <View style={styles.activityContainer}>
-          <Text style={styles.sectionTitle}>Recent Activity</Text>
-          {recentActivities.length > 0 ? (
-            recentActivities.map((activity) => (
-              <View key={activity.id} style={styles.activityItem}>
-                <View style={styles.activityInfo}>
-                  <Text style={styles.activityPlatform}>{activity.platform}</Text>
-                  <Text style={styles.activityDetails}>
-                    {activity.duration} • {activity.viewers} viewers
-                  </Text>
-                </View>
-                <Text style={styles.activityDate}>{activity.date}</Text>
-              </View>
-            ))
-          ) : (
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyIcon}>📺</Text>
-              <Text style={styles.emptyTitle}>No recent streams</Text>
-              <Text style={styles.emptyDescription}>
-                Start your first stream to see activity here
-              </Text>
-            </View>
-          )}
+        {/* Features Section */}
+        <View style={styles.featuresSection}>
+          <Text style={styles.featuresTitle}>CADASTRO DE CLIENTES{'\n'}COBRANÇA RECORRENTE</Text>
+          <Text style={styles.featuresSubtitle}>PAGAMENTO VIA APPLE / GOOGLE PLAY</Text>
+        </View>
+
+        {/* Quick Access Buttons */}
+        <View style={styles.quickAccessContainer}>
+          <TouchableOpacity style={styles.quickAccessButton} onPress={navigateToSettings}>
+            <Text style={styles.quickAccessIcon}>⚙️</Text>
+            <Text style={styles.quickAccessText}>Configurações</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.quickAccessButton} onPress={navigateToOverlay}>
+            <Text style={styles.quickAccessIcon}>🎨</Text>
+            <Text style={styles.quickAccessText}>Overlays</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.quickAccessButton} onPress={navigateToReplay}>
+            <Text style={styles.quickAccessIcon}>🔄</Text>
+            <Text style={styles.quickAccessText}>Replay</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* App Version Footer */}
+        <View style={styles.versionFooter}>
+          <Text style={styles.versionText}>v1.0.0 - Week 1 Complete ✅</Text>
+          <Text style={styles.versionSubtext}>Pronto para revisão do protótipo</Text>
         </View>
       </ScrollView>
+      </Animated.View>
 
-      {/* RTMP Configuration Modal */}
+      {/* RTMP Setup Modal */}
       <Modal
-        visible={rtmpModalVisible}
+        visible={showRTMPModal}
         animationType="slide"
-        transparent={true}
-        onRequestClose={() => setRtmpModalVisible(false)}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowRTMPModal(false)}>
+        <View style={styles.modalContainer}>
+          {/* Modal Card */}
+          <View style={styles.modalCard}>
+            {/* Modal Header */}
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>RTMP Configuration</Text>
-              <TouchableOpacity
-                style={styles.modalClose}
-                onPress={() => setRtmpModalVisible(false)}>
-                <Text style={styles.modalCloseText}>✕</Text>
-              </TouchableOpacity>
+              <Text style={styles.modalTitle}>APLICATIVO{'\n'}TRANSMISSÃO</Text>
             </View>
             
-            <View style={styles.modalBody}>
-              <Text style={styles.inputLabel}>RTMP Server URL</Text>
-              <TextInput
-                style={styles.input}
-                value={rtmpUrl}
-                onChangeText={setRtmpUrl}
-                placeholder="rtmp://your-server.com/live"
-                placeholderTextColor="#666"
-              />
+            {/* RTMP Form */}
+            <View style={styles.rtmpForm}>
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>URL RTMP *</Text>
+                <TextInput
+                  style={[
+                    styles.textInput,
+                    validationErrors.rtmpUrl ? styles.textInputError : null
+                  ]}
+                  value={rtmpUrl}
+                  onChangeText={(text) => {
+                    setRtmpUrl(text);
+                    if (validationErrors.rtmpUrl) {
+                      setValidationErrors(prev => ({...prev, rtmpUrl: undefined}));
+                    }
+                  }}
+                  placeholder="rtmp://a.rtmp.youtube.com/live2"
+                  placeholderTextColor={TextColors.disabled}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+                {validationErrors.rtmpUrl && (
+                  <Text style={styles.errorText}>{validationErrors.rtmpUrl}</Text>
+                )}
+                <Text style={styles.helpText}>
+                  Digite a URL de streaming fornecida pela plataforma
+                </Text>
+              </View>
               
-              <Text style={styles.inputLabel}>Stream Key</Text>
-              <TextInput
-                style={styles.input}
-                value={streamKey}
-                onChangeText={setStreamKey}
-                placeholder="Enter your stream key"
-                placeholderTextColor="#666"
-                secureTextEntry={true}
-              />
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Chave de Transmissão *</Text>
+                <TextInput
+                  style={[
+                    styles.textInput,
+                    validationErrors.streamKey ? styles.textInputError : null
+                  ]}
+                  value={streamKey}
+                  onChangeText={(text) => {
+                    setStreamKey(text);
+                    if (validationErrors.streamKey) {
+                      setValidationErrors(prev => ({...prev, streamKey: undefined}));
+                    }
+                  }}
+                  placeholder="xxxx-xxxx-xxxx-xxxx-xxxx"
+                  placeholderTextColor={TextColors.disabled}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  secureTextEntry={true}
+                />
+                {validationErrors.streamKey && (
+                  <Text style={styles.errorText}>{validationErrors.streamKey}</Text>
+                )}
+                <Text style={styles.helpText}>
+                  Chave secreta da sua conta de streaming
+                </Text>
+              </View>
             </View>
             
-            <View style={styles.modalFooter}>
-              <TouchableOpacity
-                style={styles.modalButtonSecondary}
-                onPress={() => setRtmpModalVisible(false)}>
-                <Text style={styles.modalButtonSecondaryText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.modalButtonPrimary}
-                onPress={handleRtmpConfirm}>
-                <Text style={styles.modalButtonPrimaryText}>Start Stream</Text>
-              </TouchableOpacity>
-            </View>
+            {/* Modal Start Button */}
+            <TouchableOpacity style={styles.modalStartButton} onPress={handleRTMPConnect}>
+              <Text style={styles.modalStartButtonText}>INICIAR</Text>
+            </TouchableOpacity>
           </View>
+
+          {/* Close Button */}
+          <TouchableOpacity
+            style={styles.modalCloseButton}
+            onPress={() => setShowRTMPModal(false)}>
+            <Text style={styles.modalCloseText}>Fechar</Text>
+          </TouchableOpacity>
         </View>
       </Modal>
     </View>
@@ -270,289 +392,225 @@ const HomeScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f0f23',
+    backgroundColor: BackgroundColors.primary,
+  },
+  animatedContainer: {
+    flex: 1,
   },
   scrollContent: {
-    padding: 20,
-    paddingBottom: 40,
+    padding: Spacing.lg,
+    paddingBottom: Spacing.xxl,
+  },
+  mainCard: {
+    backgroundColor: BackgroundColors.tertiary,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: BrandColors.primary,
+    padding: Spacing.lg,
+    marginBottom: Spacing.xl,
   },
   header: {
     alignItems: 'center',
-    marginBottom: 30,
-    paddingTop: 20,
+    marginBottom: Spacing.xl,
   },
-  logo: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#00ff88',
-    marginBottom: 8,
+  title: {
+    ...Typography.title,
+    color: TextColors.primary,
     textAlign: 'center',
   },
-  tagline: {
-    fontSize: 16,
-    color: '#888',
-    textAlign: 'center',
-  },
-  statsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 30,
-  },
-  statCard: {
-    flex: 1,
-    backgroundColor: '#1a1a2e',
-    padding: 15,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginHorizontal: 5,
-    borderTopWidth: 3,
-    borderTopColor: '#00ff88',
-  },
-  statIcon: {
-    fontSize: 20,
-    marginBottom: 8,
-  },
-  statValue: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#ffffff',
-    marginBottom: 4,
-  },
-  statLabel: {
-    fontSize: 12,
-    color: '#888',
-    textAlign: 'center',
-  },
-  platformContainer: {
-    marginBottom: 30,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#00ff88',
-    marginBottom: 15,
+  questionText: {
+    ...Typography.body,
+    color: TextColors.primary,
+    marginBottom: Spacing.lg,
+    textAlign: 'left',
   },
   platformGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-  },
-  platformButton: {
-    width: '48%',
-    backgroundColor: '#1a1a2e',
-    borderWidth: 2,
-    borderRadius: 12,
-    padding: 15,
-    marginBottom: 15,
-    position: 'relative',
-    minHeight: 120,
-  },
-  platformBadge: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-    backgroundColor: '#00ff88',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  badgeText: {
-    fontSize: 10,
-    fontWeight: 'bold',
-    color: '#0f0f23',
-  },
-  platformIcon: {
-    fontSize: 24,
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  platformName: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '600',
-    textAlign: 'center',
-    marginBottom: 4,
-  },
-  platformDescription: {
-    color: '#888',
-    fontSize: 12,
-    textAlign: 'center',
-    lineHeight: 16,
-  },
-  actionsContainer: {
     marginBottom: 30,
   },
-  actionButton: {
-    flexDirection: 'row',
+  platformButton: {
+    width: (width - 80) / 3.5,
+    height: 60,
+    borderRadius: 8,
     alignItems: 'center',
-    backgroundColor: '#1a1a2e',
-    padding: 15,
-    borderRadius: 12,
+    justifyContent: 'center',
     marginBottom: 10,
-    borderLeftWidth: 4,
-    borderLeftColor: '#00ff88',
   },
-  actionIcon: {
-    fontSize: 20,
-    marginRight: 15,
-    width: 30,
-  },
-  actionContent: {
-    flex: 1,
-  },
-  actionTitle: {
+  platformText: {
     color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 2,
-  },
-  actionDescription: {
-    color: '#888',
-    fontSize: 13,
-    lineHeight: 18,
-  },
-  actionArrow: {
-    color: '#00ff88',
-    fontSize: 18,
+    fontSize: 12,
     fontWeight: 'bold',
+    textAlign: 'center',
   },
-  activityContainer: {
+  tabContainer: {
+    flexDirection: 'row',
     marginBottom: 20,
   },
-  activityItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#1a1a2e',
-    padding: 15,
-    borderRadius: 10,
-    marginBottom: 8,
+  tab: {
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+    marginRight: 10,
   },
-  activityInfo: {
-    flex: 1,
+  activeTab: {
+    borderBottomWidth: 2,
+    borderBottomColor: '#7ED321',
   },
-  activityPlatform: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 2,
-  },
-  activityDetails: {
-    color: '#888',
-    fontSize: 13,
-  },
-  activityDate: {
-    color: '#666',
-    fontSize: 12,
-  },
-  emptyState: {
-    alignItems: 'center',
-    padding: 40,
-    backgroundColor: '#1a1a2e',
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: '#333',
-    borderStyle: 'dashed',
-  },
-  emptyIcon: {
-    fontSize: 40,
-    marginBottom: 15,
-    opacity: 0.5,
-  },
-  emptyTitle: {
-    color: '#ffffff',
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 8,
-  },
-  emptyDescription: {
+  tabText: {
     color: '#888',
     fontSize: 14,
-    textAlign: 'center',
-    lineHeight: 20,
   },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-    justifyContent: 'center',
+  activeTabText: {
+    color: '#7ED321',
+    fontWeight: '600',
+  },
+  startButton: {
+    backgroundColor: '#7ED321',
+    borderRadius: 8,
+    paddingVertical: 15,
     alignItems: 'center',
   },
-  modalContainer: {
-    backgroundColor: '#1a1a2e',
-    borderRadius: 16,
-    width: width * 0.9,
-    maxWidth: 400,
-    overflow: 'hidden',
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#333',
-  },
-  modalTitle: {
-    color: '#ffffff',
-    fontSize: 20,
+  startButtonText: {
+    color: '#000000',
+    fontSize: 16,
     fontWeight: 'bold',
   },
-  modalClose: {
-    padding: 5,
+  featuresSection: {
+    alignItems: 'center',
+    marginBottom: 30,
   },
-  modalCloseText: {
-    color: '#888',
+  featuresTitle: {
     fontSize: 18,
+    fontWeight: 'bold',
+    color: '#ffffff',
+    textAlign: 'center',
+    marginBottom: 10,
+    lineHeight: 22,
   },
-  modalBody: {
+  featuresSubtitle: {
+    fontSize: 14,
+    color: '#888',
+    textAlign: 'center',
+  },
+  quickAccessContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  quickAccessButton: {
+    alignItems: 'center',
+    padding: 15,
+    backgroundColor: '#2a2a3e',
+    borderRadius: 8,
+    minWidth: 80,
+  },
+  quickAccessIcon: {
+    fontSize: 24,
+    marginBottom: 8,
+  },
+  quickAccessText: {
+    color: '#ffffff',
+    fontSize: 12,
+    textAlign: 'center',
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: '#0f0f23',
+    justifyContent: 'center',
     padding: 20,
+  },
+  modalCard: {
+    backgroundColor: '#2a2a3e',
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#7ED321',
+    padding: 20,
+  },
+  modalHeader: {
+    alignItems: 'center',
+    marginBottom: 30,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#ffffff',
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+  rtmpForm: {
+    marginBottom: 30,
+  },
+  inputGroup: {
+    marginBottom: 20,
   },
   inputLabel: {
     color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 14,
     marginBottom: 8,
   },
-  input: {
-    backgroundColor: '#0f0f23',
+  textInput: {
+    backgroundColor: '#1a1a2e',
     borderWidth: 1,
     borderColor: '#333',
-    borderRadius: 8,
+    borderRadius: 6,
     padding: 12,
     color: '#ffffff',
-    fontSize: 16,
-    marginBottom: 20,
+    fontSize: 14,
   },
-  modalFooter: {
-    flexDirection: 'row',
-    padding: 20,
-    borderTopWidth: 1,
-    borderTopColor: '#333',
-    gap: 10,
-  },
-  modalButtonSecondary: {
-    flex: 1,
-    backgroundColor: '#333',
-    padding: 15,
+  modalStartButton: {
+    backgroundColor: '#7ED321',
     borderRadius: 8,
+    paddingVertical: 15,
     alignItems: 'center',
   },
-  modalButtonSecondaryText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  modalButtonPrimary: {
-    flex: 1,
-    backgroundColor: '#00ff88',
-    padding: 15,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  modalButtonPrimaryText: {
-    color: '#0f0f23',
+  modalStartButtonText: {
+    color: '#000000',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  modalCloseButton: {
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  modalCloseText: {
+    color: BrandColors.primary,
+    fontSize: 16,
+  },
+  // New styles for enhanced features
+  textInputError: {
+    borderColor: TextColors.error,
+    borderWidth: 2,
+  },
+  errorText: {
+    color: TextColors.error,
+    fontSize: 12,
+    marginTop: 4,
+    marginLeft: 4,
+  },
+  helpText: {
+    color: TextColors.secondary,
+    fontSize: 11,
+    marginTop: 4,
+    marginLeft: 4,
+    fontStyle: 'italic',
+  },
+  versionFooter: {
+    alignItems: 'center',
+    marginTop: Spacing.xl,
+    paddingTop: Spacing.lg,
+    borderTopWidth: 1,
+    borderTopColor: BackgroundColors.tertiary,
+  },
+  versionText: {
+    ...Typography.caption,
+    color: TextColors.accent,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  versionSubtext: {
+    ...Typography.small,
+    color: TextColors.secondary,
+    textAlign: 'center',
   },
 });
 
