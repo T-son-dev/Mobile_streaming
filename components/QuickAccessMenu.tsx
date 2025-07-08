@@ -1,6 +1,6 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Modal } from 'react-native';
 import { IconSymbol } from '@/components/ui/IconSymbol';
+import React from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 interface QuickAccessMenuProps {
   isOpen: boolean;
@@ -18,83 +18,93 @@ const Colors = {
 };
 
 const QuickAccessMenu: React.FC<QuickAccessMenuProps> = ({ isOpen, onClose, onProModeClick }) => {
+  if (!isOpen) return null;
+
   return (
-    <Modal
-      visible={isOpen}
-      transparent
-      animationType="fade"
-      onRequestClose={onClose}
-    >
-      <View style={styles.overlay}>
-        <View style={styles.container}>
-          <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-            <Text style={styles.closeButtonText}>×</Text>
+    <>
+      {/* Overlay to close menu when clicking outside */}
+      <TouchableOpacity 
+        style={styles.overlay} 
+        onPress={onClose}
+        activeOpacity={1}
+      />
+      
+      <View style={styles.container}>
+        {/* Triangle pointer */}
+        <View style={styles.triangle} />
+        
+        <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+          <Text style={styles.closeButtonText}>×</Text>
+        </TouchableOpacity>
+        
+        <View style={styles.menuGrid}>
+          {/* Top Row */}
+          <TouchableOpacity style={styles.menuItem}>
+            <View style={styles.menuIcon}>
+              <Text style={styles.menuIconText}>#</Text>
+            </View>
+            <Text style={styles.menuLabel}>Grade</Text>
           </TouchableOpacity>
-          
-          <View style={styles.menuGrid}>
-            {/* Top Row */}
-            <TouchableOpacity style={styles.menuItem}>
-              <View style={styles.menuIcon}>
-                <Text style={styles.menuIconText}>#</Text>
-              </View>
-              <Text style={styles.menuLabel}>Grade</Text>
-            </TouchableOpacity>
 
-            <TouchableOpacity style={styles.menuItem}>
-              <View style={styles.menuIcon}>
-                <IconSymbol name="flashlight.on.fill" size={20} color={Colors.text} />
-              </View>
-              <Text style={styles.menuLabel}>Lanterna</Text>
-            </TouchableOpacity>
+          <TouchableOpacity style={styles.menuItem}>
+            <View style={styles.menuIcon}>
+              <IconSymbol name="flashlight.on.fill" size={20} color={Colors.text} />
+            </View>
+            <Text style={styles.menuLabel}>Lanterna</Text>
+          </TouchableOpacity>
 
-            <TouchableOpacity style={styles.menuItem} onPress={onProModeClick}>
-              <View style={[styles.menuIcon, styles.proIcon]}>
-                <Text style={styles.proText}>PRO</Text>
-              </View>
-              <Text style={styles.menuLabel}>Modo PRO</Text>
-            </TouchableOpacity>
+          <TouchableOpacity style={styles.menuItem} onPress={onProModeClick}>
+            <View style={[styles.menuIcon, styles.proIcon]}>
+              <Text style={styles.proText}>PRO</Text>
+            </View>
+            <Text style={styles.menuLabel}>Modo PRO</Text>
+          </TouchableOpacity>
 
-            {/* Bottom Row */}
-            <TouchableOpacity style={styles.menuItem}>
-              <View style={[styles.menuIcon, styles.screenIcon]}>
-                <View style={styles.screenRect} />
-              </View>
-              <Text style={styles.menuLabel}>Tela Início</Text>
-            </TouchableOpacity>
+          {/* Bottom Row */}
+          <TouchableOpacity style={styles.menuItem}>
+            <View style={[styles.menuIcon, styles.screenIcon]}>
+              <View style={styles.screenRect} />
+            </View>
+            <Text style={styles.menuLabel}>Tela Início</Text>
+          </TouchableOpacity>
 
-            <TouchableOpacity style={styles.menuItem}>
-              <View style={styles.menuIcon}>
-                <IconSymbol name="mic.slash.fill" size={20} color={Colors.text} />
-              </View>
-              <Text style={styles.menuLabel}>Mutar</Text>
-            </TouchableOpacity>
+          <TouchableOpacity style={styles.menuItem}>
+            <View style={styles.menuIcon}>
+              <IconSymbol name="mic.slash.fill" size={20} color={Colors.text} />
+            </View>
+            <Text style={styles.menuLabel}>Mutar</Text>
+          </TouchableOpacity>
 
-            <TouchableOpacity style={styles.menuItem}>
-              <View style={styles.menuIcon}>
-                <IconSymbol name="gearshape.fill" size={20} color={Colors.text} />
-              </View>
-              <Text style={styles.menuLabel}>Configurações</Text>
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity style={styles.menuItem}>
+            <View style={styles.menuIcon}>
+              <IconSymbol name="gearshape.fill" size={20} color={Colors.text} />
+            </View>
+            <Text style={styles.menuLabel}>Configurações</Text>
+          </TouchableOpacity>
         </View>
       </View>
-    </Modal>
+    </>
   );
 };
 
 const styles = StyleSheet.create({
   overlay: {
-    flex: 1,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     backgroundColor: Colors.overlay,
-    justifyContent: 'center',
-    alignItems: 'center',
+    zIndex: 998,
   },
   container: {
+    position: 'absolute',
+    top: 90, // Adjust this value based on your navbar height
+    right: 16,
     backgroundColor: Colors.surface,
     borderRadius: 12,
     padding: 20,
-    marginHorizontal: 40,
-    minWidth: 300,
+    width: 300,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -103,6 +113,21 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 10,
+    zIndex: 999,
+  },
+  triangle: {
+    position: 'absolute',
+    top: -8,
+    right: 20, // Position it above the menu button area
+    width: 0,
+    height: 0,
+    borderLeftWidth: 8,
+    borderRightWidth: 8,
+    borderBottomWidth: 8,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    borderBottomColor: Colors.surface,
+    zIndex: 1000,
   },
   closeButton: {
     position: 'absolute',

@@ -18,6 +18,7 @@ import QuickAccessMenu from './QuickAccessMenu';
 import ProModeMenu from './ProModeMenu';
 import ShortcutButton from './ShortcutButton';
 import MonitoringIndicator from './MonitoringIndicator';
+import CameraControls from './CameraControls';
 
 const { width, height } = Dimensions.get('window');
 
@@ -44,6 +45,7 @@ const StreamingInterface: React.FC<StreamingInterfaceProps> = () => {
   const [activeSource, setActiveSource] = useState(0);
   const [isQuickAccessOpen, setIsQuickAccessOpen] = useState(false);
   const [isProModeOpen, setIsProModeOpen] = useState(false);
+  const [isCameraControlsOpen, setIsCameraControlsOpen] = useState(false);
   const [stats, setStats] = useState({
     bitrate: '6000kbps',
     fps: '30fps',
@@ -91,6 +93,12 @@ const StreamingInterface: React.FC<StreamingInterfaceProps> = () => {
     setIsProModeOpen(false);
   };
 
+  const handleCameraControlsToggle = () => {
+    setIsCameraControlsOpen(!isCameraControlsOpen);
+    setIsQuickAccessOpen(false);
+    setIsProModeOpen(false);
+  };
+
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
@@ -128,6 +136,7 @@ const StreamingInterface: React.FC<StreamingInterfaceProps> = () => {
               iconName="video.fill"
               label="Standard"
               isActive={isStreaming}
+              onPress={handleCameraControlsToggle} // Add this line
             />
             <TouchableOpacity
               onPress={handleQuickAccessToggle}
@@ -192,6 +201,11 @@ const StreamingInterface: React.FC<StreamingInterfaceProps> = () => {
         isOpen={isQuickAccessOpen}
         onClose={() => setIsQuickAccessOpen(false)}
         onProModeClick={handleProModeOpen}
+      />
+
+      <CameraControls
+        isOpen={isCameraControlsOpen}
+        onClose={() => setIsCameraControlsOpen(false)}
       />
       
       <ProModeMenu
