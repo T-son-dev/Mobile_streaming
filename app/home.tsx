@@ -13,7 +13,7 @@ import {
   Easing,
 } from 'react-native';
 import {useRouter} from 'expo-router';
-import * as Haptics from 'expo-haptics';
+// import * as Haptics from 'expo-haptics';
 import {
   BrandColors,
   BackgroundColors,
@@ -138,7 +138,7 @@ const HomeScreen: React.FC = () => {
 
   const handlePlatformSelect = async (platform: any) => {
     // Haptic feedback
-    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    // await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     
     if (platform.id === 'rtmp') {
       setShowRTMPModal(true);
@@ -164,11 +164,11 @@ const HomeScreen: React.FC = () => {
     setValidationErrors(errors);
     
     if (urlError || keyError) {
-      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      // await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       return;
     }
     
-    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    // await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     setShowRTMPModal(false);
     router.push({
       pathname: '/live-stream',
