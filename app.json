@@ -14,21 +14,48 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.example.mobilestreaming"
+      "bundleIdentifier": "com.example.mobilestreaming",
+      "infoPlist": {
+        "NSCameraUsageDescription": "This app uses the camera for dual camera streaming and recording.",
+        "NSMicrophoneUsageDescription": "This app uses the microphone for audio recording during streaming.",
+        "NSPhotoLibraryUsageDescription": "This app saves recordings to your photo library."
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#0f0f23"
       },
-      "package": "com.example.mobilestreaming"
+      "package": "com.example.mobilestreaming",
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.READ_EXTERNAL_STORAGE"
+      ]
     },
     "web": {
       "favicon": "./assets/images/favicon.png",
       "bundler": "metro"
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow mobile-streaming to access your camera for dual camera streaming.",
+          "microphonePermission": "Allow mobile-streaming to access your microphone for audio recording.",
+          "recordAudioAndroid": true
+        }
+      ],
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "Allow mobile-streaming to save recordings to your photo library.",
+          "savePhotosPermission": "Allow mobile-streaming to save recordings to your photo library.",
+          "isAccessMediaLocationEnabled": true
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
