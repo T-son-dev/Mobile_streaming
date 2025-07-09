@@ -20,6 +20,7 @@ interface OverlayTypeCardProps {
   description: string;
   onPress: () => void;
   selected?: boolean;
+  responsive: any;
 }
 
 export const OverlayTypeCard: React.FC<OverlayTypeCardProps> = ({
@@ -29,28 +30,37 @@ export const OverlayTypeCard: React.FC<OverlayTypeCardProps> = ({
   description,
   onPress,
   selected = false,
-}) => (
-  <TouchableOpacity
-    style={[styles.typeCard, selected && styles.typeCardSelected]}
-    onPress={onPress}
-  >
-    <IconSymbol name={iconName} size={32} color={Colors.dark.tint} style={styles.typeIcon} />
-    <Text style={styles.typeTitle}>{title}</Text>
-    <Text style={styles.typeDescription}>{description}</Text>
-  </TouchableOpacity>
-);
+  responsive,
+}) => {
+  const styles = createResponsiveStyles(responsive);
+  
+  return (
+    <TouchableOpacity
+      style={[styles.typeCard, selected && styles.typeCardSelected]}
+      onPress={onPress}
+    >
+      <IconSymbol name={iconName} size={responsive.layout.iconSize.large} color={Colors.dark.tint} style={styles.typeIcon} />
+      <Text style={styles.typeTitle}>{title}</Text>
+      <Text style={styles.typeDescription}>{description}</Text>
+    </TouchableOpacity>
+  );
+};
 
 interface OverlayPreviewProps {
   overlays: Overlay[];
   selectedId: string | null;
   onSelectOverlay: (id: string) => void;
+  responsive: any;
 }
 
 export const OverlayPreview: React.FC<OverlayPreviewProps> = ({
   overlays,
   selectedId,
   onSelectOverlay,
+  responsive,
 }) => {
+  const styles = createResponsiveStyles(responsive);
+  
   return (
     <View style={styles.previewContainer}>
       <Text style={styles.previewTitle}>Live Preview</Text>
@@ -106,7 +116,7 @@ export const OverlayPreview: React.FC<OverlayPreviewProps> = ({
                 <View style={styles.placeholderOverlay}>
                   <IconSymbol 
                     name={overlay.type === 'web' ? 'globe' : 'play.rectangle.fill'} 
-                    size={20} 
+                    size={responsive.layout.iconSize.medium} 
                     color={Colors.dark.text} 
                   />
                   <Text style={styles.placeholderText}>{overlay.name}</Text>
@@ -126,6 +136,7 @@ interface OverlayListItemProps {
   onPress: () => void;
   onToggle: () => void;
   onDelete: () => void;
+  responsive: any;
 }
 
 export const OverlayListItem: React.FC<OverlayListItemProps> = ({
@@ -134,7 +145,10 @@ export const OverlayListItem: React.FC<OverlayListItemProps> = ({
   onPress,
   onToggle,
   onDelete,
+  responsive,
 }) => {
+  const styles = createResponsiveStyles(responsive);
+  
   const getIconName = () => {
     switch (overlay.type) {
       case 'text': return 'text.alignleft';
@@ -149,7 +163,7 @@ export const OverlayListItem: React.FC<OverlayListItemProps> = ({
       style={[styles.listItem, selected && styles.listItemSelected]}
       onPress={onPress}
     >
-      <IconSymbol name={getIconName()} size={24} color={Colors.dark.tint} style={styles.listIcon} />
+      <IconSymbol name={getIconName()} size={responsive.layout.iconSize.medium} color={Colors.dark.tint} style={styles.listIcon} />
       <View style={styles.listContent}>
         <Text style={styles.listTitle}>{overlay.name}</Text>
         <Text style={styles.listSubtitle}>
@@ -163,7 +177,7 @@ export const OverlayListItem: React.FC<OverlayListItemProps> = ({
         <Text style={styles.toggleText}>{overlay.enabled ? 'ON' : 'OFF'}</Text>
       </TouchableOpacity>
       <TouchableOpacity style={styles.deleteButton} onPress={onDelete}>
-        <IconSymbol name="trash" size={20} color="#ff4444" />
+        <IconSymbol name="trash" size={responsive.layout.iconSize.small} color="#ff4444" />
       </TouchableOpacity>
     </TouchableOpacity>
   );
@@ -174,6 +188,7 @@ interface PositionControlProps {
   size: { width: number; height: number };
   onPositionChange: (position: { x: number; y: number }) => void;
   onSizeChange: (size: { width: number; height: number }) => void;
+  responsive: any;
 }
 
 export const PositionControl: React.FC<PositionControlProps> = ({
@@ -181,75 +196,80 @@ export const PositionControl: React.FC<PositionControlProps> = ({
   size,
   onPositionChange,
   onSizeChange,
-}) => (
-  <View style={styles.positionContainer}>
-    <Text style={styles.sectionTitle}>Position & Size</Text>
-    <View style={styles.positionRow}>
-      <View style={styles.positionInput}>
-        <Text style={styles.inputLabel}>X</Text>
-        <TextInput
-          style={styles.numberInput}
-          value={String(Math.round(position.x))}
-          onChangeText={(text) => {
-            const x = parseInt(text) || 0;
-            onPositionChange({ ...position, x: Math.min(100, Math.max(0, x)) });
-          }}
-          keyboardType="numeric"
-          placeholder="0"
-          placeholderTextColor={Colors.dark.tabIconDefault}
-        />
-        <Text style={styles.inputUnit}>%</Text>
+  responsive,
+}) => {
+  const styles = createResponsiveStyles(responsive);
+  
+  return (
+    <View style={styles.positionContainer}>
+      <Text style={styles.sectionTitle}>Position & Size</Text>
+      <View style={styles.positionRow}>
+        <View style={styles.positionInput}>
+          <Text style={styles.inputLabel}>X</Text>
+          <TextInput
+            style={styles.numberInput}
+            value={String(Math.round(position.x))}
+            onChangeText={(text) => {
+              const x = parseInt(text) || 0;
+              onPositionChange({ ...position, x: Math.min(100, Math.max(0, x)) });
+            }}
+            keyboardType="numeric"
+            placeholder="0"
+            placeholderTextColor={Colors.dark.tabIconDefault}
+          />
+          <Text style={styles.inputUnit}>%</Text>
+        </View>
+        <View style={styles.positionInput}>
+          <Text style={styles.inputLabel}>Y</Text>
+          <TextInput
+            style={styles.numberInput}
+            value={String(Math.round(position.y))}
+            onChangeText={(text) => {
+              const y = parseInt(text) || 0;
+              onPositionChange({ ...position, y: Math.min(100, Math.max(0, y)) });
+            }}
+            keyboardType="numeric"
+            placeholder="0"
+            placeholderTextColor={Colors.dark.tabIconDefault}
+          />
+          <Text style={styles.inputUnit}>%</Text>
+        </View>
       </View>
-      <View style={styles.positionInput}>
-        <Text style={styles.inputLabel}>Y</Text>
-        <TextInput
-          style={styles.numberInput}
-          value={String(Math.round(position.y))}
-          onChangeText={(text) => {
-            const y = parseInt(text) || 0;
-            onPositionChange({ ...position, y: Math.min(100, Math.max(0, y)) });
-          }}
-          keyboardType="numeric"
-          placeholder="0"
-          placeholderTextColor={Colors.dark.tabIconDefault}
-        />
-        <Text style={styles.inputUnit}>%</Text>
+      <View style={styles.positionRow}>
+        <View style={styles.positionInput}>
+          <Text style={styles.inputLabel}>Width</Text>
+          <TextInput
+            style={styles.numberInput}
+            value={String(size.width)}
+            onChangeText={(text) => {
+              const width = parseInt(text) || 100;
+              onSizeChange({ ...size, width });
+            }}
+            keyboardType="numeric"
+            placeholder="100"
+            placeholderTextColor={Colors.dark.tabIconDefault}
+          />
+          <Text style={styles.inputUnit}>px</Text>
+        </View>
+        <View style={styles.positionInput}>
+          <Text style={styles.inputLabel}>Height</Text>
+          <TextInput
+            style={styles.numberInput}
+            value={String(size.height)}
+            onChangeText={(text) => {
+              const height = parseInt(text) || 100;
+              onSizeChange({ ...size, height });
+            }}
+            keyboardType="numeric"
+            placeholder="100"
+            placeholderTextColor={Colors.dark.tabIconDefault}
+          />
+          <Text style={styles.inputUnit}>px</Text>
+        </View>
       </View>
     </View>
-    <View style={styles.positionRow}>
-      <View style={styles.positionInput}>
-        <Text style={styles.inputLabel}>Width</Text>
-        <TextInput
-          style={styles.numberInput}
-          value={String(size.width)}
-          onChangeText={(text) => {
-            const width = parseInt(text) || 100;
-            onSizeChange({ ...size, width });
-          }}
-          keyboardType="numeric"
-          placeholder="100"
-          placeholderTextColor={Colors.dark.tabIconDefault}
-        />
-        <Text style={styles.inputUnit}>px</Text>
-      </View>
-      <View style={styles.positionInput}>
-        <Text style={styles.inputLabel}>Height</Text>
-        <TextInput
-          style={styles.numberInput}
-          value={String(size.height)}
-          onChangeText={(text) => {
-            const height = parseInt(text) || 100;
-            onSizeChange({ ...size, height });
-          }}
-          keyboardType="numeric"
-          placeholder="100"
-          placeholderTextColor={Colors.dark.tabIconDefault}
-        />
-        <Text style={styles.inputUnit}>px</Text>
-      </View>
-    </View>
-  </View>
-);
+  );
+};
 
 interface TextStyleEditorProps {
   style: {
@@ -262,6 +282,7 @@ interface TextStyleEditorProps {
   content: string;
   onStyleChange: (style: any) => void;
   onContentChange: (content: string) => void;
+  responsive: any;
 }
 
 export const TextStyleEditor: React.FC<TextStyleEditorProps> = ({
@@ -269,78 +290,85 @@ export const TextStyleEditor: React.FC<TextStyleEditorProps> = ({
   content,
   onStyleChange,
   onContentChange,
-}) => (
-  <View style={styles.editorSection}>
-    <Text style={styles.sectionTitle}>Text Content</Text>
-    <TextInput
-      style={styles.textContentInput}
-      value={content}
-      onChangeText={onContentChange}
-      placeholder="Enter overlay text..."
-      placeholderTextColor={Colors.dark.tabIconDefault}
-      multiline
-    />
-    
-    <ColorPicker
-      label="Text Color"
-      value={style.color}
-      onValueChange={(color) => onStyleChange({ ...style, color })}
-    />
-    
-    <View style={styles.fontSizeContainer}>
-      <Text style={styles.inputLabel}>Font Size</Text>
+  responsive,
+}) => {
+  const styles = createResponsiveStyles(responsive);
+  
+  return (
+    <View style={styles.editorSection}>
+      <Text style={styles.sectionTitle}>Text Content</Text>
       <TextInput
-        style={styles.numberInput}
-        value={String(style.fontSize)}
-        onChangeText={(text) => {
-          const fontSize = parseInt(text) || 16;
-          onStyleChange({ ...style, fontSize });
-        }}
-        keyboardType="numeric"
-        placeholder="16"
+        style={styles.textContentInput}
+        value={content}
+        onChangeText={onContentChange}
+        placeholder="Enter overlay text..."
         placeholderTextColor={Colors.dark.tabIconDefault}
+        multiline
       />
-      <Text style={styles.inputUnit}>px</Text>
+      
+      <ColorPicker
+        label="Text Color"
+        value={style.color}
+        onValueChange={(color) => onStyleChange({ ...style, color })}
+      />
+      
+      <View style={styles.fontSizeContainer}>
+        <Text style={styles.inputLabel}>Font Size</Text>
+        <TextInput
+          style={styles.numberInput}
+          value={String(style.fontSize)}
+          onChangeText={(text) => {
+            const fontSize = parseInt(text) || 16;
+            onStyleChange({ ...style, fontSize });
+          }}
+          keyboardType="numeric"
+          placeholder="16"
+          placeholderTextColor={Colors.dark.tabIconDefault}
+        />
+        <Text style={styles.inputUnit}>px</Text>
+      </View>
     </View>
-  </View>
-);
+  );
+};
 
-const styles = StyleSheet.create({
+const createResponsiveStyles = (responsive: any) => StyleSheet.create({
   typeCard: {
     backgroundColor: Colors.dark.surface,
-    padding: 16,
+    padding: responsive.layout.cardPadding,
     borderRadius: 12,
     alignItems: 'center',
-    width: '48%',
-    marginBottom: 16,
+    width: responsive.isTablet ? '22%' : '48%',
+    marginBottom: responsive.spacing.md,
     borderWidth: 2,
     borderColor: 'transparent',
+    minHeight: responsive.isTablet ? 140 : 120,
   },
   typeCardSelected: {
     borderColor: Colors.dark.tint,
   },
   typeIcon: {
-    marginBottom: 8,
+    marginBottom: responsive.spacing.sm,
   },
   typeTitle: {
     color: Colors.dark.text,
-    fontSize: 16,
+    fontSize: responsive.typography.body,
     fontWeight: '600',
-    marginBottom: 4,
+    marginBottom: responsive.spacing.xs,
+    textAlign: 'center',
   },
   typeDescription: {
     color: Colors.dark.tabIconDefault,
-    fontSize: 12,
+    fontSize: responsive.typography.caption,
     textAlign: 'center',
   },
   previewContainer: {
-    marginBottom: 24,
+    marginBottom: responsive.spacing.xl,
   },
   previewTitle: {
     color: Colors.dark.text,
-    fontSize: 18,
+    fontSize: responsive.typography.heading,
     fontWeight: '600',
-    marginBottom: 12,
+    marginBottom: responsive.spacing.sm,
   },
   previewScreen: {
     backgroundColor: Colors.dark.surface,
@@ -348,6 +376,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     aspectRatio: 16 / 9,
     position: 'relative',
+    minHeight: responsive.isTablet ? 300 : 200,
   },
   previewBackground: {
     width: '100%',
@@ -371,110 +400,342 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 4,
-    gap: 4,
+    gap: responsive.spacing.xs,
   },
   placeholderText: {
     color: Colors.dark.text,
-    fontSize: 12,
+    fontSize: responsive.typography.caption,
   },
   listItem: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: Colors.dark.surface,
-    padding: 16,
+    padding: responsive.layout.cardPadding,
     borderRadius: 12,
-    marginBottom: 12,
+    marginBottom: responsive.spacing.sm,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
+    minHeight: responsive.layout.buttonHeight + 20,
   },
   listItemSelected: {
     borderColor: Colors.dark.tint,
   },
   listIcon: {
-    marginRight: 12,
+    marginRight: responsive.spacing.sm,
   },
   listContent: {
     flex: 1,
   },
   listTitle: {
     color: Colors.dark.text,
-    fontSize: 16,
+    fontSize: responsive.typography.body,
     fontWeight: '600',
     marginBottom: 2,
   },
   listSubtitle: {
     color: Colors.dark.tabIconDefault,
-    fontSize: 12,
+    fontSize: responsive.typography.caption,
   },
   toggleButton: {
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: responsive.spacing.sm,
+    paddingVertical: responsive.spacing.xs,
     borderRadius: 16,
-    marginRight: 8,
+    marginRight: responsive.spacing.xs,
   },
   toggleButtonActive: {
     backgroundColor: Colors.dark.tint,
   },
   toggleText: {
     color: Colors.dark.text,
-    fontSize: 12,
+    fontSize: responsive.typography.caption,
     fontWeight: '600',
   },
   deleteButton: {
-    padding: 8,
+    padding: responsive.spacing.xs,
   },
   positionContainer: {
-    marginBottom: 24,
+    marginBottom: responsive.spacing.xl,
   },
   sectionTitle: {
     color: Colors.dark.text,
-    fontSize: 18,
+    fontSize: responsive.typography.heading,
     fontWeight: '600',
-    marginBottom: 16,
+    marginBottom: responsive.spacing.md,
   },
   positionRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 16,
+    marginBottom: responsive.spacing.md,
   },
   positionInput: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: Colors.dark.surface,
     borderRadius: 8,
-    paddingHorizontal: 12,
+    paddingHorizontal: responsive.spacing.sm,
     width: '48%',
   },
   inputLabel: {
     color: Colors.dark.tabIconDefault,
-    fontSize: 14,
-    marginRight: 8,
+    fontSize: responsive.typography.caption,
+    marginRight: responsive.spacing.xs,
   },
   numberInput: {
     color: Colors.dark.text,
-    fontSize: 16,
+    fontSize: responsive.typography.body,
     flex: 1,
-    paddingVertical: 12,
+    paddingVertical: responsive.spacing.sm,
     textAlign: 'center',
   },
   inputUnit: {
     color: Colors.dark.tabIconDefault,
-    fontSize: 14,
-    marginLeft: 4,
+    fontSize: responsive.typography.caption,
+    marginLeft: responsive.spacing.xs,
   },
   editorSection: {
-    marginBottom: 24,
+    marginBottom: responsive.spacing.xl,
   },
   textContentInput: {
     backgroundColor: Colors.dark.surface,
     color: Colors.dark.text,
-    padding: 16,
+    padding: responsive.spacing.md,
     borderRadius: 12,
-    fontSize: 16,
-    minHeight: 100,
+    fontSize: responsive.typography.body,
+    minHeight: responsive.isTablet ? 120 : 100,
     textAlignVertical: 'top',
-    marginBottom: 16,
+    marginBottom: responsive.spacing.md,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+    padding?: number;
+  };
+  content: string;
+  onStyleChange: (style: any) => void;
+  onContentChange: (content: string) => void;
+  responsive: any;
+}
+
+export const TextStyleEditor: React.FC<TextStyleEditorProps> = ({
+  style,
+  content,
+  onStyleChange,
+  onContentChange,
+  responsive,
+}) => {
+  const styles = createResponsiveStyles(responsive);
+  
+  return (
+    <View style={styles.editorSection}>
+      <Text style={styles.sectionTitle}>Text Content</Text>
+      <TextInput
+        style={styles.textContentInput}
+        value={content}
+        onChangeText={onContentChange}
+        placeholder="Enter overlay text..."
+        placeholderTextColor={Colors.dark.tabIconDefault}
+        multiline
+      />
+      
+      <ColorPicker
+        label="Text Color"
+        value={style.color}
+        onValueChange={(color) => onStyleChange({ ...style, color })}
+      />
+      
+      <View style={styles.fontSizeContainer}>
+        <Text style={styles.inputLabel}>Font Size</Text>
+        <TextInput
+          style={styles.numberInput}
+          value={String(style.fontSize)}
+          onChangeText={(text) => {
+            const fontSize = parseInt(text) || 16;
+            onStyleChange({ ...style, fontSize });
+          }}
+          keyboardType="numeric"
+          placeholder="16"
+          placeholderTextColor={Colors.dark.tabIconDefault}
+        />
+        <Text style={styles.inputUnit}>px</Text>
+      </View>
+    </View>
+  );
+};
+
+const createResponsiveStyles = (responsive: any) => StyleSheet.create({
+  typeCard: {
+    backgroundColor: Colors.dark.surface,
+    padding: responsive.layout.cardPadding,
+    borderRadius: 12,
+    alignItems: 'center',
+    width: responsive.isTablet ? '22%' : '48%',
+    marginBottom: responsive.spacing.md,
+    borderWidth: 2,
+    borderColor: 'transparent',
+    minHeight: responsive.isTablet ? 140 : 120,
+  },
+  typeCardSelected: {
+    borderColor: Colors.dark.tint,
+  },
+  typeIcon: {
+    marginBottom: responsive.spacing.sm,
+  },
+  typeTitle: {
+    color: Colors.dark.text,
+    fontSize: responsive.typography.body,
+    fontWeight: '600',
+    marginBottom: responsive.spacing.xs,
+    textAlign: 'center',
+  },
+  typeDescription: {
+    color: Colors.dark.tabIconDefault,
+    fontSize: responsive.typography.caption,
+    textAlign: 'center',
+  },
+  previewContainer: {
+    marginBottom: responsive.spacing.xl,
+  },
+  previewTitle: {
+    color: Colors.dark.text,
+    fontSize: responsive.typography.heading,
+    fontWeight: '600',
+    marginBottom: responsive.spacing.sm,
+  },
+  previewScreen: {
+    backgroundColor: Colors.dark.surface,
+    borderRadius: 12,
+    overflow: 'hidden',
+    aspectRatio: 16 / 9,
+    position: 'relative',
+    minHeight: responsive.isTablet ? 300 : 200,
+  },
+  previewBackground: {
+    width: '100%',
+    height: '100%',
+  },
+  overlayItem: {
+    borderWidth: 2,
+    borderColor: 'transparent',
+    minWidth: 50,
+    minHeight: 30,
+  },
+  overlayItemSelected: {
+    borderColor: Colors.dark.tint,
+    borderStyle: 'dashed',
+  },
+  placeholderOverlay: {
+    backgroundColor: 'rgba(0, 255, 136, 0.2)',
+    width: '100%',
+    height: '100%',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 4,
+    gap: responsive.spacing.xs,
+  },
+  placeholderText: {
+    color: Colors.dark.text,
+    fontSize: responsive.typography.caption,
+  },
+  listItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.dark.surface,
+    padding: responsive.layout.cardPadding,
+    borderRadius: 12,
+    marginBottom: responsive.spacing.sm,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    minHeight: responsive.layout.buttonHeight + 20,
+  },
+  listItemSelected: {
+    borderColor: Colors.dark.tint,
+  },
+  listIcon: {
+    marginRight: responsive.spacing.sm,
+  },
+  listContent: {
+    flex: 1,
+  },
+  listTitle: {
+    color: Colors.dark.text,
+    fontSize: responsive.typography.body,
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  listSubtitle: {
+    color: Colors.dark.tabIconDefault,
+    fontSize: responsive.typography.caption,
+  },
+  toggleButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    paddingHorizontal: responsive.spacing.sm,
+    paddingVertical: responsive.spacing.xs,
+    borderRadius: 16,
+    marginRight: responsive.spacing.xs,
+  },
+  toggleButtonActive: {
+    backgroundColor: Colors.dark.tint,
+  },
+  toggleText: {
+    color: Colors.dark.text,
+    fontSize: responsive.typography.caption,
+    fontWeight: '600',
+  },
+  deleteButton: {
+    padding: responsive.spacing.xs,
+  },
+  positionContainer: {
+    marginBottom: responsive.spacing.xl,
+  },
+  sectionTitle: {
+    color: Colors.dark.text,
+    fontSize: responsive.typography.heading,
+    fontWeight: '600',
+    marginBottom: responsive.spacing.md,
+  },
+  positionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: responsive.spacing.md,
+  },
+  positionInput: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.dark.surface,
+    borderRadius: 8,
+    paddingHorizontal: responsive.spacing.sm,
+    width: '48%',
+  },
+  inputLabel: {
+    color: Colors.dark.tabIconDefault,
+    fontSize: responsive.typography.caption,
+    marginRight: responsive.spacing.xs,
+  },
+  numberInput: {
+    color: Colors.dark.text,
+    fontSize: responsive.typography.body,
+    flex: 1,
+    paddingVertical: responsive.spacing.sm,
+    textAlign: 'center',
+  },
+  inputUnit: {
+    color: Colors.dark.tabIconDefault,
+    fontSize: responsive.typography.caption,
+    marginLeft: responsive.spacing.xs,
+  },
+  editorSection: {
+    marginBottom: responsive.spacing.xl,
+  },
+  textContentInput: {
+    backgroundColor: Colors.dark.surface,
+    color: Colors.dark.text,
+    padding: responsive.spacing.md,
+    borderRadius: 12,
+    fontSize: responsive.typography.body,
+    minHeight: responsive.isTablet ? 120 : 100,
+    textAlignVertical: 'top',
+    marginBottom: responsive.spacing.md,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
   },
@@ -483,7 +744,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: Colors.dark.surface,
     borderRadius: 8,
-    paddingHorizontal: 12,
-    marginTop: 16,
+    paddingHorizontal: responsive.spacing.sm,
+    marginTop: responsive.spacing.md,
   },
 });

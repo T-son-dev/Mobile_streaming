@@ -1,7 +1,7 @@
-import React from 'react';
-import { View, StyleSheet } from 'react-native';
-import { useRouter } from 'expo-router';
 import StreamingInterface from '@/components/StreamingInterface';
+import { useRouter } from 'expo-router';
+import React from 'react';
+import { StyleSheet, View } from 'react-native';
 
 const LiveStreamScreen: React.FC = () => {
   const router = useRouter();

@@ -384,4 +384,31 @@ const createResponsiveStyles = (responsive: any) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  settingValueAccent:
+  settingValueAccent: {
+    fontSize: responsive.typography.caption,
+    color: Colors.accent,
+    marginRight: responsive.spacing.xs,
+  },
+  switch: {
+    transform: [
+      { scaleX: responsive.isSmallPhone ? 0.8 : 0.9 }, 
+      { scaleY: responsive.isSmallPhone ? 0.8 : 0.9 }
+    ],
+  },
+  versionContainer: {
+    alignItems: 'center',
+    paddingVertical: responsive.spacing.xxl,
+    paddingHorizontal: responsive.layout.containerPadding,
+  },
+  versionText: {
+    fontSize: responsive.typography.caption,
+    color: Colors.textSecondary,
+    marginBottom: responsive.spacing.xs,
+  },
+  versionSubtext: {
+    fontSize: responsive.typography.tiny,
+    color: Colors.textSecondary,
+  },
+});
+
+export default SettingsScreen;

@@ -1,262 +1,199 @@
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  StatusBar,
-  Dimensions,
-  ImageBackground,
-  Alert,
-} from 'react-native';
-import { useRouter } from 'expo-router';
-import { IconSymbol } from '@/components/ui/IconSymbol';
-import SourceCard from './SourceCard';
-import VideoPreview from './VideoPreview';
-import StreamButton from './StreamButton';
-import QuickAccessMenu from './QuickAccessMenu';
-import ProModeMenu from './ProModeMenu';
-import ShortcutButton from './ShortcutButton';
-import MonitoringIndicator from './MonitoringIndicator';
-import CameraControls from './CameraControls';
-
-const { width, height } = Dimensions.get('window');
-
+streamButtonContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  // Dual Camera Styles
+  cameraContainer: {
+    flex: 1,
+    position: 'relative',
+    backgroundColor: '#000',
+    borderRadius: 8,
+    overflow: 'hidden',
+  },
+  streamStatusOverlay: {
+    position: 'absolute',
+    top: 16,
+    left: 16,
+    right: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    zIndex: 100,
+  },
+  liveIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.danger,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    gap: 8,
+  },
+  liveDot: {
+    width: 8,
+    height: 8,
+    backgroundColor: Colors.text,
+    borderRadius: 4,
+  },
+  liveText: {
+    color: Colors.text,
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  streamDuration: {
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    color: Colors.text,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 15,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  errorOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(255, 68, 68, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 200,
+  },
+  errorText: {
+    color: Colors.text,
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginBottom: 16,
+    paddingHorizontal: 20,
+  },
+  errorDismiss: {
+    backgroundColor: Colors.text,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  errorDismissText: {
+    color: Colors.danger,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  initializingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 150,
+  },
+  initializingText: {
+    color: Colors.primary,
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginTop: 8,
+  },
+  additionalStats: {
+    marginTop: 8,
+    gap: 4,
+  },
 const Colors = {
-  background: '#0f172a', // slate-900
-  surface: '#1e293b', // slate-800
-  border: '#334155', // slate-700
-  primary: '#22c55e', // green-500
-  primaryHover: '#16a34a', // green-600
+  background: '#0f172a',
+  surface: '#1e293b',
+  border: '#334155',
+  primary: '#22c55e',
+  primaryHover: '#16a34a',
   text: '#ffffff',
-  textSecondary: '#94a3b8', // slate-400
-  danger: '#ef4444', // red-500
-  warning: '#f59e0b', // amber-500
+  textSecondary: '#94a3b8',
+  danger: '#ef4444',
+  warning: '#f59e0b',
 };
 
 interface StreamingInterfaceProps {
   // Props can be added here if needed
 }
 
-const StreamingInterface: React.FC<StreamingInterfaceProps> = () => {
-  const router = useRouter();
-  
-  const [isStreaming, setIsStreaming] = useState(false);
-  const [activeSource, setActiveSource] = useState(0);
-  const [isQuickAccessOpen, setIsQuickAccessOpen] = useState(false);
-  const [isProModeOpen, setIsProModeOpen] = useState(false);
-  const [isCameraControlsOpen, setIsCameraControlsOpen] = useState(false);
-  const [stats, setStats] = useState({
-    bitrate: '6000kbps',
-    fps: '30fps',
-    audioLevel: 75
-  });
+interface CameraSettings {
+  resolution: '480p' | '720p' | '1080p' | '4K';
+  fps: 24 | 30 | 60;
+  zoom: number;
+  focus: 'auto' | 'manual';
+  flashMode: 'off' | 'on' | 'auto' | 'torch';
+  layout: CameraLayout;
+  primaryCamera: 'front' | 'back';
+  secondaryCamera: 'front' | 'back';
+}
 
-  // Realistic audio level animation
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setStats(prev => ({
-        ...prev,
-        audioLevel: Math.floor(Math.random() * 40) + 50 // Random between 50-90%
-      }));
-    }, 2000);
-    
-    return () => clearInterval(interval);
-  }, []);
-
-  const sources = [
-    { id: 0, name: 'CAMERA CELULAR', isActive: true },
-    { id: 1, name: 'CAMERA USB', isActive: true },
-    { id: 2, name: 'NAVEGADOR WEB - SINGULAR', isActive: true },
-    { id: 3, name: 'XXXX', isActive: true }
-  ];
-
-  const handleSourceSelect = (sourceId: number) => {
-    setActiveSource(sourceId);
-  };
-
-  const handleStreamToggle = () => {
-    setIsStreaming(!isStreaming);
-  };
-
-  const handleQuickAccessToggle = () => {
-    setIsQuickAccessOpen(!isQuickAccessOpen);
-    setIsProModeOpen(false);
-  };
-
-  const handleProModeOpen = () => {
-    setIsQuickAccessOpen(false);
-    setIsProModeOpen(true);
-  };
-
-  const handleProModeClose = () => {
-    setIsProModeOpen(false);
-  };
-
-  const handleCameraControlsToggle = () => {
-    setIsCameraControlsOpen(!isCameraControlsOpen);
-    setIsQuickAccessOpen(false);
-    setIsProModeOpen(false);
-  };
-
-  return (
-    <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
-      
-      {/* Header Section */}
-      <View style={styles.header}>
-        <View style={styles.headerContent}>
-          {/* Left Section - 50% width */}
-          <View style={styles.headerLeft}>
-            <ShortcutButton
-              iconName="person.circle"
-              label="User"
-              isActive={isStreaming}
-            />
-          </View>
-          
-          {/* Right Section - 50% width */}
-          <View style={styles.headerRight}>
-            <ShortcutButton
-              iconName="gobackward"
-              label="Replay"
-              isActive={isStreaming}
-            />
-            <ShortcutButton
-              iconName="waveform"
-              label="Fx"
-              isActive={isStreaming}
-            />
-            <ShortcutButton
-              iconName="mic.fill"
-              label="Standard"
-              isActive={isStreaming}
-            />
-            <ShortcutButton
-              iconName="video.fill"
-              label="Standard"
-              isActive={isStreaming}
-              onPress={handleCameraControlsToggle} // Add this line
-            />
-            <TouchableOpacity
-              onPress={handleQuickAccessToggle}
-              style={styles.menuButton}
-            >
-              <View style={[styles.menuButtonCircle, isQuickAccessOpen && styles.menuButtonActive]}>
-                <IconSymbol name="line.horizontal.3" size={24} color={Colors.background} />
-              </View>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </View>
-
-      {/* Main Content Area */}
-      <View style={styles.mainContent}>
-        {/* Left Sidebar - Source Panel */}
-        <View style={styles.sourceSidebar}>
-          <View style={styles.sourceList}>
-            {sources.map((source) => (
-              <SourceCard
-                key={source.id}
-                name={source.name}
-                isOnAir={source.id === activeSource && isStreaming}
-                isSelected={source.id === activeSource}
-                onPress={() => handleSourceSelect(source.id)}
-              />
-            ))}
-          </View>
-        </View>
-
-        {/* Central Video Preview */}
-        <View style={styles.videoPreviewContainer}>
-          <VideoPreview 
-            isStreaming={isStreaming}
-            activeSource={sources[activeSource].name}
-          />
-        </View>
-      </View>
-
-      {/* Bottom Section */}
-      <View style={styles.bottomSection}>
-        {/* Audio Monitoring Widget - Left Side */}
-        <View style={styles.monitoringContainer}>
-          <MonitoringIndicator
-            audioLevel={stats.audioLevel}
-            bitrate={stats.bitrate}
-            fps={stats.fps}
-          />
-        </View>
-
-        {/* Centered Stream Control Button */}
-        <View style={styles.streamButtonContainer}>
-          <StreamButton
-            isStreaming={isStreaming}
-            onToggle={handleStreamToggle}
-          />
-        </View>
-      </View>
-
-      {/* Overlay Components */}
-      <QuickAccessMenu
-        isOpen={isQuickAccessOpen}
-        onClose={() => setIsQuickAccessOpen(false)}
-        onProModeClick={handleProModeOpen}
-      />
-
-      <CameraControls
-        isOpen={isCameraControlsOpen}
-        onClose={() => setIsCameraControlsOpen(false)}
-      />
-      
-      <ProModeMenu
-        isOpen={isProModeOpen}
-        onClose={handleProModeClose}
-      />
-    </View>
-  );
-};
-
-const styles = StyleSheet.create({
+const createResponsiveStyles = (responsive: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
   },
   header: {
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 16,
+    paddingHorizontal: responsive.layout.containerPadding,
+    paddingTop: responsive.spacing.md,
+    paddingBottom: responsive.spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: Colors.border,
+    minHeight: responsive.layout.headerHeight,
   },
   headerContent: {
     flexDirection: 'row',
+    flex: 1,
+    alignItems: 'center',
   },
   headerLeft: {
     flex: 1,
     justifyContent: 'flex-start',
   },
   headerRight: {
-    flex: 1,
+    flex: responsive.isTablet ? 2 : 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    gap: 8,
+    gap: responsive.isSmallPhone ? 4 : 8,
+  },
+  shortcutButton: {
+    alignItems: 'center',
+    padding: responsive.spacing.xs,
+    minWidth: responsive.isTablet ? 80 : responsive.isSmallPhone ? 50 : 60,
+  },
+  shortcutIconContainer: {
+    width: responsive.layout.iconSize.large,
+    height: responsive.layout.iconSize.large,
+    borderRadius: responsive.layout.iconSize.large / 2,
+    backgroundColor: Colors.surface,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: responsive.spacing.xs,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  shortcutLabel: {
+    fontSize: responsive.typography.tiny,
+    color: Colors.text,
+    textAlign: 'center',
+    fontWeight: '500',
   },
   menuButton: {
-    padding: 8,
+    padding: responsive.spacing.xs,
   },
   menuButtonCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: responsive.layout.iconSize.large,
+    height: responsive.layout.iconSize.large,
+    borderRadius: responsive.layout.iconSize.large / 2,
     backgroundColor: Colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
@@ -266,40 +203,181 @@ const styles = StyleSheet.create({
   },
   mainContent: {
     flex: 1,
-    flexDirection: 'row',
+    flexDirection: responsive.isLandscape && !responsive.isTablet ? 'row' : 'column',
   },
   sourceSidebar: {
-    width: 192, // 48 * 4 = 192 (w-48 in Tailwind)
-    padding: 16,
-    borderRightWidth: 1,
-    borderRightColor: Colors.border,
+    width: responsive.isLandscape && !responsive.isTablet ? 
+      responsive.screenWidth * 0.25 : 
+      responsive.isTablet ? 220 : '100%',
+    padding: responsive.layout.containerPadding,
+    borderRightWidth: responsive.isLandscape && !responsive.isTablet ? 1 : 0,
+    borderBottomWidth: responsive.isLandscape && !responsive.isTablet ? 0 : 1,
+    borderColor: Colors.border,
+    maxHeight: responsive.isLandscape && !responsive.isTablet ? '100%' : 200,
   },
   sourceList: {
-    gap: 12,
+    gap: responsive.spacing.sm,
+    flexDirection: responsive.isLandscape && !responsive.isTablet ? 'column' : 'row',
+    flexWrap: 'wrap',
   },
   videoPreviewContainer: {
     flex: 1,
-    padding: 16,
+    padding: responsive.layout.containerPadding,
   },
   bottomSection: {
     borderTopWidth: 1,
     borderTopColor: Colors.border,
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    flexDirection: 'row',
+    paddingHorizontal: responsive.layout.containerPadding,
+    paddingVertical: responsive.spacing.md,
+    flexDirection: responsive.isTablet ? 'row' : 'column',
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
+    minHeight: responsive.layout.bottomSectionHeight,
   },
   monitoringContainer: {
-    position: 'absolute',
-    left: 20,
-    bottom: 20,
+    position: responsive.isTablet ? 'absolute' : 'relative',
+    left: responsive.isTablet ? 20 : 0,
+    bottom: responsive.isTablet ? 20 : 0,
+    marginBottom: responsive.isTablet ? 0 : responsive.spacing.md,
   },
   streamButtonContainer: {
     alignItems: 'center',
     justifyContent: 'center',
   },
+  additionalStats: {
+    marginTop: responsive.spacing.xs,
+    gap: responsive.spacing.xs / 2,
+  },
+  statText: {
+    fontSize: responsive.typography.tiny,
+    color: Colors.text,
+    fontWeight: '500',
+  },
+  initializingText: {
+    color: Colors.primary,
+    fontSize: responsive.typography.body,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginTop: responsive.spacing.xs,
+  },
+  // Camera specific styles
+  cameraContainer: {
+    flex: 1,
+    position: 'relative',
+    backgroundColor: '#000',
+    borderRadius: 8,
+    overflow: 'hidden',
+    minHeight: responsive.isTablet ? 400 : 250,
+  },
+  streamStatusOverlay: {
+    position: 'absolute',
+    top: responsive.spacing.md,
+    left: responsive.spacing.md,
+    right: responsive.spacing.md,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    zIndex: 100,
+  },
+  liveIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.danger,
+    paddingHorizontal: responsive.spacing.sm,
+    paddingVertical: responsive.spacing.xs,
+    borderRadius: 20,
+    gap: responsive.spacing.xs,
+  },
+  liveDot: {
+    width: 8,
+    height: 8,
+    backgroundColor: Colors.text,
+    borderRadius: 4,
+  },
+  liveText: {
+    color: Colors.text,
+    fontSize: responsive.typography.caption,
+    fontWeight: 'bold',
+  },
+  streamDuration: {
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    color: Colors.text,
+    paddingHorizontal: responsive.spacing.sm,
+    paddingVertical: responsive.spacing.xs,
+    borderRadius: 15,
+    fontSize: responsive.typography.caption,
+    fontWeight: '600',
+  },
+  errorOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(255, 68, 68, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 200,
+  },
+  errorText: {
+    color: Colors.text,
+    fontSize: responsive.typography.body,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginBottom: responsive.spacing.md,
+    paddingHorizontal: responsive.spacing.lg,
+  },
+  errorDismiss: {
+    backgroundColor: Colors.text,
+    paddingHorizontal: responsive.spacing.lg,
+    paddingVertical: responsive.spacing.sm,
+    borderRadius: 8,
+  },
+  errorDismissText: {
+    color: Colors.danger,
+    fontSize: responsive.typography.caption,
+    fontWeight: '600',
+  },
+  initializingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 150,
+  },
 });
 
-export default StreamingInterface;
+export default StreamingInterface;import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  StatusBar,
+  Alert,
+} from 'react-native';
+import { useRouter } from 'expo-router';
+import { IconSymbol } from '@/components/ui/IconSymbol';
+import { useResponsive } from '@/hooks/useResponsive';
+import {
+  UserIcon,
+  ReplayIcon,
+  FxIcon,
+  AudioIcon,
+  VideoIcon,
+} from '@/components/icons';
+import SourceCard from './SourceCard';
+import VideoPreview from './VideoPreview';
+import StreamButton from './StreamButton';
+import QuickAccessMenu from './QuickAccessMenu';
+import ProModeMenu from './ProModeMenu';
+import ShortcutButton from './ShortcutButton';
+import MonitoringIndicator from './MonitoringIndicator';
+import DualCameraManager, { DualCameraConfig, CameraLayout } from './DualCameraManager';
+import EnhancedCameraControls from './EnhancedCameraControls';
+import rtmpStreamingService, { RTMPConfig } from '../services/RTMPStreamingService';

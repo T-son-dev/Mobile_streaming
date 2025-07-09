@@ -20,14 +20,18 @@ import {
 import { Overlay, OverlayType, TextOverlay } from '@/types/overlay';
 import { Colors } from '@/constants/Colors';
 import { IconSymbol } from '@/components/ui/IconSymbol';
+import { useResponsive } from '@/hooks/useResponsive';
+import { CropIcon } from '@/components/icons';
 
 const OverlayScreen: React.FC = () => {
+  const responsive = useResponsive();
   const [overlays, setOverlays] = useState<Overlay[]>([]);
   const [selectedOverlayId, setSelectedOverlayId] = useState<string | null>(null);
   const [showTypeSelector, setShowTypeSelector] = useState(false);
   const [editingOverlay, setEditingOverlay] = useState<Overlay | null>(null);
 
   const selectedOverlay = overlays.find(o => o.id === selectedOverlayId);
+  const styles = createResponsiveStyles(responsive);
 
   const createOverlay = (type: OverlayType) => {
     const newOverlay: Overlay = {
@@ -42,10 +46,10 @@ const OverlayScreen: React.FC = () => {
         content: 'Sample Text',
         style: {
           color: '#FFFFFF',
-          fontSize: 24,
+          fontSize: responsive.typography.body,
           fontFamily: 'System',
           backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          padding: 8,
+          padding: responsive.spacing.xs,
         },
       }),
       ...(type === 'image' && {
@@ -106,7 +110,13 @@ const OverlayScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.content}>
-        <Text style={styles.title}>Overlay Manager</Text>
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={styles.headerIconContainer}>
+            <CropIcon />
+          </View>
+          <Text style={styles.title}>Overlay Manager</Text>
+        </View>
 
         <OverlayPreview
           overlays={overlays}
@@ -115,6 +125,7 @@ const OverlayScreen: React.FC = () => {
             setSelectedOverlayId(id);
             setEditingOverlay(overlays.find(o => o.id === id) || null);
           }}
+          responsive={responsive}
         />
 
         <View style={styles.section}>
@@ -124,7 +135,8 @@ const OverlayScreen: React.FC = () => {
               style={styles.addButton}
               onPress={() => setShowTypeSelector(true)}
             >
-              <Text style={styles.addButtonText}>+ Add Overlay</Text>
+              <IconSymbol name="plus" size={responsive.layout.iconSize.small} color={Colors.dark.background} />
+              <Text style={styles.addButtonText}>Add Overlay</Text>
             </TouchableOpacity>
           </View>
 
@@ -147,6 +159,7 @@ const OverlayScreen: React.FC = () => {
                 }}
                 onToggle={() => toggleOverlay(overlay.id)}
                 onDelete={() => deleteOverlay(overlay.id)}
+                responsive={responsive}
               />
             ))
           )}
@@ -165,7 +178,7 @@ const OverlayScreen: React.FC = () => {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Choose Overlay Type</Text>
               <TouchableOpacity onPress={() => setShowTypeSelector(false)} style={styles.closeButtonContainer}>
-                <IconSymbol name="xmark" size={24} color={Colors.dark.tabIconDefault} />
+                <IconSymbol name="xmark" size={responsive.layout.iconSize.medium} color={Colors.dark.tabIconDefault} />
               </TouchableOpacity>
             </View>
             <View style={styles.typeGrid}>
@@ -175,6 +188,7 @@ const OverlayScreen: React.FC = () => {
                 title="Text"
                 description="Add custom text with styling"
                 onPress={() => createOverlay('text')}
+                responsive={responsive}
               />
               <OverlayTypeCard
                 type="image"
@@ -182,6 +196,7 @@ const OverlayScreen: React.FC = () => {
                 title="Image"
                 description="Display images from URL"
                 onPress={() => createOverlay('image')}
+                responsive={responsive}
               />
               <OverlayTypeCard
                 type="web"
@@ -189,6 +204,7 @@ const OverlayScreen: React.FC = () => {
                 title="Web"
                 description="Embed web content"
                 onPress={() => createOverlay('web')}
+                responsive={responsive}
               />
               <OverlayTypeCard
                 type="video"
@@ -196,6 +212,7 @@ const OverlayScreen: React.FC = () => {
                 title="Video"
                 description="Play video files"
                 onPress={() => createOverlay('video')}
+                responsive={responsive}
               />
             </View>
           </View>
@@ -216,7 +233,7 @@ const OverlayScreen: React.FC = () => {
                 Edit {editingOverlay?.type.charAt(0).toUpperCase()}{editingOverlay?.type.slice(1)} Overlay
               </Text>
               <TouchableOpacity onPress={() => setEditingOverlay(null)} style={styles.closeButtonContainer}>
-                <IconSymbol name="xmark" size={24} color={Colors.dark.tabIconDefault} />
+                <IconSymbol name="xmark" size={responsive.layout.iconSize.medium} color={Colors.dark.tabIconDefault} />
               </TouchableOpacity>
             </View>
             <ScrollView style={styles.editorContent}>
@@ -242,6 +259,7 @@ const OverlayScreen: React.FC = () => {
                     onSizeChange={(size) =>
                       updateOverlay(editingOverlay.id, { size })
                     }
+                    responsive={responsive}
                   />
 
                   {editingOverlay.type === 'text' && (
@@ -254,6 +272,7 @@ const OverlayScreen: React.FC = () => {
                       onContentChange={(content) =>
                         updateOverlay(editingOverlay.id, { content })
                       }
+                      responsive={responsive}
                     />
                   )}
 
@@ -301,59 +320,77 @@ const OverlayScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createResponsiveStyles = (responsive: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.dark.background,
   },
   content: {
     flex: 1,
-    padding: 20,
+    padding: responsive.layout.containerPadding,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: responsive.spacing.xl,
+  },
+  headerIconContainer: {
+    width: responsive.layout.iconSize.extraLarge,
+    height: responsive.layout.iconSize.extraLarge,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: responsive.spacing.md,
+    backgroundColor: Colors.dark.surface,
+    borderRadius: responsive.layout.iconSize.extraLarge / 2,
   },
   title: {
-    fontSize: 28,
+    fontSize: responsive.typography.display,
     fontWeight: 'bold',
     color: Colors.dark.text,
-    marginBottom: 24,
-    textAlign: 'center',
+    flex: 1,
   },
   section: {
-    marginTop: 24,
+    marginTop: responsive.spacing.xl,
   },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: responsive.spacing.md,
   },
   sectionTitle: {
-    fontSize: 20,
+    fontSize: responsive.typography.heading,
     fontWeight: '600',
     color: Colors.dark.text,
   },
   addButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: Colors.dark.tint,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingHorizontal: responsive.spacing.md,
+    paddingVertical: responsive.spacing.sm,
     borderRadius: 20,
+    gap: responsive.spacing.xs,
   },
   addButtonText: {
     color: Colors.dark.background,
-    fontSize: 14,
+    fontSize: responsive.typography.caption,
     fontWeight: '600',
   },
   emptyState: {
     alignItems: 'center',
-    padding: 40,
+    padding: responsive.spacing.xxl,
+    backgroundColor: Colors.dark.surface,
+    borderRadius: 12,
   },
   emptyStateText: {
     color: Colors.dark.text,
-    fontSize: 18,
-    marginBottom: 8,
+    fontSize: responsive.typography.subheading,
+    marginBottom: responsive.spacing.xs,
   },
   emptyStateSubtext: {
     color: Colors.dark.tabIconDefault,
-    fontSize: 14,
+    fontSize: responsive.typography.caption,
     textAlign: 'center',
   },
   modalOverlay: {
@@ -365,27 +402,28 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.dark.background,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    padding: 20,
+    padding: responsive.layout.containerPadding,
     maxHeight: '70%',
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: responsive.spacing.lg,
   },
   modalTitle: {
     color: Colors.dark.text,
-    fontSize: 20,
+    fontSize: responsive.typography.heading,
     fontWeight: 'bold',
   },
   closeButtonContainer: {
-    padding: 4,
+    padding: responsive.spacing.xs,
   },
   typeGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
+    gap: responsive.spacing.sm,
   },
   editorModal: {
     backgroundColor: Colors.dark.background,
@@ -395,24 +433,25 @@ const styles = StyleSheet.create({
     maxHeight: '90%',
   },
   editorContent: {
-    padding: 20,
+    padding: responsive.layout.containerPadding,
   },
   editorSection: {
-    marginBottom: 24,
+    marginBottom: responsive.spacing.xl,
   },
   inputLabel: {
     color: Colors.dark.text,
-    fontSize: 16,
-    marginBottom: 8,
+    fontSize: responsive.typography.body,
+    marginBottom: responsive.spacing.sm,
   },
   textInput: {
     backgroundColor: Colors.dark.surface,
     color: Colors.dark.text,
-    padding: 12,
+    padding: responsive.spacing.md,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
-    fontSize: 16,
+    fontSize: responsive.typography.body,
+    minHeight: responsive.layout.buttonHeight,
   },
 });
 
