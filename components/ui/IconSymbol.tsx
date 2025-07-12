@@ -54,6 +54,7 @@ const MAPPING = {
   'circle': 'radio-button-unchecked',
   'bolt': 'flash-on',
   'arrow.clockwise': 'refresh',
+  'chevron.left': 'chevron-left',
 } as const satisfies IconMapping;
 
 export interface IconSymbolProps {

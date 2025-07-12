@@ -110,8 +110,8 @@ const styles = StyleSheet.create({
   },
   container: {
     position: 'absolute',
-    top: 90, // Adjust based on your camera button position
-    right: 16, // Position it on the left side for camera controls
+    top: 90,
+    right: 128, // Position under camera button (fourth button from right)
     backgroundColor: Colors.surface,
     borderRadius: 12,
     padding: 16,
@@ -129,7 +129,7 @@ const styles = StyleSheet.create({
   triangle: {
     position: 'absolute',
     top: -8,
-    left: 30, // Position it above where the camera button would be
+    right: 24, // Center triangle above the camera button
     width: 0,
     height: 0,
     borderLeftWidth: 8,

@@ -1,28 +1,28 @@
-import React, {useState, useEffect, useRef} from 'react';
+import { useRouter } from 'expo-router';
+import React, { useEffect, useRef, useState } from 'react';
 import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  ScrollView,
-  TextInput,
-  Modal,
-  Dimensions,
-  StatusBar,
   Animated,
+  Dimensions,
   Easing,
+  Modal,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import {useRouter} from 'expo-router';
 // import * as Haptics from 'expo-haptics';
 import {
-  BrandColors,
-  BackgroundColors,
-  TextColors,
-  PlatformColors,
   AnimationConfig,
-  Spacing,
-  Typography,
+  BackgroundColors,
+  BrandColors,
+  PlatformColors,
   Shadows,
+  Spacing,
+  TextColors,
+  Typography,
 } from '@/constants/Colors';
 
 const {width} = Dimensions.get('window');

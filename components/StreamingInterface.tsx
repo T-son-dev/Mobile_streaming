@@ -6,18 +6,35 @@ import {
   StatusBar,
   StyleSheet,
   TouchableOpacity,
-  View
+  View,
+  Platform
 } from 'react-native';
 import CameraControls from './CameraControls';
+import EffectsModal from './EffectsModal';
+import MicrophoneModal from './MicrophoneModal';
 import MonitoringIndicator from './MonitoringIndicator';
 import ProModeMenu from './ProModeMenu';
 import QuickAccessMenu from './QuickAccessMenu';
+import ReplayModal from './ReplayModal';
 import ShortcutButton from './ShortcutButton';
 import SourceCard from './SourceCard';
 import StreamButton from './StreamButton';
 import VideoPreview from './VideoPreview';
 
 const { width, height } = Dimensions.get('window');
+
+// Responsive breakpoint definitions
+const breakpoints = {
+  mobile: 768,
+  tablet: 1024,
+  desktop: 1200
+};
+
+const getDeviceType = () => {
+  if (width < breakpoints.mobile) return 'mobile';
+  if (width < breakpoints.tablet) return 'tablet';
+  return 'desktop';
+};
 
 const Colors = {
   background: '#0f172a', // slate-900
@@ -37,17 +54,46 @@ interface StreamingInterfaceProps {
 
 const StreamingInterface: React.FC<StreamingInterfaceProps> = () => {
   const router = useRouter();
+  const [deviceType, setDeviceType] = useState(getDeviceType());
+  const [isPortrait, setIsPortrait] = useState(height > width);
   
   const [isStreaming, setIsStreaming] = useState(false);
   const [activeSource, setActiveSource] = useState(0);
   const [isQuickAccessOpen, setIsQuickAccessOpen] = useState(false);
   const [isProModeOpen, setIsProModeOpen] = useState(false);
   const [isCameraControlsOpen, setIsCameraControlsOpen] = useState(false);
+  const [isReplayModalOpen, setIsReplayModalOpen] = useState(false);
+  const [isEffectsModalOpen, setIsEffectsModalOpen] = useState(false);
+  const [isMicrophoneModalOpen, setIsMicrophoneModalOpen] = useState(false);
+  
+  const [replaySettings, setReplaySettings] = useState({
+    enabled: false,
+    bufferSeconds: 8
+  });
+  
+  const [microphoneSettings, setMicrophoneSettings] = useState({
+    enabled: true,
+    volume: 75,
+    zoomEnabled: true
+  });
+  
   const [stats, setStats] = useState({
     bitrate: '6000kbps',
     fps: '30fps',
     audioLevel: 75
   });
+
+  // Detect screen size changes
+  useEffect(() => {
+    const updateLayout = () => {
+      const newDimensions = Dimensions.get('window');
+      setDeviceType(getDeviceType());
+      setIsPortrait(newDimensions.height > newDimensions.width);
+    };
+
+    const subscription = Dimensions.addEventListener('change', updateLayout);
+    return () => subscription?.remove();
+  }, []);
 
   // Realistic audio level animation
   useEffect(() => {
@@ -79,11 +125,17 @@ const StreamingInterface: React.FC<StreamingInterfaceProps> = () => {
   const handleQuickAccessToggle = () => {
     setIsQuickAccessOpen(!isQuickAccessOpen);
     setIsProModeOpen(false);
+    setIsReplayModalOpen(false);
+    setIsEffectsModalOpen(false);
+    setIsMicrophoneModalOpen(false);
   };
 
   const handleProModeOpen = () => {
     setIsQuickAccessOpen(false);
     setIsProModeOpen(true);
+    setIsReplayModalOpen(false);
+    setIsEffectsModalOpen(false);
+    setIsMicrophoneModalOpen(false);
   };
 
   const handleProModeClose = () => {
@@ -94,16 +146,146 @@ const StreamingInterface: React.FC<StreamingInterfaceProps> = () => {
     setIsCameraControlsOpen(!isCameraControlsOpen);
     setIsQuickAccessOpen(false);
     setIsProModeOpen(false);
+    setIsReplayModalOpen(false);
+    setIsEffectsModalOpen(false);
+    setIsMicrophoneModalOpen(false);
   };
+
+  const handleReplayModalToggle = () => {
+    setIsReplayModalOpen(!isReplayModalOpen);
+    setIsQuickAccessOpen(false);
+    setIsProModeOpen(false);
+    setIsCameraControlsOpen(false);
+    setIsEffectsModalOpen(false);
+    setIsMicrophoneModalOpen(false);
+  };
+
+  const handleEffectsModalToggle = () => {
+    setIsEffectsModalOpen(!isEffectsModalOpen);
+    setIsQuickAccessOpen(false);
+    setIsProModeOpen(false);
+    setIsCameraControlsOpen(false);
+    setIsReplayModalOpen(false);
+    setIsMicrophoneModalOpen(false);
+  };
+
+  const handleMicrophoneModalToggle = () => {
+    setIsMicrophoneModalOpen(!isMicrophoneModalOpen);
+    setIsQuickAccessOpen(false);
+    setIsProModeOpen(false);
+    setIsCameraControlsOpen(false);
+    setIsReplayModalOpen(false);
+    setIsEffectsModalOpen(false);
+  };
+
+  const handleReplaySettingsChange = (enabled: boolean, seconds: number) => {
+    setReplaySettings({ enabled, bufferSeconds: seconds });
+    console.log(`Replay ${enabled ? 'enabled' : 'disabled'} with ${seconds} second buffer`);
+  };
+
+  const handleLastMovePress = () => {
+    console.log(`Playing back last ${replaySettings.bufferSeconds} seconds`);
+    setIsReplayModalOpen(false);
+  };
+
+  const handleBestMomentsPress = () => {
+    console.log('Showing best moments');
+    setIsReplayModalOpen(false);
+  };
+
+  const handleEffectSelect = (effectType: string, effectId: number) => {
+    console.log(`Selected ${effectType} effect ${effectId}`);
+    setIsEffectsModalOpen(false);
+  };
+
+  const handleWebOverlayAdd = (url: string, title: string) => {
+    console.log(`Adding web overlay: ${title} - ${url}`);
+  };
+
+  const handleMicrophoneToggle = (enabled: boolean) => {
+    setMicrophoneSettings(prev => ({ ...prev, enabled }));
+    console.log(`Microphone ${enabled ? 'enabled' : 'disabled'}`);
+  };
+
+  const handleVolumeChange = (volume: number) => {
+    setMicrophoneSettings(prev => ({ ...prev, volume }));
+    console.log(`Volume changed to ${volume}%`);
+  };
+
+  const handleZoomChange = (zoom: number) => {
+    setMicrophoneSettings(prev => ({ ...prev, zoomEnabled: zoom > 0 }));
+    console.log(`Zoom ${zoom > 0 ? 'enabled' : 'disabled'}`);
+  };
+
+  // Responsive style functions
+  const getResponsiveStyles = () => {
+    const isMobile = deviceType === 'mobile';
+    const isTablet = deviceType === 'tablet';
+    const isDesktop = deviceType === 'desktop';
+
+    return {
+      // Header styles
+      header: [
+        styles.header,
+        isMobile && styles.headerMobile,
+        isTablet && styles.headerTablet,
+        isDesktop && styles.headerDesktop
+      ],
+      
+      // Main content layout
+      mainContent: [
+        styles.mainContent,
+        isMobile && isPortrait && styles.mainContentMobilePortrait,
+        isMobile && !isPortrait && styles.mainContentMobileLandscape,
+        isTablet && styles.mainContentTablet,
+        isDesktop && styles.mainContentDesktop
+      ],
+      
+      // Source sidebar
+      sourceSidebar: [
+        styles.sourceSidebar,
+        isMobile && isPortrait && styles.sourceSidebarMobilePortrait,
+        isMobile && !isPortrait && styles.sourceSidebarMobileLandscape,
+        isTablet && styles.sourceSidebarTablet,
+        isDesktop && styles.sourceSidebarDesktop
+      ],
+      
+      // Video preview container
+      videoPreviewContainer: [
+        styles.videoPreviewContainer,
+        isMobile && styles.videoPreviewContainerMobile,
+        isTablet && styles.videoPreviewContainerTablet,
+        isDesktop && styles.videoPreviewContainerDesktop
+      ],
+      
+      // Bottom section
+      bottomSection: [
+        styles.bottomSection,
+        isMobile && styles.bottomSectionMobile,
+        isTablet && styles.bottomSectionTablet,
+        isDesktop && styles.bottomSectionDesktop
+      ],
+      
+      // Monitoring container
+      monitoringContainer: [
+        styles.monitoringContainer,
+        isMobile && styles.monitoringContainerMobile,
+        isTablet && styles.monitoringContainerTablet,
+        isDesktop && styles.monitoringContainerDesktop
+      ]
+    };
+  };
+
+  const responsiveStyles = getResponsiveStyles();
 
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
       
       {/* Header Section */}
-      <View style={styles.header}>
+      <View style={responsiveStyles.header}>
         <View style={styles.headerContent}>
-          {/* Left Section - 50% width */}
+          {/* Left Section */}
           <View style={styles.headerLeft}>
             <ShortcutButton
               label=''
@@ -112,28 +294,31 @@ const StreamingInterface: React.FC<StreamingInterfaceProps> = () => {
             />
           </View>
           
-          {/* Right Section - 50% width */}
+          {/* Right Section */}
           <View style={styles.headerRight}>
             <ShortcutButton
               iconName="gobackward"
               label=""
-              isActive={isStreaming}
+              isActive={replaySettings.enabled}
+              onPress={handleReplayModalToggle}
             />
             <ShortcutButton
               iconName="waveform"
               label=""
               isActive={isStreaming}
+              onPress={handleEffectsModalToggle}
             />
             <ShortcutButton
               iconName="mic.fill"
               label=""
-              isActive={isStreaming}
+              isActive={microphoneSettings.enabled}
+              onPress={handleMicrophoneModalToggle}
             />
             <ShortcutButton
               iconName="video.fill"
               label=""
               isActive={isStreaming}
-              onPress={handleCameraControlsToggle} // Add this line
+              onPress={handleCameraControlsToggle}
             />
             <TouchableOpacity
               onPress={handleQuickAccessToggle}
@@ -148,9 +333,9 @@ const StreamingInterface: React.FC<StreamingInterfaceProps> = () => {
       </View>
 
       {/* Main Content Area */}
-      <View style={styles.mainContent}>
-        {/* Left Sidebar - Source Panel */}
-        <View style={styles.sourceSidebar}>
+      <View style={responsiveStyles.mainContent}>
+        {/* Source Panel */}
+        <View style={responsiveStyles.sourceSidebar}>
           <View style={styles.sourceList}>
             {sources.map((source) => (
               <SourceCard
@@ -165,7 +350,7 @@ const StreamingInterface: React.FC<StreamingInterfaceProps> = () => {
         </View>
 
         {/* Central Video Preview */}
-        <View style={styles.videoPreviewContainer}>
+        <View style={responsiveStyles.videoPreviewContainer}>
           <VideoPreview 
             isStreaming={isStreaming}
             activeSource={sources[activeSource].name}
@@ -174,9 +359,9 @@ const StreamingInterface: React.FC<StreamingInterfaceProps> = () => {
       </View>
 
       {/* Bottom Section */}
-      <View style={styles.bottomSection}>
-        {/* Audio Monitoring Widget - Left Side */}
-        <View style={styles.monitoringContainer}>
+      <View style={responsiveStyles.bottomSection}>
+        {/* Audio Monitoring Widget */}
+        <View style={responsiveStyles.monitoringContainer}>
           <MonitoringIndicator
             audioLevel={stats.audioLevel}
             bitrate={stats.bitrate}
@@ -209,6 +394,29 @@ const StreamingInterface: React.FC<StreamingInterfaceProps> = () => {
         isOpen={isProModeOpen}
         onClose={handleProModeClose}
       />
+
+      <ReplayModal
+        isOpen={isReplayModalOpen}
+        onClose={() => setIsReplayModalOpen(false)}
+        onReplaySettingsChange={handleReplaySettingsChange}
+        onLastMovePress={handleLastMovePress}
+        onBestMomentsPress={handleBestMomentsPress}
+      />
+
+      <EffectsModal
+        isOpen={isEffectsModalOpen}
+        onClose={() => setIsEffectsModalOpen(false)}
+        onEffectSelect={handleEffectSelect}
+        onWebOverlayAdd={handleWebOverlayAdd}
+      />
+
+      <MicrophoneModal
+        isOpen={isMicrophoneModalOpen}
+        onClose={() => setIsMicrophoneModalOpen(false)}
+        onMicrophoneToggle={handleMicrophoneToggle}
+        onVolumeChange={handleVolumeChange}
+        onZoomChange={handleZoomChange}
+      />
     </View>
   );
 };
@@ -218,12 +426,29 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
   },
+  
+  // Header Styles
   header: {
     paddingHorizontal: 16,
     paddingTop: 16,
     paddingBottom: 16,
     borderBottomWidth: 1,
     borderBottomColor: Colors.border,
+  },
+  headerMobile: {
+    paddingHorizontal: 12,
+    paddingTop: 12,
+    paddingBottom: 12,
+  },
+  headerTablet: {
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 16,
+  },
+  headerDesktop: {
+    paddingHorizontal: 24,
+    paddingTop: 24,
+    paddingBottom: 20,
   },
   headerContent: {
     flexDirection: 'row',
@@ -261,23 +486,72 @@ const styles = StyleSheet.create({
   menuButtonActive: {
     backgroundColor: Colors.primaryHover,
   },
+  
+  // Main Content Styles
   mainContent: {
     flex: 1,
     flexDirection: 'row',
   },
+  mainContentMobilePortrait: {
+    flexDirection: 'column',
+  },
+  mainContentMobileLandscape: {
+    flexDirection: 'row',
+  },
+  mainContentTablet: {
+    flexDirection: 'row',
+  },
+  mainContentDesktop: {
+    flexDirection: 'row',
+  },
+  
+  // Source Sidebar Styles
   sourceSidebar: {
-    width: 192, // 48 * 4 = 192 (w-48 in Tailwind)
+    width: 192,
     padding: 16,
     borderRightWidth: 1,
     borderRightColor: Colors.border,
   },
+  sourceSidebarMobilePortrait: {
+    width: '100%',
+    height: 120,
+    borderRightWidth: 0,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+    padding: 12,
+  },
+  sourceSidebarMobileLandscape: {
+    width: 160,
+    padding: 12,
+  },
+  sourceSidebarTablet: {
+    width: 200,
+    padding: 18,
+  },
+  sourceSidebarDesktop: {
+    width: 240,
+    padding: 20,
+  },
   sourceList: {
     gap: 12,
   },
+  
+  // Video Preview Container Styles
   videoPreviewContainer: {
     flex: 1,
     padding: 16,
   },
+  videoPreviewContainerMobile: {
+    padding: 12,
+  },
+  videoPreviewContainerTablet: {
+    padding: 18,
+  },
+  videoPreviewContainerDesktop: {
+    padding: 20,
+  },
+  
+  // Bottom Section Styles
   bottomSection: {
     borderTopWidth: 1,
     borderTopColor: Colors.border,
@@ -287,12 +561,47 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
+    minHeight: 80,
   },
+  bottomSectionMobile: {
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    minHeight: 70,
+    flexDirection: 'column',
+    gap: 12,
+  },
+  bottomSectionTablet: {
+    paddingHorizontal: 20,
+    paddingVertical: 18,
+    minHeight: 90,
+  },
+  bottomSectionDesktop: {
+    paddingHorizontal: 24,
+    paddingVertical: 20,
+    minHeight: 100,
+  },
+  
+  // Monitoring Container Styles
   monitoringContainer: {
     position: 'absolute',
     left: 20,
     bottom: 20,
   },
+  monitoringContainerMobile: {
+    position: 'relative',
+    left: 'auto',
+    bottom: 'auto',
+    alignSelf: 'center',
+  },
+  monitoringContainerTablet: {
+    left: 24,
+    bottom: 24,
+  },
+  monitoringContainerDesktop: {
+    left: 28,
+    bottom: 28,
+  },
+  
   streamButtonContainer: {
     alignItems: 'center',
     justifyContent: 'center',
