@@ -1,24 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  StatusBar,
-  Dimensions,
-  ImageBackground,
-  Alert,
-} from 'react-native';
-import { useRouter } from 'expo-router';
 import { IconSymbol } from '@/components/ui/IconSymbol';
-import SourceCard from './SourceCard';
-import VideoPreview from './VideoPreview';
-import StreamButton from './StreamButton';
-import QuickAccessMenu from './QuickAccessMenu';
-import ProModeMenu from './ProModeMenu';
-import ShortcutButton from './ShortcutButton';
-import MonitoringIndicator from './MonitoringIndicator';
+import { useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import {
+  Dimensions,
+  StatusBar,
+  StyleSheet,
+  TouchableOpacity,
+  View
+} from 'react-native';
 import CameraControls from './CameraControls';
+import MonitoringIndicator from './MonitoringIndicator';
+import ProModeMenu from './ProModeMenu';
+import QuickAccessMenu from './QuickAccessMenu';
+import ShortcutButton from './ShortcutButton';
+import SourceCard from './SourceCard';
+import StreamButton from './StreamButton';
+import VideoPreview from './VideoPreview';
 
 const { width, height } = Dimensions.get('window');
 
@@ -109,8 +106,8 @@ const StreamingInterface: React.FC<StreamingInterfaceProps> = () => {
           {/* Left Section - 50% width */}
           <View style={styles.headerLeft}>
             <ShortcutButton
+              label=''
               iconName="person.circle"
-              label="User"
               isActive={isStreaming}
             />
           </View>
@@ -119,22 +116,22 @@ const StreamingInterface: React.FC<StreamingInterfaceProps> = () => {
           <View style={styles.headerRight}>
             <ShortcutButton
               iconName="gobackward"
-              label="Replay"
+              label=""
               isActive={isStreaming}
             />
             <ShortcutButton
               iconName="waveform"
-              label="Fx"
+              label=""
               isActive={isStreaming}
             />
             <ShortcutButton
               iconName="mic.fill"
-              label="Standard"
+              label=""
               isActive={isStreaming}
             />
             <ShortcutButton
               iconName="video.fill"
-              label="Standard"
+              label=""
               isActive={isStreaming}
               onPress={handleCameraControlsToggle} // Add this line
             />

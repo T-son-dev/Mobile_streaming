@@ -1,7 +1,7 @@
 // Fallback for using MaterialIcons on Android and web.
 
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { SymbolWeight, SymbolViewProps } from 'expo-symbols';
+import { SymbolViewProps, SymbolWeight } from 'expo-symbols';
 import { ComponentProps } from 'react';
 import { OpaqueColorValue, type StyleProp, type TextStyle } from 'react-native';
 
@@ -32,14 +32,37 @@ const MAPPING = {
   'pencil': 'edit',
   'eye.fill': 'visibility',
   'eye.slash.fill': 'visibility-off',
-  // Platform icons
   'play.tv': 'play-arrow',
   'person.2.square.stack': 'groups',
   'camera.fill': 'camera-alt',
   'gamecontroller.fill': 'sports-esports',
   'antenna.radiowaves.left.and.right': 'wifi',
   'rocket.fill': 'speed',
-} as IconMapping;
+  'person.circle': 'account-circle',
+  'person.fill': 'person',
+  'gobackward': 'replay',
+  'waveform': 'graphic-eq',
+  'line.horizontal.3': 'menu',
+  'play.fill': 'play-arrow',
+  'magnifyingglass': 'search',
+  'iphone': 'phone-iphone',
+  'flashlight.on.fill': 'flashlight-on',
+  'mic.slash.fill': 'mic-off',
+  'gearshape.fill': 'settings',
+  'camera.rotate': 'flip-camera-ios',
+  'plus.magnifyingglass': 'zoom-in',
+  'circle': 'radio-button-unchecked',
+  'bolt': 'flash-on',
+  'arrow.clockwise': 'refresh',
+} as const satisfies IconMapping;
+
+export interface IconSymbolProps {
+  name: IconSymbolName;
+  size?: number;
+  color?: string | OpaqueColorValue;
+  style?: StyleProp<TextStyle>;
+  weight?: SymbolWeight;
+}
 
 /**
  * An icon component that uses native SF Symbols on iOS, and Material Icons on Android and web.
@@ -51,12 +74,21 @@ export function IconSymbol({
   size = 24,
   color,
   style,
-}: {
-  name: IconSymbolName;
-  size?: number;
-  color: string | OpaqueColorValue;
-  style?: StyleProp<TextStyle>;
-  weight?: SymbolWeight;
-}) {
-  return <MaterialIcons color={color} size={size} name={MAPPING[name]} style={style} />;
+  weight,
+}: IconSymbolProps) {
+  const materialIconName = MAPPING[name];
+  
+  if (!materialIconName) {
+    console.warn(`IconSymbol: No mapping found for "${name}"`);
+    return null;
+  }
+
+  return (
+    <MaterialIcons
+      name={materialIconName}
+      size={size}
+      color={color}
+      style={style}
+    />
+  );
 }
