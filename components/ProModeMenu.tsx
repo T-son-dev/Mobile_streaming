@@ -27,7 +27,7 @@ const ProModeMenu: React.FC<ProModeMenuProps> = ({ isOpen, onClose }) => {
       <View style={styles.overlay}>
         <View style={styles.container}>
           <View style={styles.header}>
-            <Text style={styles.title}>Modo PRO</Text>
+            <Text style={styles.title}>PRO Mode</Text>
             <TouchableOpacity style={styles.closeButton} onPress={onClose}>
               <Text style={styles.closeButtonText}>×</Text>
             </TouchableOpacity>
@@ -37,13 +37,13 @@ const ProModeMenu: React.FC<ProModeMenuProps> = ({ isOpen, onClose }) => {
             <View style={styles.controlsGrid}>
               {/* Camera Controls */}
               <View style={styles.controlGroup}>
-                <Text style={styles.controlGroupTitle}>Câmera</Text>
+                <Text style={styles.controlGroupTitle}>Camera</Text>
                 
                 <TouchableOpacity style={styles.controlItem}>
                   <View style={styles.controlIcon}>
                     <IconSymbol name="camera.rotate" size={20} color={Colors.text} />
                   </View>
-                  <Text style={styles.controlLabel}>Rotação</Text>
+                  <Text style={styles.controlLabel}>Rotation</Text>
                   <Text style={styles.controlValue}>0.3m</Text>
                 </TouchableOpacity>
                 
@@ -63,13 +63,13 @@ const ProModeMenu: React.FC<ProModeMenuProps> = ({ isOpen, onClose }) => {
               
               {/* Exposure Controls */}
               <View style={styles.controlGroup}>
-                <Text style={styles.controlGroupTitle}>Exposição</Text>
+                <Text style={styles.controlGroupTitle}>Exposure</Text>
                 
                 <TouchableOpacity style={styles.controlItem}>
                   <View style={styles.controlIcon}>
                     <IconSymbol name="circle" size={20} color={Colors.text} />
                   </View>
-                  <Text style={styles.controlLabel}>Abertura</Text>
+                  <Text style={styles.controlLabel}>Aperture</Text>
                   <Text style={styles.controlValue}>f/2.8</Text>
                 </TouchableOpacity>
                 

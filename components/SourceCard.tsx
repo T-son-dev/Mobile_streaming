@@ -31,7 +31,7 @@ const SourceCard: React.FC<SourceCardProps> = ({ name, isOnAir, isSelected, onPr
       {/* Status Badge */}
       {!isOnAir && (
         <View style={styles.statusBadge}>
-          <Text style={styles.statusText}>NO AR</Text>
+          <Text style={styles.statusText}>ON AIR</Text>
         </View>
       )}
       

@@ -76,7 +76,7 @@ export default function RootLayout() {
         <Stack.Screen 
           name="home" 
           options={{ 
-            title: 'APLICATIVO TRANSMISSÃO',
+            title: 'STREAMING APPLICATION',
             headerShown: true,
             headerTitleAlign: 'center',
             headerStyle: {
@@ -89,7 +89,7 @@ export default function RootLayout() {
         <Stack.Screen 
           name="live-stream" 
           options={{ 
-            title: 'Transmissão Ao Vivo',
+            title: 'Live Stream',
             headerShown: false,
             gestureEnabled: false, // Prevent swipe to dismiss
             // Full screen modal-like presentation
@@ -99,7 +99,7 @@ export default function RootLayout() {
         <Stack.Screen 
           name="settings" 
           options={{ 
-            title: 'Configurações',
+            title: 'Settings',
             presentation: 'modal',
             headerLeft: () => null, // Remove back button, use custom close
           }} 
@@ -107,7 +107,7 @@ export default function RootLayout() {
         <Stack.Screen 
           name="overlay" 
           options={{ 
-            title: 'Gerenciador de Overlays',
+            title: 'Overlay Manager',
             presentation: 'modal',
             headerLeft: () => null,
           }} 
@@ -115,7 +115,7 @@ export default function RootLayout() {
         <Stack.Screen 
           name="relay" 
           options={{ 
-            title: 'Galeria de Replays',
+            title: 'Replay Gallery',
           }} 
         />
         <Stack.Screen name="+not-found" />

@@ -58,7 +58,7 @@ const VideoPreview: React.FC<VideoPreviewProps> = ({ isStreaming, activeSource }
           {isStreaming && (
             <View style={styles.streamStatus}>
               <View style={styles.liveDot} />
-              <Text style={styles.liveText}>AO VIVO</Text>
+              <Text style={styles.liveText}>LIVE</Text>
             </View>
           )}
           

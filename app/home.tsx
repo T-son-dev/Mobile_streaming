@@ -66,7 +66,7 @@ const platforms = [
   },
   {
     id: 'gravacao',
-    name: 'Gravação',
+    name: 'Recording',
     color: PlatformColors.youtube,
     bgColor: PlatformColors.youtube,
   },
@@ -77,7 +77,7 @@ const HomeScreen: React.FC = () => {
   const [showRTMPModal, setShowRTMPModal] = useState(false);
   const [rtmpUrl, setRtmpUrl] = useState('rtmp://a.rtmp.youtube.com/live2');
   const [streamKey, setStreamKey] = useState('');
-  const [selectedTab, setSelectedTab] = useState<'login' | 'cadastro'>('login');
+  const [selectedTab, setSelectedTab] = useState<'login' | 'signup'>('login');
   const [validationErrors, setValidationErrors] = useState<{rtmpUrl?: string; streamKey?: string}>({});
   
   // Animation values
@@ -123,16 +123,16 @@ const HomeScreen: React.FC = () => {
 
   // Validation functions
   const validateRTMPUrl = (url: string) => {
-    if (!url.trim()) return 'URL RTMP é obrigatória';
+    if (!url.trim()) return 'RTMP URL is required';
     if (!url.startsWith('rtmp://') && !url.startsWith('rtmps://')) {
-      return 'URL deve começar com rtmp:// ou rtmps://';
+      return 'URL must start with rtmp:// or rtmps://';
     }
     return null;
   };
 
   const validateStreamKey = (key: string) => {
-    if (!key.trim()) return 'Chave de transmissão é obrigatória';
-    if (key.length < 4) return 'Chave muito curta';
+    if (!key.trim()) return 'Stream key is required';
+    if (key.length < 4) return 'Stream key too short';
     return null;
   };
 
@@ -213,11 +213,11 @@ const HomeScreen: React.FC = () => {
           <View style={[styles.mainCard, Shadows.medium]}>
           {/* Header */}
           <View style={styles.header}>
-            <Text style={styles.title}>APLICATIVO{'\n'}TRANSMISSÃO</Text>
+            <Text style={styles.title}>STREAMING{'\n'}APPLICATION</Text>
           </View>
 
           {/* Platform Question */}
-          <Text style={styles.questionText}>Onde você vai transmitir?</Text>
+          <Text style={styles.questionText}>Where will you stream?</Text>
 
           {/* Platform Grid */}
           <View style={styles.platformGrid}>
@@ -251,10 +251,10 @@ const HomeScreen: React.FC = () => {
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.tab, selectedTab === 'cadastro' && styles.activeTab]}
-              onPress={() => setSelectedTab('cadastro')}>
-              <Text style={[styles.tabText, selectedTab === 'cadastro' && styles.activeTabText]}>
-                cadastro
+              style={[styles.tab, selectedTab === 'signup' && styles.activeTab]}
+              onPress={() => setSelectedTab('signup')}>
+              <Text style={[styles.tabText, selectedTab === 'signup' && styles.activeTabText]}>
+                signup
               </Text>
             </TouchableOpacity>
           </View>
@@ -263,21 +263,21 @@ const HomeScreen: React.FC = () => {
           <TouchableOpacity
             style={styles.startButton}
             onPress={() => router.push('/live-stream')}>
-            <Text style={styles.startButtonText}>INICIAR</Text>
+            <Text style={styles.startButtonText}>START</Text>
           </TouchableOpacity>
         </View>
 
         {/* Features Section */}
         <View style={styles.featuresSection}>
-          <Text style={styles.featuresTitle}>CADASTRO DE CLIENTES{'\n'}COBRANÇA RECORRENTE</Text>
-          <Text style={styles.featuresSubtitle}>PAGAMENTO VIA APPLE / GOOGLE PLAY</Text>
+          <Text style={styles.featuresTitle}>CLIENT REGISTRATION{'\n'}RECURRING BILLING</Text>
+          <Text style={styles.featuresSubtitle}>PAYMENT VIA APPLE / GOOGLE PLAY</Text>
         </View>
 
         {/* Quick Access Buttons */}
         <View style={styles.quickAccessContainer}>
           <TouchableOpacity style={styles.quickAccessButton} onPress={navigateToSettings}>
             <Text style={styles.quickAccessIcon}>⚙️</Text>
-            <Text style={styles.quickAccessText}>Configurações</Text>
+            <Text style={styles.quickAccessText}>Settings</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.quickAccessButton} onPress={navigateToOverlay}>
@@ -294,7 +294,7 @@ const HomeScreen: React.FC = () => {
         {/* App Version Footer */}
         <View style={styles.versionFooter}>
           <Text style={styles.versionText}>v1.0.0 - Week 1 Complete ✅</Text>
-          <Text style={styles.versionSubtext}>Pronto para revisão do protótipo</Text>
+          <Text style={styles.versionSubtext}>Ready for prototype review</Text>
         </View>
       </ScrollView>
       </Animated.View>
@@ -310,7 +310,7 @@ const HomeScreen: React.FC = () => {
           <View style={styles.modalCard}>
             {/* Modal Header */}
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>APLICATIVO{'\n'}TRANSMISSÃO</Text>
+              <Text style={styles.modalTitle}>STREAMING{'\n'}APPLICATION</Text>
             </View>
             
             {/* RTMP Form */}
@@ -338,12 +338,12 @@ const HomeScreen: React.FC = () => {
                   <Text style={styles.errorText}>{validationErrors.rtmpUrl}</Text>
                 )}
                 <Text style={styles.helpText}>
-                  Digite a URL de streaming fornecida pela plataforma
+                  Enter the streaming URL provided by the platform
                 </Text>
               </View>
               
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Chave de Transmissão *</Text>
+                <Text style={styles.inputLabel}>Stream Key *</Text>
                 <TextInput
                   style={[
                     styles.textInput,
@@ -366,14 +366,14 @@ const HomeScreen: React.FC = () => {
                   <Text style={styles.errorText}>{validationErrors.streamKey}</Text>
                 )}
                 <Text style={styles.helpText}>
-                  Chave secreta da sua conta de streaming
+                  Secret key from your streaming account
                 </Text>
               </View>
             </View>
             
             {/* Modal Start Button */}
             <TouchableOpacity style={styles.modalStartButton} onPress={handleRTMPConnect}>
-              <Text style={styles.modalStartButtonText}>INICIAR</Text>
+              <Text style={styles.modalStartButtonText}>START</Text>
             </TouchableOpacity>
           </View>
 
@@ -381,7 +381,7 @@ const HomeScreen: React.FC = () => {
           <TouchableOpacity
             style={styles.modalCloseButton}
             onPress={() => setShowRTMPModal(false)}>
-            <Text style={styles.modalCloseText}>Fechar</Text>
+            <Text style={styles.modalCloseText}>Close</Text>
           </TouchableOpacity>
         </View>
       </Modal>

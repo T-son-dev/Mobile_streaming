@@ -43,21 +43,21 @@ const QuickAccessMenu: React.FC<QuickAccessMenuProps> = ({ isOpen, onClose, onPr
             <View style={styles.menuIcon}>
               <Text style={styles.menuIconText}>#</Text>
             </View>
-            <Text style={styles.menuLabel}>Grade</Text>
+            <Text style={styles.menuLabel}>Grid</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.menuItem}>
             <View style={styles.menuIcon}>
               <IconSymbol name="flashlight.on.fill" size={20} color={Colors.text} />
             </View>
-            <Text style={styles.menuLabel}>Lanterna</Text>
+            <Text style={styles.menuLabel}>Flashlight</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.menuItem} onPress={onProModeClick}>
             <View style={[styles.menuIcon, styles.proIcon]}>
               <Text style={styles.proText}>PRO</Text>
             </View>
-            <Text style={styles.menuLabel}>Modo PRO</Text>
+            <Text style={styles.menuLabel}>PRO Mode</Text>
           </TouchableOpacity>
 
           {/* Bottom Row */}
@@ -65,21 +65,21 @@ const QuickAccessMenu: React.FC<QuickAccessMenuProps> = ({ isOpen, onClose, onPr
             <View style={[styles.menuIcon, styles.screenIcon]}>
               <View style={styles.screenRect} />
             </View>
-            <Text style={styles.menuLabel}>Tela Início</Text>
+            <Text style={styles.menuLabel}>Home Screen</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.menuItem}>
             <View style={styles.menuIcon}>
               <IconSymbol name="mic.slash.fill" size={20} color={Colors.text} />
             </View>
-            <Text style={styles.menuLabel}>Mutar</Text>
+            <Text style={styles.menuLabel}>Mute</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.menuItem}>
             <View style={styles.menuIcon}>
               <IconSymbol name="gearshape.fill" size={20} color={Colors.text} />
             </View>
-            <Text style={styles.menuLabel}>Configurações</Text>
+            <Text style={styles.menuLabel}>Settings</Text>
           </TouchableOpacity>
         </View>
       </View>

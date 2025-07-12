@@ -29,7 +29,7 @@ const StreamButton: React.FC<StreamButtonProps> = ({ isStreaming, onToggle }) =>
         styles.buttonText,
         isStreaming ? styles.buttonTextLight : styles.buttonTextDark
       ]}>
-        {isStreaming ? 'PARAR TRANSMISSÃO' : 'INICIAR TRANSMISSÃO'}
+        {isStreaming ? 'STOP STREAMING' : 'START STREAMING'}
       </Text>
     </TouchableOpacity>
   );

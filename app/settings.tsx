@@ -31,21 +31,21 @@ const SettingsScreen: React.FC = () => {
   const [settings, setSettings] = useState({
     resolution: '720p (HD)',
     fps: '30 FPS',
-    quality: 'Ultra alto',
+    quality: 'Ultra high',
     variableBitrate: true,
     saveVideo: true,
-    storageLocation: 'Armazenamento interno',
+    storageLocation: 'Internal storage',
     autoRotation: true,
     autoFocus: 'Manual',
     preview: false,
-    micSource: 'Microfone',
+    micSource: 'Microphone',
   });
 
   const resolutionOptions = ['480p', '720p (HD)', '1080p (Full HD)', '4K'];
   const fpsOptions = ['24 FPS', '30 FPS', '60 FPS'];
-  const qualityOptions = ['Baixo', 'Médio', 'Alto', 'Ultra alto'];
-  const focusOptions = ['Automático', 'Manual'];
-  const micOptions = ['Microfone', 'Microfone Externo', 'Bluetooth'];
+  const qualityOptions = ['Low', 'Medium', 'High', 'Ultra high'];
+  const focusOptions = ['Automatic', 'Manual'];
+  const micOptions = ['Microphone', 'External Microphone', 'Bluetooth'];
 
   const updateSetting = (key: string, value: any) => {
     setSettings(prev => ({ ...prev, [key]: value }));
@@ -54,7 +54,7 @@ const SettingsScreen: React.FC = () => {
   const showOptionPicker = (title: string, options: string[], currentValue: string, onSelect: (value: string) => void) => {
     Alert.alert(
       title,
-      'Selecione uma opção:',
+      'Select an option:',
       options.map(option => ({
         text: option,
         onPress: () => onSelect(option),
@@ -76,17 +76,17 @@ const SettingsScreen: React.FC = () => {
         <TouchableOpacity style={styles.backButton} onPress={handleBack}>
           <IconSymbol name="chevron.left" size={24} color={Colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Configurações</Text>
+        <Text style={styles.headerTitle}>Settings</Text>
         <View style={styles.headerSpacer} />
       </View>
 
       <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
         {/* Server Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>SERVIDOR</Text>
+          <Text style={styles.sectionTitle}>SERVER</Text>
           <View style={styles.sectionContent}>
             <View style={styles.settingItem}>
-              <Text style={styles.settingLabel}>Endereço da transmissão</Text>
+              <Text style={styles.settingLabel}>Stream address</Text>
               <Text style={styles.settingValue}>
                 rtmp://a.rtmp.youtube.com/live2/cc55-0b7f/ue7-mk61-7726
               </Text>
@@ -101,13 +101,13 @@ const SettingsScreen: React.FC = () => {
             <TouchableOpacity 
               style={styles.settingRow}
               onPress={() => showOptionPicker(
-                'Resolução',
+                'Resolution',
                 resolutionOptions,
                 settings.resolution,
                 (value) => updateSetting('resolution', value)
               )}
             >
-              <Text style={styles.settingLabel}>Resolução</Text>
+              <Text style={styles.settingLabel}>Resolution</Text>
               <View style={styles.settingValueContainer}>
                 <Text style={styles.settingValueAccent}>{settings.resolution}</Text>
                 <IconSymbol name="chevron.right" size={16} color={Colors.accent} />
@@ -117,13 +117,13 @@ const SettingsScreen: React.FC = () => {
             <TouchableOpacity 
               style={styles.settingRow}
               onPress={() => showOptionPicker(
-                'Taxa de Quadros',
+                'Frame Rate',
                 fpsOptions,
                 settings.fps,
                 (value) => updateSetting('fps', value)
               )}
             >
-              <Text style={styles.settingLabel}>Velocidade de quadros por segundo (fps)</Text>
+              <Text style={styles.settingLabel}>Frames per second (fps)</Text>
               <View style={styles.settingValueContainer}>
                 <Text style={styles.settingValueAccent}>{settings.fps}</Text>
                 <IconSymbol name="chevron.right" size={16} color={Colors.accent} />
@@ -133,13 +133,13 @@ const SettingsScreen: React.FC = () => {
             <TouchableOpacity 
               style={styles.settingRow}
               onPress={() => showOptionPicker(
-                'Qualidade',
+                'Quality',
                 qualityOptions,
                 settings.quality,
                 (value) => updateSetting('quality', value)
               )}
             >
-              <Text style={styles.settingLabel}>Qualidade</Text>
+              <Text style={styles.settingLabel}>Quality</Text>
               <View style={styles.settingValueContainer}>
                 <Text style={styles.settingValueAccent}>{settings.quality}</Text>
                 <IconSymbol name="chevron.right" size={16} color={Colors.accent} />
@@ -147,10 +147,10 @@ const SettingsScreen: React.FC = () => {
             </TouchableOpacity>
 
             <View style={styles.settingRow}>
-              <Text style={styles.settingLabel}>Bitrate variável</Text>
+              <Text style={styles.settingLabel}>Variable bitrate</Text>
               <View style={styles.settingValueContainer}>
                 <Text style={styles.settingValueAccent}>
-                  {settings.variableBitrate ? 'Ligado' : 'Desligado'}
+                  {settings.variableBitrate ? 'On' : 'Off'}
                 </Text>
                 <Switch
                   value={settings.variableBitrate}
@@ -162,7 +162,7 @@ const SettingsScreen: React.FC = () => {
             </View>
 
             <View style={styles.settingRow}>
-              <Text style={styles.settingLabel}>Salvar vídeo ao vivo</Text>
+              <Text style={styles.settingLabel}>Save live video</Text>
               <View style={styles.settingValueContainer}>
                 <Switch
                   value={settings.saveVideo}
@@ -174,7 +174,7 @@ const SettingsScreen: React.FC = () => {
             </View>
 
             <TouchableOpacity style={styles.settingRow}>
-              <Text style={styles.settingLabel}>Localização de arquivo</Text>
+              <Text style={styles.settingLabel}>File location</Text>
               <View style={styles.settingValueContainer}>
                 <Text style={styles.settingValueAccent}>{settings.storageLocation}</Text>
                 <IconSymbol name="chevron.right" size={16} color={Colors.accent} />
@@ -182,10 +182,10 @@ const SettingsScreen: React.FC = () => {
             </TouchableOpacity>
 
             <View style={styles.settingRow}>
-              <Text style={styles.settingLabel}>Rotação da tela</Text>
+              <Text style={styles.settingLabel}>Screen rotation</Text>
               <View style={styles.settingValueContainer}>
                 <Text style={styles.settingValueAccent}>
-                  {settings.autoRotation ? 'Auto rotação' : 'Fixo'}
+                  {settings.autoRotation ? 'Auto rotation' : 'Fixed'}
                 </Text>
                 <Switch
                   value={settings.autoRotation}
@@ -200,18 +200,18 @@ const SettingsScreen: React.FC = () => {
 
         {/* Camera Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>CÂMERA</Text>
+          <Text style={styles.sectionTitle}>CAMERA</Text>
           <View style={styles.sectionContent}>
             <TouchableOpacity 
               style={styles.settingRow}
               onPress={() => showOptionPicker(
-                'Foco',
+                'Focus',
                 focusOptions,
                 settings.autoFocus,
                 (value) => updateSetting('autoFocus', value)
               )}
             >
-              <Text style={styles.settingLabel}>Foco automático</Text>
+              <Text style={styles.settingLabel}>Auto focus</Text>
               <View style={styles.settingValueContainer}>
                 <Text style={styles.settingValueAccent}>{settings.autoFocus}</Text>
                 <IconSymbol name="chevron.right" size={16} color={Colors.accent} />
@@ -219,7 +219,7 @@ const SettingsScreen: React.FC = () => {
             </TouchableOpacity>
 
             <View style={styles.settingRow}>
-              <Text style={styles.settingLabel}>Antevisão</Text>
+              <Text style={styles.settingLabel}>Preview</Text>
               <View style={styles.settingValueContainer}>
                 <Switch
                   value={settings.preview}
@@ -234,18 +234,18 @@ const SettingsScreen: React.FC = () => {
 
         {/* Audio Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>ÁUDIO</Text>
+          <Text style={styles.sectionTitle}>AUDIO</Text>
           <View style={styles.sectionContent}>
             <TouchableOpacity 
               style={styles.settingRow}
               onPress={() => showOptionPicker(
-                'Fonte de Microfone',
+                'Microphone Source',
                 micOptions,
                 settings.micSource,
                 (value) => updateSetting('micSource', value)
               )}
             >
-              <Text style={styles.settingLabel}>Fonte de MIC</Text>
+              <Text style={styles.settingLabel}>MIC Source</Text>
               <View style={styles.settingValueContainer}>
                 <Text style={styles.settingValueAccent}>{settings.micSource}</Text>
                 <IconSymbol name="chevron.right" size={16} color={Colors.accent} />
@@ -256,30 +256,30 @@ const SettingsScreen: React.FC = () => {
 
         {/* Additional Settings */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>GERAL</Text>
+          <Text style={styles.sectionTitle}>GENERAL</Text>
           <View style={styles.sectionContent}>
             <TouchableOpacity style={styles.settingRow}>
-              <Text style={styles.settingLabel}>Centro de ajuda</Text>
+              <Text style={styles.settingLabel}>Help center</Text>
               <IconSymbol name="chevron.right" size={16} color={Colors.accent} />
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.settingRow}>
-              <Text style={styles.settingLabel}>Informação do sistema</Text>
+              <Text style={styles.settingLabel}>System information</Text>
               <IconSymbol name="chevron.right" size={16} color={Colors.accent} />
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.settingRow}>
-              <Text style={styles.settingLabel}>Sobre nós</Text>
+              <Text style={styles.settingLabel}>About us</Text>
               <IconSymbol name="chevron.right" size={16} color={Colors.accent} />
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.settingRow}>
-              <Text style={styles.settingLabel}>Política de Privacidade</Text>
+              <Text style={styles.settingLabel}>Privacy Policy</Text>
               <IconSymbol name="chevron.right" size={16} color={Colors.accent} />
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.settingRow}>
-              <Text style={styles.settingLabel}>Termos de Utilização</Text>
+              <Text style={styles.settingLabel}>Terms of Use</Text>
               <IconSymbol name="chevron.right" size={16} color={Colors.accent} />
             </TouchableOpacity>
           </View>
@@ -287,7 +287,7 @@ const SettingsScreen: React.FC = () => {
 
         {/* App Version */}
         <View style={styles.versionContainer}>
-          <Text style={styles.versionText}>Versão 1.0.0</Text>
+          <Text style={styles.versionText}>Version 1.0.0</Text>
           <Text style={styles.versionSubtext}>Mobile Streaming App</Text>
         </View>
       </ScrollView>

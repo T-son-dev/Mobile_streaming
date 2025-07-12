@@ -52,7 +52,7 @@ const CameraControls: React.FC<CameraControlsProps> = ({ isOpen, onClose }) => {
         <View style={styles.content}>
           {/* Auto Focus Section */}
           <View style={styles.focusSection}>
-            <Text style={styles.focusLabel}>Foco automático</Text>
+            <Text style={styles.focusLabel}>Auto Focus</Text>
             <Switch
               value={isAutoFocus}
               onValueChange={setIsAutoFocus}

@@ -62,9 +62,9 @@ const StreamingInterface: React.FC<StreamingInterfaceProps> = () => {
   }, []);
 
   const sources = [
-    { id: 0, name: 'CAMERA CELULAR', isActive: true },
-    { id: 1, name: 'CAMERA USB', isActive: true },
-    { id: 2, name: 'NAVEGADOR WEB - SINGULAR', isActive: true },
+    { id: 0, name: 'MOBILE CAMERA', isActive: true },
+    { id: 1, name: 'USB CAMERA', isActive: true },
+    { id: 2, name: 'WEB BROWSER - SINGULAR', isActive: true },
     { id: 3, name: 'XXXX', isActive: true }
   ];
 

@@ -36,37 +36,37 @@ const HomeScreen: React.FC = () => {
       id: 'youtube' as PlatformType, 
       name: 'YouTube', 
       color: '#FF0000',
-      description: 'Transmita para YouTube Live'
+      description: 'Stream to YouTube Live'
     },
     {
       id: 'facebook' as PlatformType, 
       name: 'Facebook', 
       color: '#1877F2',
-      description: 'Transmita para Facebook Live'
+      description: 'Stream to Facebook Live'
     },
     {
       id: 'instagram' as PlatformType, 
       name: 'Instagram', 
       color: '#E4405F',
-      description: 'Transmita para Instagram Live'
+      description: 'Stream to Instagram Live'
     },
     {
       id: 'twitch' as PlatformType, 
       name: 'Twitch', 
       color: '#9146FF',
-      description: 'Transmita para Twitch'
+      description: 'Stream to Twitch'
     },
     {
       id: 'rtmp' as PlatformType, 
       name: 'RTMP', 
       color: '#00ff88',
-      description: 'Configuração personalizada'
+      description: 'Custom configuration'
     },
     {
       id: 'srt' as PlatformType, 
       name: 'SRT', 
       color: '#FFA500',
-      description: 'Protocolo SRT'
+      description: 'SRT Protocol'
     },
   ];
 
@@ -83,7 +83,7 @@ const HomeScreen: React.FC = () => {
 
   const handleRTMPConnect = () => {
     if (!rtmpUrl.trim() || !streamKey.trim()) {
-      Alert.alert('Erro', 'Por favor, preencha todos os campos');
+      Alert.alert('Error', 'Please fill in all fields');
       return;
     }
 
@@ -117,12 +117,12 @@ const HomeScreen: React.FC = () => {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.title}>APLICATIVO</Text>
-          <Text style={styles.titleAccent}>TRANSMISSÃO</Text>
+          <Text style={styles.title}>STREAMING</Text>
+          <Text style={styles.titleAccent}>APPLICATION</Text>
         </View>
 
         {/* Question */}
-        <Text style={styles.questionText}>Onde você vai transmitir?</Text>
+        <Text style={styles.questionText}>Where will you stream?</Text>
 
         {/* Platform Grid */}
         <View style={styles.platformGrid}>
@@ -146,8 +146,8 @@ const HomeScreen: React.FC = () => {
           <TouchableOpacity style={styles.actionButton} onPress={navigateToSettings}>
             <IconSymbol name="bolt.fill" size={24} color={Colors.primary} />
             <View style={styles.actionContent}>
-              <Text style={styles.actionTitle}>Configurações</Text>
-              <Text style={styles.actionDescription}>Ajustar qualidade e configurações</Text>
+              <Text style={styles.actionTitle}>Settings</Text>
+              <Text style={styles.actionDescription}>Adjust quality and settings</Text>
             </View>
             <Text style={styles.actionArrow}>›</Text>
           </TouchableOpacity>
@@ -155,8 +155,8 @@ const HomeScreen: React.FC = () => {
           <TouchableOpacity style={styles.actionButton} onPress={navigateToOverlay}>
             <IconSymbol name="photo.fill" size={24} color={Colors.primary} />
             <View style={styles.actionContent}>
-              <Text style={styles.actionTitle}>Gerenciar Overlays</Text>
-              <Text style={styles.actionDescription}>Adicionar elementos visuais</Text>
+              <Text style={styles.actionTitle}>Manage Overlays</Text>
+              <Text style={styles.actionDescription}>Add visual elements</Text>
             </View>
             <Text style={styles.actionArrow}>›</Text>
           </TouchableOpacity>
@@ -164,8 +164,8 @@ const HomeScreen: React.FC = () => {
           <TouchableOpacity style={styles.actionButton} onPress={navigateToReplay}>
             <IconSymbol name="globe" size={24} color={Colors.primary} />
             <View style={styles.actionContent}>
-              <Text style={styles.actionTitle}>Galeria de Replays</Text>
-              <Text style={styles.actionDescription}>Ver transmissões anteriores</Text>
+              <Text style={styles.actionTitle}>Replay Gallery</Text>
+              <Text style={styles.actionDescription}>View previous streams</Text>
             </View>
             <Text style={styles.actionArrow}>›</Text>
           </TouchableOpacity>
@@ -173,9 +173,9 @@ const HomeScreen: React.FC = () => {
 
         {/* Bottom Info */}
         <View style={styles.bottomInfo}>
-          <Text style={styles.infoText}>CADASTRO DE CLIENTES</Text>
-          <Text style={styles.infoText}>COBRANÇA RECORRENTE</Text>
-          <Text style={styles.infoText}>PAGAMENTO VIA APPLE / GOOGLE PLAY</Text>
+          <Text style={styles.infoText}>CLIENT REGISTRATION</Text>
+          <Text style={styles.infoText}>RECURRING BILLING</Text>
+          <Text style={styles.infoText}>PAYMENT VIA APPLE / GOOGLE PLAY</Text>
         </View>
       </ScrollView>
 
@@ -189,8 +189,8 @@ const HomeScreen: React.FC = () => {
         <View style={styles.modalContainer}>
           {/* Modal Header */}
           <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>APLICATIVO</Text>
-            <Text style={styles.modalTitleAccent}>TRANSMISSÃO</Text>
+            <Text style={styles.modalTitle}>STREAMING</Text>
+            <Text style={styles.modalTitleAccent}>APPLICATION</Text>
           </View>
 
           {/* Modal Content */}
@@ -226,14 +226,14 @@ const HomeScreen: React.FC = () => {
               style={styles.connectButton}
               onPress={handleRTMPConnect}
             >
-              <Text style={styles.connectButtonText}>INICIAR</Text>
+              <Text style={styles.connectButtonText}>START</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.cancelButton}
               onPress={() => setShowRTMPModal(false)}
             >
-              <Text style={styles.cancelButtonText}>Cancelar</Text>
+              <Text style={styles.cancelButtonText}>Cancel</Text>
             </TouchableOpacity>
           </View>
         </View>
