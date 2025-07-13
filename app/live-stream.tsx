@@ -1,14 +1,156 @@
-import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, StyleSheet, Alert, StatusBar } from 'react-native';
 import { useRouter } from 'expo-router';
+import DualCameraView from '@/components/DualCameraView';
 import StreamingInterface from '@/components/StreamingInterface';
+import { CameraLayout } from '@/services/DualCameraManager';
+import { useStreaming } from '@/hooks/useStreaming';
+import streamingService from '@/services/streamingService';
 
 const LiveStreamScreen: React.FC = () => {
   const router = useRouter();
+  const [cameraLayout, setCameraLayout] = useState<CameraLayout>(CameraLayout.SINGLE_BACK);
+  const [isInitialized, setIsInitialized] = useState(false);
+  const { 
+    isStreaming, 
+    streamStats, 
+    isInitializing, 
+    error, 
+    initializeStream,
+    startStream,
+    stopStream,
+    clearError 
+  } = useStreaming();
+
+  useEffect(() => {
+    initializeStreamingSystem();
+    
+    return () => {
+      // Cleanup when component unmounts
+      if (isStreaming) {
+        stopStream();
+      }
+      streamingService.dispose();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (error) {
+      Alert.alert('Streaming Error', error, [
+        { text: 'OK', onPress: clearError }
+      ]);
+    }
+  }, [error]);
+
+  const initializeStreamingSystem = async () => {
+    try {
+      // Initialize with default stream configuration
+      const defaultConfig = {
+        rtmpUrl: 'rtmp://localhost:1935/live/',
+        streamKey: 'test-stream-key',
+        platform: 'custom' as const,
+        quality: '720p' as const,
+        bitrate: 3000,
+        fps: 30,
+        enableAudio: true,
+        cameraLayout: CameraLayout.SINGLE_BACK
+      };
+
+      const success = await initializeStream(defaultConfig);
+      setIsInitialized(success);
+
+      if (!success) {
+        Alert.alert('Initialization Failed', 'Could not initialize streaming system');
+      }
+    } catch (error) {
+      console.error('Failed to initialize streaming system:', error);
+      Alert.alert('Error', 'Failed to initialize streaming system');
+    }
+  };
+
+  const handleLayoutChange = async (layout: CameraLayout) => {
+    try {
+      const success = await streamingService.switchCameraLayout(layout);
+      if (success) {
+        setCameraLayout(layout);
+      } else {
+        Alert.alert('Error', 'Failed to change camera layout');
+      }
+    } catch (error) {
+      console.error('Error changing camera layout:', error);
+      Alert.alert('Error', 'Failed to change camera layout');
+    }
+  };
+
+  const handleCameraSwitch = () => {
+    if (cameraLayout === CameraLayout.SINGLE_FRONT) {
+      handleLayoutChange(CameraLayout.SINGLE_BACK);
+    } else if (cameraLayout === CameraLayout.SINGLE_BACK) {
+      handleLayoutChange(CameraLayout.SINGLE_FRONT);
+    }
+  };
+
+  const handleStartStreaming = async () => {
+    if (isStreaming) {
+      await stopStream();
+    } else {
+      await startStream();
+    }
+  };
+
+  const handleQualityChange = async (quality: '720p' | '1080p' | '480p' | '4K') => {
+    try {
+      if (isStreaming) {
+        Alert.alert('Quality Change', 'Cannot change quality while streaming. Please stop the stream first.');
+        return;
+      }
+
+      const success = await streamingService.updateStreamQuality(quality);
+      if (!success) {
+        Alert.alert('Error', 'Failed to update stream quality');
+      }
+    } catch (error) {
+      console.error('Error changing quality:', error);
+      Alert.alert('Error', 'Failed to change stream quality');
+    }
+  };
+
+  if (!isInitialized && !isInitializing) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.errorContainer}>
+          {/* Could add error UI here */}
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
-      <StreamingInterface />
+      <StatusBar barStyle="light-content" backgroundColor="#000" />
+      
+      {/* Dual Camera View */}
+      <View style={styles.cameraContainer}>
+        <DualCameraView
+          layout={cameraLayout}
+          onLayoutChange={handleLayoutChange}
+          onCameraSwitch={handleCameraSwitch}
+          style={styles.camera}
+        />
+      </View>
+
+      {/* Streaming Interface Overlay */}
+      <View style={styles.interfaceContainer}>
+        <StreamingInterface
+          isStreaming={isStreaming}
+          streamStats={streamStats}
+          isInitializing={isInitializing}
+          onStartStop={handleStartStreaming}
+          onQualityChange={handleQualityChange}
+          onLayoutChange={handleLayoutChange}
+          currentLayout={cameraLayout}
+        />
+      </View>
     </View>
   );
 };
@@ -16,6 +158,27 @@ const LiveStreamScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#000',
+  },
+  cameraContainer: {
+    flex: 1,
+  },
+  camera: {
+    flex: 1,
+  },
+  interfaceContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    pointerEvents: 'box-none', // Allow camera interactions to pass through
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#333',
   },
 });
 
