@@ -7,9 +7,11 @@ import StreamingInterface from '@/components/StreamingInterface';
 import { CameraLayout } from '@/services/DualCameraManager';
 import { useStreaming } from '@/hooks/useStreaming';
 import streamingService from '@/services/streamingService';
+import { useResponsive } from '@/utils/responsive';
 
 const LiveStreamScreen: React.FC = () => {
   const router = useRouter();
+  const responsive = useResponsive();
   const [cameraLayout, setCameraLayout] = useState<CameraLayout>(CameraLayout.SINGLE_BACK);
   const [isInitialized, setIsInitialized] = useState(false);
   const { 
@@ -129,10 +131,13 @@ const LiveStreamScreen: React.FC = () => {
     }
   };
 
+  // Create responsive styles
+  const responsiveStyles = createResponsiveStyles(responsive);
+
   if (!isInitialized && !isInitializing) {
     return (
-      <View style={styles.container}>
-        <View style={styles.errorContainer}>
+      <View style={responsiveStyles.container}>
+        <View style={responsiveStyles.errorContainer}>
           {/* Could add error UI here */}
         </View>
       </View>
@@ -140,21 +145,21 @@ const LiveStreamScreen: React.FC = () => {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={responsiveStyles.container}>
       <StatusBar hidden={true} />
       
       {/* Dual Camera View */}
-      <View style={styles.cameraContainer}>
+      <View style={responsiveStyles.cameraContainer}>
         <DualCameraView
           layout={cameraLayout}
           onLayoutChange={handleLayoutChange}
           onCameraSwitch={handleCameraSwitch}
-          style={styles.camera}
+          style={responsiveStyles.camera}
         />
       </View>
 
       {/* Streaming Interface Overlay */}
-      <View style={styles.interfaceContainer}>
+      <View style={responsiveStyles.interfaceContainer}>
         <StreamingInterface
           isStreaming={isStreaming}
           streamStats={streamStats}
@@ -169,31 +174,50 @@ const LiveStreamScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#000',
-  },
-  cameraContainer: {
-    flex: 1,
-  },
-  camera: {
-    flex: 1,
-  },
-  interfaceContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    pointerEvents: 'box-none', // Allow camera interactions to pass through
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#333',
-  },
-});
+const createResponsiveStyles = (responsive: ReturnType<typeof useResponsive>) => {
+  const { orientation, deviceType, safeAreaHorizontal, safeAreaVertical } = responsive;
+  
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: '#000',
+    },
+    cameraContainer: {
+      flex: 1,
+      // Add responsive positioning for different orientations
+      ...(orientation === 'landscape' && {
+        paddingHorizontal: safeAreaHorizontal / 2,
+      })
+    },
+    camera: {
+      flex: 1,
+      borderRadius: orientation === 'landscape' ? responsive.styles.cameraView.borderRadius : 0,
+    },
+    interfaceContainer: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      pointerEvents: 'box-none', // Allow camera interactions to pass through
+      // Add responsive padding for different device types
+      ...(deviceType.includes('tablet') && {
+        paddingHorizontal: safeAreaHorizontal * 2,
+        paddingVertical: safeAreaVertical,
+      }),
+      ...(deviceType === 'desktop' && {
+        paddingHorizontal: safeAreaHorizontal * 3,
+        paddingVertical: safeAreaVertical * 2,
+      })
+    },
+    errorContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: '#333',
+      padding: safeAreaHorizontal,
+    },
+  });
+};
 
 export default LiveStreamScreen;

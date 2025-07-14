@@ -1,9 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, StyleSheet, Dimensions, TouchableOpacity, Alert } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { CameraView, CameraType } from 'expo-camera';
 import { dualCameraManager, CameraLayout, DualCameraState } from '../services/DualCameraManager';
-
-const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+import { useResponsive, getResponsiveStyles } from '../utils/responsive';
 
 interface DualCameraViewProps {
   layout: CameraLayout;
@@ -20,6 +19,7 @@ const DualCameraView: React.FC<DualCameraViewProps> = ({
 }) => {
   const frontCameraRef = useRef<CameraView>(null);
   const backCameraRef = useRef<CameraView>(null);
+  const responsive = useResponsive();
   const [cameraState, setCameraState] = useState<DualCameraState>(() => {
     const state = dualCameraManager.getState();
     // Ensure cameras are properly initialized
@@ -93,6 +93,7 @@ const DualCameraView: React.FC<DualCameraViewProps> = ({
   };
 
   const renderSingleCamera = (cameraType: CameraType) => {
+    const responsiveStyles = createResponsiveStyles(responsive);
     const isActive = cameraType === 'front' 
       ? cameraState.frontCamera?.isActive 
       : cameraState.backCamera?.isActive;
@@ -107,7 +108,7 @@ const DualCameraView: React.FC<DualCameraViewProps> = ({
     return (
       <CameraView
         ref={cameraRef}
-        style={styles.fullCamera}
+        style={responsiveStyles.fullCamera}
         facing={cameraType}
         flash={cameraDevice?.flashMode || 'off'}
         zoom={cameraDevice?.zoom || 1.0}
@@ -118,12 +119,13 @@ const DualCameraView: React.FC<DualCameraViewProps> = ({
   };
 
   const renderPiPLayout = () => {
+    const responsiveStyles = createResponsiveStyles(responsive);
     return (
-      <View style={styles.pipContainer}>
+      <View style={responsiveStyles.pipContainer}>
         {/* Main camera (back) */}
         <CameraView
           ref={backCameraRef}
-          style={styles.fullCamera}
+          style={responsiveStyles.fullCamera}
           facing="back"
           flash={cameraState.backCamera?.flashMode || 'off'}
           zoom={cameraState.backCamera?.zoom || 1.0}
@@ -132,10 +134,10 @@ const DualCameraView: React.FC<DualCameraViewProps> = ({
         />
         
         {/* Picture-in-picture camera (front) */}
-        <View style={styles.pipWindow}>
+        <View style={responsiveStyles.pipWindow}>
           <CameraView
             ref={frontCameraRef}
-            style={styles.pipCamera}
+            style={responsiveStyles.pipCamera}
             facing="front"
             flash={cameraState.frontCamera?.flashMode || 'off'}
             zoom={cameraState.frontCamera?.zoom || 1.0}
@@ -146,23 +148,24 @@ const DualCameraView: React.FC<DualCameraViewProps> = ({
 
         {/* Layout switch button */}
         <TouchableOpacity 
-          style={styles.layoutSwitchButton} 
+          style={responsiveStyles.layoutSwitchButton} 
           onPress={() => onLayoutChange?.(CameraLayout.SPLIT)}
         >
-          <View style={styles.layoutIcon} />
+          <View style={responsiveStyles.layoutIcon} />
         </TouchableOpacity>
       </View>
     );
   };
 
   const renderSplitLayout = () => {
+    const responsiveStyles = createResponsiveStyles(responsive);
     return (
-      <View style={styles.splitContainer}>
+      <View style={responsiveStyles.splitContainer}>
         {/* Top camera (back) */}
-        <View style={styles.splitTop}>
+        <View style={responsiveStyles.splitTop}>
           <CameraView
             ref={backCameraRef}
-            style={styles.splitCamera}
+            style={responsiveStyles.splitCamera}
             facing="back"
             flash={cameraState.backCamera?.flashMode || 'off'}
             zoom={cameraState.backCamera?.zoom || 1.0}
@@ -172,13 +175,13 @@ const DualCameraView: React.FC<DualCameraViewProps> = ({
         </View>
 
         {/* Divider */}
-        <View style={styles.splitDivider} />
+        <View style={responsiveStyles.splitDivider} />
 
         {/* Bottom camera (front) */}
-        <View style={styles.splitBottom}>
+        <View style={responsiveStyles.splitBottom}>
           <CameraView
             ref={frontCameraRef}
-            style={styles.splitCamera}
+            style={responsiveStyles.splitCamera}
             facing="front"
             flash={cameraState.frontCamera?.flashMode || 'off'}
             zoom={cameraState.frontCamera?.zoom || 1.0}
@@ -189,22 +192,23 @@ const DualCameraView: React.FC<DualCameraViewProps> = ({
 
         {/* Layout switch button */}
         <TouchableOpacity 
-          style={styles.layoutSwitchButton} 
+          style={responsiveStyles.layoutSwitchButton} 
           onPress={() => onLayoutChange?.(CameraLayout.OVERLAY)}
         >
-          <View style={styles.layoutIcon} />
+          <View style={responsiveStyles.layoutIcon} />
         </TouchableOpacity>
       </View>
     );
   };
 
   const renderOverlayLayout = () => {
+    const responsiveStyles = createResponsiveStyles(responsive);
     return (
-      <View style={styles.overlayContainer}>
+      <View style={responsiveStyles.overlayContainer}>
         {/* Background camera (back) */}
         <CameraView
           ref={backCameraRef}
-          style={styles.fullCamera}
+          style={responsiveStyles.fullCamera}
           facing="back"
           flash={cameraState.backCamera?.flashMode || 'off'}
           zoom={cameraState.backCamera?.zoom || 1.0}
@@ -213,10 +217,10 @@ const DualCameraView: React.FC<DualCameraViewProps> = ({
         />
         
         {/* Overlay camera (front) with transparency */}
-        <View style={styles.overlayFront}>
+        <View style={responsiveStyles.overlayFront}>
           <CameraView
             ref={frontCameraRef}
-            style={styles.overlayCamera}
+            style={responsiveStyles.overlayCamera}
             facing="front"
             flash={cameraState.frontCamera?.flashMode || 'off'}
             zoom={cameraState.frontCamera?.zoom || 1.0}
@@ -227,18 +231,19 @@ const DualCameraView: React.FC<DualCameraViewProps> = ({
 
         {/* Layout switch button */}
         <TouchableOpacity 
-          style={styles.layoutSwitchButton} 
+          style={responsiveStyles.layoutSwitchButton} 
           onPress={() => onLayoutChange?.(CameraLayout.PIP)}
         >
-          <View style={styles.layoutIcon} />
+          <View style={responsiveStyles.layoutIcon} />
         </TouchableOpacity>
       </View>
     );
   };
 
   const renderCameraContent = () => {
+    const responsiveStyles = createResponsiveStyles(responsive);
     if (!isInitialized) {
-      return <View style={styles.placeholder} />;
+      return <View style={responsiveStyles.placeholder} />;
     }
 
     switch (layout) {
@@ -257,168 +262,176 @@ const DualCameraView: React.FC<DualCameraViewProps> = ({
     }
   };
 
+  // Create responsive styles
+  const responsiveStyles = createResponsiveStyles(responsive);
+
   return (
-    <View style={[styles.container, style]}>
+    <View style={[responsiveStyles.container, style]}>
       {renderCameraContent()}
       
       {/* Camera switch button for single camera layouts */}
       {(layout === 'single_front' || layout === 'single_back') && (
         <TouchableOpacity 
-          style={styles.cameraSwitchButton} 
+          style={responsiveStyles.cameraSwitchButton} 
           onPress={handleCameraSwitch}
         >
-          <View style={styles.switchIcon} />
+          <View style={responsiveStyles.switchIcon} />
         </TouchableOpacity>
       )}
 
       {/* Error indicator */}
       {cameraState.error && (
-        <View style={styles.errorOverlay}>
-          <View style={styles.errorIndicator} />
+        <View style={responsiveStyles.errorOverlay}>
+          <View style={responsiveStyles.errorIndicator} />
         </View>
       )}
     </View>
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#000',
-    position: 'relative',
-  },
-  placeholder: {
-    flex: 1,
-    backgroundColor: '#333',
-  },
-  fullCamera: {
-    flex: 1,
-  },
+const createResponsiveStyles = (responsive: ReturnType<typeof useResponsive>) => {
+  const { screenWidth, screenHeight, buttonSize, safeAreaHorizontal, safeAreaVertical, orientation } = responsive;
   
-  // PiP Layout Styles
-  pipContainer: {
-    flex: 1,
-    position: 'relative',
-  },
-  pipWindow: {
-    position: 'absolute',
-    top: 50,
-    right: 20,
-    width: 120,
-    height: 160,
-    borderRadius: 12,
-    overflow: 'hidden',
-    borderWidth: 2,
-    borderColor: '#fff',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 10,
-  },
-  pipCamera: {
-    flex: 1,
-  },
-  
-  // Split Layout Styles
-  splitContainer: {
-    flex: 1,
-    flexDirection: 'column',
-  },
-  splitTop: {
-    flex: 1,
-  },
-  splitBottom: {
-    flex: 1,
-  },
-  splitCamera: {
-    flex: 1,
-  },
-  splitDivider: {
-    height: 2,
-    backgroundColor: '#fff',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.5,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  
-  // Overlay Layout Styles
-  overlayContainer: {
-    flex: 1,
-    position: 'relative',
-  },
-  overlayFront: {
-    position: 'absolute',
-    top: 50,
-    left: 20,
-    width: screenWidth * 0.4,
-    height: screenHeight * 0.3,
-    borderRadius: 12,
-    overflow: 'hidden',
-    opacity: 0.8,
-    borderWidth: 2,
-    borderColor: '#fff',
-  },
-  overlayCamera: {
-    flex: 1,
-  },
-  
-  // Control Buttons
-  layoutSwitchButton: {
-    position: 'absolute',
-    top: 20,
-    left: 20,
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#fff',
-  },
-  layoutIcon: {
-    width: 20,
-    height: 20,
-    backgroundColor: '#fff',
-    borderRadius: 2,
-  },
-  cameraSwitchButton: {
-    position: 'absolute',
-    bottom: 100,
-    right: 20,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#fff',
-  },
-  switchIcon: {
-    width: 24,
-    height: 24,
-    backgroundColor: '#fff',
-    borderRadius: 12,
-  },
-  
-  // Error States
-  errorOverlay: {
-    position: 'absolute',
-    top: 20,
-    right: 20,
-    width: 24,
-    height: 24,
-  },
-  errorIndicator: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#ff4444',
-  },
-});
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: '#000',
+      position: 'relative',
+    },
+    placeholder: {
+      flex: 1,
+      backgroundColor: '#333',
+    },
+    fullCamera: {
+      flex: 1,
+    },
+    
+    // PiP Layout Styles - Responsive
+    pipContainer: {
+      flex: 1,
+      position: 'relative',
+    },
+    pipWindow: {
+      position: 'absolute',
+      top: safeAreaVertical * 2,
+      right: safeAreaHorizontal,
+      width: orientation === 'landscape' ? screenWidth * 0.25 : screenWidth * 0.3,
+      height: orientation === 'landscape' ? screenHeight * 0.4 : screenHeight * 0.25,
+      borderRadius: responsive.styles.cameraView.borderRadius,
+      overflow: 'hidden',
+      borderWidth: 2,
+      borderColor: '#fff',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.3,
+      shadowRadius: 8,
+      elevation: 10,
+    },
+    pipCamera: {
+      flex: 1,
+    },
+    
+    // Split Layout Styles
+    splitContainer: {
+      flex: 1,
+      flexDirection: orientation === 'landscape' ? 'row' : 'column',
+    },
+    splitTop: {
+      flex: 1,
+    },
+    splitBottom: {
+      flex: 1,
+    },
+    splitCamera: {
+      flex: 1,
+    },
+    splitDivider: {
+      width: orientation === 'landscape' ? 2 : '100%',
+      height: orientation === 'landscape' ? '100%' : 2,
+      backgroundColor: '#fff',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.5,
+      shadowRadius: 4,
+      elevation: 5,
+    },
+    
+    // Overlay Layout Styles - Responsive
+    overlayContainer: {
+      flex: 1,
+      position: 'relative',
+    },
+    overlayFront: {
+      position: 'absolute',
+      top: safeAreaVertical * 2,
+      left: safeAreaHorizontal,
+      width: orientation === 'landscape' ? screenWidth * 0.3 : screenWidth * 0.4,
+      height: orientation === 'landscape' ? screenHeight * 0.5 : screenHeight * 0.3,
+      borderRadius: responsive.styles.cameraView.borderRadius,
+      overflow: 'hidden',
+      opacity: 0.8,
+      borderWidth: 2,
+      borderColor: '#fff',
+    },
+    overlayCamera: {
+      flex: 1,
+    },
+    
+    // Control Buttons - Responsive
+    layoutSwitchButton: {
+      position: 'absolute',
+      top: safeAreaVertical,
+      left: safeAreaHorizontal,
+      width: buttonSize.medium,
+      height: buttonSize.medium,
+      borderRadius: buttonSize.medium / 2,
+      backgroundColor: 'rgba(0, 0, 0, 0.6)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderWidth: 2,
+      borderColor: '#fff',
+    },
+    layoutIcon: {
+      width: responsive.iconSize.medium,
+      height: responsive.iconSize.medium,
+      backgroundColor: '#fff',
+      borderRadius: 2,
+    },
+    cameraSwitchButton: {
+      position: 'absolute',
+      bottom: orientation === 'landscape' ? safeAreaVertical * 2 : safeAreaVertical * 4,
+      right: safeAreaHorizontal,
+      width: buttonSize.large,
+      height: buttonSize.large,
+      borderRadius: buttonSize.large / 2,
+      backgroundColor: 'rgba(0, 0, 0, 0.6)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderWidth: 2,
+      borderColor: '#fff',
+    },
+    switchIcon: {
+      width: responsive.iconSize.large,
+      height: responsive.iconSize.large,
+      backgroundColor: '#fff',
+      borderRadius: responsive.iconSize.large / 2,
+    },
+    
+    // Error States
+    errorOverlay: {
+      position: 'absolute',
+      top: safeAreaVertical,
+      right: safeAreaHorizontal,
+      width: buttonSize.small,
+      height: buttonSize.small,
+    },
+    errorIndicator: {
+      width: buttonSize.small,
+      height: buttonSize.small,
+      borderRadius: buttonSize.small / 2,
+      backgroundColor: '#ff4444',
+    },
+  });
+};
 
 export default DualCameraView;

@@ -9,6 +9,7 @@ import {
   View,
   Platform
 } from 'react-native';
+import { useResponsive } from '../utils/responsive';
 import CameraControls from './CameraControls';
 import EffectsModal from './EffectsModal';
 import MicrophoneModal from './MicrophoneModal';
@@ -49,15 +50,30 @@ const Colors = {
 };
 
 interface StreamingInterfaceProps {
-  // Props can be added here if needed
+  isStreaming: boolean;
+  streamStats?: any;
+  isInitializing: boolean;
+  onStartStop: () => void;
+  onQualityChange: (quality: '720p' | '1080p' | '480p' | '4K') => void;
+  onLayoutChange: (layout: any) => void;
+  currentLayout: any;
 }
 
-const StreamingInterface: React.FC<StreamingInterfaceProps> = () => {
+const StreamingInterface: React.FC<StreamingInterfaceProps> = ({
+  isStreaming: propIsStreaming,
+  streamStats,
+  isInitializing,
+  onStartStop,
+  onQualityChange,
+  onLayoutChange,
+  currentLayout
+}) => {
   const router = useRouter();
-  const [deviceType, setDeviceType] = useState(getDeviceType());
-  const [isPortrait, setIsPortrait] = useState(height > width);
+  const responsive = useResponsive();
+  const [deviceType, setDeviceType] = useState(responsive.deviceType);
+  const [isPortrait, setIsPortrait] = useState(responsive.orientation === 'portrait');
   
-  const [isStreaming, setIsStreaming] = useState(false);
+  const [isStreaming, setIsStreaming] = useState(propIsStreaming);
   const [activeSource, setActiveSource] = useState(0);
   const [isQuickAccessOpen, setIsQuickAccessOpen] = useState(false);
   const [isProModeOpen, setIsProModeOpen] = useState(false);
@@ -83,17 +99,16 @@ const StreamingInterface: React.FC<StreamingInterfaceProps> = () => {
     audioLevel: 75
   });
 
-  // Detect screen size changes
+  // Sync with prop changes
   useEffect(() => {
-    const updateLayout = () => {
-      const newDimensions = Dimensions.get('window');
-      setDeviceType(getDeviceType());
-      setIsPortrait(newDimensions.height > newDimensions.width);
-    };
+    setIsStreaming(propIsStreaming);
+  }, [propIsStreaming]);
 
-    const subscription = Dimensions.addEventListener('change', updateLayout);
-    return () => subscription?.remove();
-  }, []);
+  // Update responsive state when dimensions change
+  useEffect(() => {
+    setDeviceType(responsive.deviceType);
+    setIsPortrait(responsive.orientation === 'portrait');
+  }, [responsive.deviceType, responsive.orientation]);
 
   // Realistic audio level animation
   useEffect(() => {
@@ -119,7 +134,7 @@ const StreamingInterface: React.FC<StreamingInterfaceProps> = () => {
   };
 
   const handleStreamToggle = () => {
-    setIsStreaming(!isStreaming);
+    onStartStop();
   };
 
   const handleQuickAccessToggle = () => {
@@ -219,8 +234,8 @@ const StreamingInterface: React.FC<StreamingInterfaceProps> = () => {
 
   // Responsive style functions
   const getResponsiveStyles = () => {
-    const isMobile = deviceType === 'mobile';
-    const isTablet = deviceType === 'tablet';
+    const isMobile = deviceType.includes('phone');
+    const isTablet = deviceType.includes('tablet');
     const isDesktop = deviceType === 'desktop';
 
     return {
