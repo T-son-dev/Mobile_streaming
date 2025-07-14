@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, StyleSheet, Dimensions, TouchableOpacity, Alert } from 'react-native';
-import { Camera, CameraType } from 'expo-camera';
+import { CameraView, CameraType } from 'expo-camera';
 import { dualCameraManager, CameraLayout, DualCameraState } from '../services/DualCameraManager';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
@@ -18,14 +18,46 @@ const DualCameraView: React.FC<DualCameraViewProps> = ({
   onCameraSwitch,
   style
 }) => {
-  const frontCameraRef = useRef<Camera>(null);
-  const backCameraRef = useRef<Camera>(null);
-  const [cameraState, setCameraState] = useState<DualCameraState>(dualCameraManager.getState());
+  const frontCameraRef = useRef<CameraView>(null);
+  const backCameraRef = useRef<CameraView>(null);
+  const [cameraState, setCameraState] = useState<DualCameraState>(() => {
+    const state = dualCameraManager.getState();
+    // Ensure cameras are properly initialized
+    if (!state.frontCamera || !state.backCamera) {
+      return {
+        frontCamera: {
+          id: 'front',
+          type: 'front' as CameraType,
+          isActive: false,
+          ref: null,
+          zoom: 1.0,
+          flashMode: 'off' as any
+        },
+        backCamera: {
+          id: 'back',
+          type: 'back' as CameraType,
+          isActive: false,
+          ref: null,
+          zoom: 1.0,
+          flashMode: 'off' as any
+        },
+        layout: CameraLayout.SINGLE_BACK,
+        resolution: 'MEDIUM' as any,
+        isRecording: false,
+        isInitialized: false,
+        error: null
+      };
+    }
+    return state;
+  });
   const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
     const unsubscribe = dualCameraManager.subscribe((state) => {
-      setCameraState(state);
+      // Ensure state has proper camera objects before setting
+      if (state && state.frontCamera && state.backCamera) {
+        setCameraState(state);
+      }
     });
 
     initializeCameras();
@@ -61,26 +93,26 @@ const DualCameraView: React.FC<DualCameraViewProps> = ({
   };
 
   const renderSingleCamera = (cameraType: CameraType) => {
-    const isActive = cameraType === CameraType.front 
-      ? cameraState.frontCamera.isActive 
-      : cameraState.backCamera.isActive;
+    const isActive = cameraType === 'front' 
+      ? cameraState.frontCamera?.isActive 
+      : cameraState.backCamera?.isActive;
 
     if (!isActive) return null;
 
-    const cameraRef = cameraType === CameraType.front ? frontCameraRef : backCameraRef;
-    const cameraDevice = cameraType === CameraType.front 
+    const cameraRef = cameraType === 'front' ? frontCameraRef : backCameraRef;
+    const cameraDevice = cameraType === 'front' 
       ? cameraState.frontCamera 
       : cameraState.backCamera;
 
     return (
-      <Camera
+      <CameraView
         ref={cameraRef}
         style={styles.fullCamera}
-        type={cameraType}
-        flashMode={cameraDevice.flashMode}
-        zoom={cameraDevice.zoom}
+        facing={cameraType}
+        flash={cameraDevice?.flashMode || 'off'}
+        zoom={cameraDevice?.zoom || 1.0}
         onCameraReady={() => console.log(`${cameraType} camera ready`)}
-        onMountError={(error) => console.error(`${cameraType} camera mount error:`, error)}
+        onMountError={(error: any) => console.error(`${cameraType} camera mount error:`, error)}
       />
     );
   };
@@ -89,26 +121,26 @@ const DualCameraView: React.FC<DualCameraViewProps> = ({
     return (
       <View style={styles.pipContainer}>
         {/* Main camera (back) */}
-        <Camera
+        <CameraView
           ref={backCameraRef}
           style={styles.fullCamera}
-          type={CameraType.back}
-          flashMode={cameraState.backCamera.flashMode}
-          zoom={cameraState.backCamera.zoom}
+          facing="back"
+          flash={cameraState.backCamera?.flashMode || 'off'}
+          zoom={cameraState.backCamera?.zoom || 1.0}
           onCameraReady={() => console.log('Back camera ready')}
-          onMountError={(error) => console.error('Back camera mount error:', error)}
+          onMountError={(error: any) => console.error('Back camera mount error:', error)}
         />
         
         {/* Picture-in-picture camera (front) */}
         <View style={styles.pipWindow}>
-          <Camera
+          <CameraView
             ref={frontCameraRef}
             style={styles.pipCamera}
-            type={CameraType.front}
-            flashMode={cameraState.frontCamera.flashMode}
-            zoom={cameraState.frontCamera.zoom}
+            facing="front"
+            flash={cameraState.frontCamera?.flashMode || 'off'}
+            zoom={cameraState.frontCamera?.zoom || 1.0}
             onCameraReady={() => console.log('Front camera ready')}
-            onMountError={(error) => console.error('Front camera mount error:', error)}
+            onMountError={(error: any) => console.error('Front camera mount error:', error)}
           />
         </View>
 
@@ -128,14 +160,14 @@ const DualCameraView: React.FC<DualCameraViewProps> = ({
       <View style={styles.splitContainer}>
         {/* Top camera (back) */}
         <View style={styles.splitTop}>
-          <Camera
+          <CameraView
             ref={backCameraRef}
             style={styles.splitCamera}
-            type={CameraType.back}
-            flashMode={cameraState.backCamera.flashMode}
-            zoom={cameraState.backCamera.zoom}
+            facing="back"
+            flash={cameraState.backCamera?.flashMode || 'off'}
+            zoom={cameraState.backCamera?.zoom || 1.0}
             onCameraReady={() => console.log('Back camera ready')}
-            onMountError={(error) => console.error('Back camera mount error:', error)}
+            onMountError={(error: any) => console.error('Back camera mount error:', error)}
           />
         </View>
 
@@ -144,14 +176,14 @@ const DualCameraView: React.FC<DualCameraViewProps> = ({
 
         {/* Bottom camera (front) */}
         <View style={styles.splitBottom}>
-          <Camera
+          <CameraView
             ref={frontCameraRef}
             style={styles.splitCamera}
-            type={CameraType.front}
-            flashMode={cameraState.frontCamera.flashMode}
-            zoom={cameraState.frontCamera.zoom}
+            facing="front"
+            flash={cameraState.frontCamera?.flashMode || 'off'}
+            zoom={cameraState.frontCamera?.zoom || 1.0}
             onCameraReady={() => console.log('Front camera ready')}
-            onMountError={(error) => console.error('Front camera mount error:', error)}
+            onMountError={(error: any) => console.error('Front camera mount error:', error)}
           />
         </View>
 
@@ -170,26 +202,26 @@ const DualCameraView: React.FC<DualCameraViewProps> = ({
     return (
       <View style={styles.overlayContainer}>
         {/* Background camera (back) */}
-        <Camera
+        <CameraView
           ref={backCameraRef}
           style={styles.fullCamera}
-          type={CameraType.back}
-          flashMode={cameraState.backCamera.flashMode}
-          zoom={cameraState.backCamera.zoom}
+          facing="back"
+          flash={cameraState.backCamera?.flashMode || 'off'}
+          zoom={cameraState.backCamera?.zoom || 1.0}
           onCameraReady={() => console.log('Back camera ready')}
-          onMountError={(error) => console.error('Back camera mount error:', error)}
+          onMountError={(error: any) => console.error('Back camera mount error:', error)}
         />
         
         {/* Overlay camera (front) with transparency */}
         <View style={styles.overlayFront}>
-          <Camera
+          <CameraView
             ref={frontCameraRef}
             style={styles.overlayCamera}
-            type={CameraType.front}
-            flashMode={cameraState.frontCamera.flashMode}
-            zoom={cameraState.frontCamera.zoom}
+            facing="front"
+            flash={cameraState.frontCamera?.flashMode || 'off'}
+            zoom={cameraState.frontCamera?.zoom || 1.0}
             onCameraReady={() => console.log('Front camera ready')}
-            onMountError={(error) => console.error('Front camera mount error:', error)}
+            onMountError={(error: any) => console.error('Front camera mount error:', error)}
           />
         </View>
 
@@ -211,9 +243,9 @@ const DualCameraView: React.FC<DualCameraViewProps> = ({
 
     switch (layout) {
       case CameraLayout.SINGLE_FRONT:
-        return renderSingleCamera(CameraType.front);
+        return renderSingleCamera('front');
       case CameraLayout.SINGLE_BACK:
-        return renderSingleCamera(CameraType.back);
+        return renderSingleCamera('back');
       case CameraLayout.PIP:
         return renderPiPLayout();
       case CameraLayout.SPLIT:
@@ -221,7 +253,7 @@ const DualCameraView: React.FC<DualCameraViewProps> = ({
       case CameraLayout.OVERLAY:
         return renderOverlayLayout();
       default:
-        return renderSingleCamera(CameraType.back);
+        return renderSingleCamera('back');
     }
   };
 
@@ -230,7 +262,7 @@ const DualCameraView: React.FC<DualCameraViewProps> = ({
       {renderCameraContent()}
       
       {/* Camera switch button for single camera layouts */}
-      {(layout === CameraLayout.SINGLE_FRONT || layout === CameraLayout.SINGLE_BACK) && (
+      {(layout === 'single_front' || layout === 'single_back') && (
         <TouchableOpacity 
           style={styles.cameraSwitchButton} 
           onPress={handleCameraSwitch}

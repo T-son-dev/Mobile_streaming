@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, Alert, StatusBar } from 'react-native';
 import { useRouter } from 'expo-router';
+import * as ScreenOrientation from 'expo-screen-orientation';
 import DualCameraView from '@/components/DualCameraView';
 import StreamingInterface from '@/components/StreamingInterface';
 import { CameraLayout } from '@/services/DualCameraManager';
@@ -23,6 +24,16 @@ const LiveStreamScreen: React.FC = () => {
   } = useStreaming();
 
   useEffect(() => {
+    // Set orientation to landscape when component mounts
+    const setLandscapeOrientation = async () => {
+      try {
+        await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
+      } catch (error) {
+        console.error('Failed to set landscape orientation:', error);
+      }
+    };
+    
+    setLandscapeOrientation();
     initializeStreamingSystem();
     
     return () => {
@@ -31,6 +42,9 @@ const LiveStreamScreen: React.FC = () => {
         stopStream();
       }
       streamingService.dispose();
+      
+      // Reset orientation to portrait when leaving screen
+      ScreenOrientation.unlockAsync().catch(console.error);
     };
   }, []);
 
@@ -46,8 +60,8 @@ const LiveStreamScreen: React.FC = () => {
     try {
       // Initialize with default stream configuration
       const defaultConfig = {
-        rtmpUrl: 'rtmp://localhost:1935/live/',
-        streamKey: 'test-stream-key',
+        rtmpUrl: 'rtmp://146.19.215.133:1935/live/',
+        streamKey: 'test',
         platform: 'custom' as const,
         quality: '720p' as const,
         bitrate: 3000,
@@ -127,7 +141,7 @@ const LiveStreamScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#000" />
+      <StatusBar hidden={true} />
       
       {/* Dual Camera View */}
       <View style={styles.cameraContainer}>

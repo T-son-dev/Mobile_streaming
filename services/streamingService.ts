@@ -1,5 +1,5 @@
 import { Alert } from 'react-native';
-import { NodeMediaClient } from 'react-native-nodemediaclient';
+import { MockRTMPPublisher, RTMPConfig } from './MockRTMPService';
 import { dualCameraManager, CameraLayout } from './DualCameraManager';
 import { videoComposer, VideoCompositionConfig } from './VideoComposer';
 
@@ -37,13 +37,12 @@ class StreamingService {
   private isStreaming = false;
   private streamConfig: StreamConfig | null = null;
   private startTime = 0;
-  private statsInterval: NodeJS.Timeout | null = null;
+  private statsInterval: ReturnType<typeof setInterval> | null = null;
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
-  private nodeMediaClient: NodeMediaClient | null = null;
+  private rtmpPublisher: MockRTMPPublisher | null = null;
   private totalFrames = 0;
   private droppedFrames = 0;
-  private lastBitrateCheck = 0;
   private networkSpeed = 0;
 
   async initializeStream(config: StreamConfig): Promise<boolean> {
@@ -80,12 +79,16 @@ class StreamingService {
         throw new Error('Failed to initialize video composer');
       }
 
-      // Initialize RTMP client
-      this.nodeMediaClient = new NodeMediaClient();
+      // Initialize RTMP publisher
+      this.rtmpPublisher = new MockRTMPPublisher();
       
-      // Configure RTMP client
-      const rtmpConfig = this.buildRTMPConfig(config);
-      this.nodeMediaClient.setConfig(rtmpConfig);
+      // Configure RTMP publisher
+      const rtmpConfig: RTMPConfig = {
+        url: config.rtmpUrl,
+        streamKey: config.streamKey,
+        ...this.buildRTMPConfig(config)
+      };
+      this.rtmpPublisher.setConfig(rtmpConfig);
 
       // Setup event listeners
       this.setupRTMPEventListeners();
@@ -101,7 +104,7 @@ class StreamingService {
   }
 
   async startStream(): Promise<boolean> {
-    if (!this.streamConfig || !this.nodeMediaClient) {
+    if (!this.streamConfig || !this.rtmpPublisher) {
       Alert.alert('Error', 'Stream not initialized. Please configure stream settings first.');
       return false;
     }
@@ -126,12 +129,10 @@ class StreamingService {
         throw new Error('Failed to start video composition');
       }
 
-      // Connect to RTMP server
-      const rtmpUrl = `${this.streamConfig.rtmpUrl}${this.streamConfig.streamKey}`;
-      console.log('Connecting to RTMP server:', rtmpUrl);
+      // Start RTMP publishing
+      console.log('Starting RTMP publisher...');
       
-      await this.nodeMediaClient.start();
-      await this.nodeMediaClient.startStream(rtmpUrl);
+      await this.rtmpPublisher.start();
       
       this.isStreaming = true;
       this.startTime = Date.now();
@@ -173,16 +174,17 @@ class StreamingService {
       this.stopStatsMonitoring();
       
       // Stop RTMP streaming
-      if (this.nodeMediaClient) {
-        await this.nodeMediaClient.stopStream();
-        await this.nodeMediaClient.stop();
+      if (this.rtmpPublisher) {
+        await this.rtmpPublisher.stop();
       }
       
       // Stop video composition
       await videoComposer.stopComposition();
       
-      // Stop camera recording
-      await dualCameraManager.stopRecording();
+      // Stop camera recording if it's in progress
+      if (dualCameraManager.getState().isRecording) {
+        await dualCameraManager.stopRecording();
+      }
       
       this.startTime = 0;
       this.totalFrames = 0;
@@ -298,15 +300,16 @@ class StreamingService {
   }
 
   private updateNetworkStats(): void {
-    if (this.nodeMediaClient && this.isStreaming) {
-      // In a real implementation, this would get actual network stats from the RTMP client
-      const currentTime = Date.now();
-      const timeDiff = currentTime - this.lastBitrateCheck;
+    if (this.rtmpPublisher && this.isStreaming) {
+      const stats = this.rtmpPublisher.getStats();
       
-      if (timeDiff > 0) {
-        // Simulate network speed calculation
-        this.networkSpeed = Math.floor(Math.random() * 5000) + 1000; // 1-6 Mbps
-        this.lastBitrateCheck = currentTime;
+      // Update network speed based on actual bitrate
+      this.networkSpeed = stats.bitrate;
+      
+      // Update frame stats
+      const newDroppedFrames = stats.droppedFrames;
+      if (newDroppedFrames > this.droppedFrames) {
+        this.droppedFrames = newDroppedFrames;
       }
     }
   }
@@ -367,10 +370,6 @@ class StreamingService {
 
   private buildRTMPConfig(config: StreamConfig): any {
     return {
-      camera: {
-        cameraId: 1,
-        cameraFrontMirror: true,
-      },
       audio: {
         bitrate: 32000,
         profile: 1,
@@ -397,27 +396,25 @@ class StreamingService {
   }
 
   private setupRTMPEventListeners(): void {
-    if (!this.nodeMediaClient) return;
+    if (!this.rtmpPublisher) return;
 
-    this.nodeMediaClient.on('onConnectionStarted', () => {
-      console.log('RTMP connection started');
-    });
-
-    this.nodeMediaClient.on('onConnectionFailed', (error: any) => {
-      console.error('RTMP connection failed:', error);
-      this.handleConnectionError(error);
-    });
-
-    this.nodeMediaClient.on('onConnectionClosed', () => {
-      console.log('RTMP connection closed');
-      if (this.isStreaming) {
-        this.reconnectStream();
+    this.rtmpPublisher.on('onStateChange', (state: any) => {
+      console.log('RTMP state changed:', state);
+      if (state === 'CONNECTING') {
+        console.log('RTMP connection started');
+      } else if (state === 'CONNECTED') {
+        console.log('RTMP connected successfully');
+      } else if (state === 'DISCONNECTED') {
+        console.log('RTMP connection closed');
+        if (this.isStreaming) {
+          this.reconnectStream();
+        }
       }
     });
 
-    this.nodeMediaClient.on('onStreamError', (error: any) => {
-      console.error('RTMP stream error:', error);
-      this.handleStreamError(error);
+    this.rtmpPublisher.on('onError', (error: any) => {
+      console.error('RTMP error:', error);
+      this.handleConnectionError(error);
     });
   }
 
@@ -432,20 +429,18 @@ class StreamingService {
     }
   }
 
-  private async handleStreamError(error: any): Promise<void> {
-    console.error('Handling stream error:', error);
-    
-    // In a real implementation, handle different types of stream errors
-    this.droppedFrames += 10; // Simulate frame loss due to error
-  }
 
   private async cleanup(): Promise<void> {
     try {
       await videoComposer.stopComposition();
-      await dualCameraManager.stopRecording();
       
-      if (this.nodeMediaClient) {
-        await this.nodeMediaClient.stop();
+      // Only stop recording if it's actually in progress
+      if (dualCameraManager.getState().isRecording) {
+        await dualCameraManager.stopRecording();
+      }
+      
+      if (this.rtmpPublisher) {
+        await this.rtmpPublisher.stop();
       }
     } catch (error) {
       console.error('Error during cleanup:', error);
@@ -499,9 +494,9 @@ class StreamingService {
     console.log('Disposing streaming service...');
     this.stopStream();
     
-    if (this.nodeMediaClient) {
-      this.nodeMediaClient.removeAllListeners();
-      this.nodeMediaClient = null;
+    if (this.rtmpPublisher) {
+      this.rtmpPublisher.removeAllListeners();
+      this.rtmpPublisher = null;
     }
 
     videoComposer.dispose();

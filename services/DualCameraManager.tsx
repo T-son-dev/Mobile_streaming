@@ -363,12 +363,35 @@ class DualCameraManager {
   dispose(): void {
     console.log('Disposing dual camera manager...');
     this.stopRecording();
-    this.listeners = [];
-    this.updateState({
-      isInitialized: false,
+    
+    // Reset to initial state and notify listeners before clearing them
+    this.state = {
+      frontCamera: {
+        id: 'front',
+        type: 'front' as CameraType,
+        isActive: false,
+        ref: null,
+        zoom: 1.0,
+        flashMode: 'off' as FlashMode
+      },
+      backCamera: {
+        id: 'back',
+        type: 'back' as CameraType,
+        isActive: false,
+        ref: null,
+        zoom: 1.0,
+        flashMode: 'off' as FlashMode
+      },
+      layout: CameraLayout.SINGLE_BACK,
+      resolution: ResolutionPreset.MEDIUM,
       isRecording: false,
+      isInitialized: false,
       error: null
-    });
+    };
+    
+    // Notify listeners about the reset state before clearing
+    this.notifyListeners();
+    this.listeners = [];
   }
 }
 
