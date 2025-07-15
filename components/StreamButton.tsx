@@ -1,5 +1,6 @@
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { TouchableOpacity, Text, StyleSheet, Platform } from 'react-native';
+import { useResponsive } from '../utils/responsive';
 
 interface StreamButtonProps {
   isStreaming: boolean;
@@ -16,18 +17,25 @@ const Colors = {
 };
 
 const StreamButton: React.FC<StreamButtonProps> = ({ isStreaming, onToggle }) => {
+  const responsive = useResponsive();
+  const isMobile = responsive.deviceType.includes('phone');
+  const minTouchTarget = responsive.capabilities.minTouchTarget;
+  
   return (
     <TouchableOpacity
       onPress={onToggle}
       style={[
         styles.button,
-        isStreaming ? styles.buttonDanger : styles.buttonPrimary
+        isStreaming ? styles.buttonDanger : styles.buttonPrimary,
+        isMobile && styles.buttonMobile,
+        { minHeight: minTouchTarget }
       ]}
       activeOpacity={0.8}
     >
       <Text style={[
         styles.buttonText,
-        isStreaming ? styles.buttonTextLight : styles.buttonTextDark
+        isStreaming ? styles.buttonTextLight : styles.buttonTextDark,
+        isMobile && styles.buttonTextMobile
       ]}>
         {isStreaming ? 'STOP STREAMING' : 'START STREAMING'}
       </Text>
@@ -51,6 +59,13 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
     elevation: 5,
   },
+  buttonMobile: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    minWidth: 120,
+    maxWidth: '70%',
+  },
   buttonPrimary: {
     backgroundColor: Colors.primary,
   },
@@ -60,6 +75,10 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 18,
     fontWeight: '600',
+  },
+  buttonTextMobile: {
+    fontSize: 12,
+    fontWeight: '700',
   },
   buttonTextLight: {
     color: Colors.text,

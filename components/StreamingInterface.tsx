@@ -9,6 +9,7 @@ import {
   View,
   Platform
 } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useResponsive } from '../utils/responsive';
 import CameraControls from './CameraControls';
 import EffectsModal from './EffectsModal';
@@ -70,6 +71,7 @@ const StreamingInterface: React.FC<StreamingInterfaceProps> = ({
 }) => {
   const router = useRouter();
   const responsive = useResponsive();
+  const insets = useSafeAreaInsets();
   const [deviceType, setDeviceType] = useState(responsive.deviceType);
   const [isPortrait, setIsPortrait] = useState(responsive.orientation === 'portrait');
   
@@ -237,6 +239,7 @@ const StreamingInterface: React.FC<StreamingInterfaceProps> = ({
     const isMobile = deviceType.includes('phone');
     const isTablet = deviceType.includes('tablet');
     const isDesktop = deviceType === 'desktop';
+    const minTouchTarget = responsive.capabilities.minTouchTarget;
 
     return {
       // Header styles
@@ -244,7 +247,9 @@ const StreamingInterface: React.FC<StreamingInterfaceProps> = ({
         styles.header,
         isMobile && styles.headerMobile,
         isTablet && styles.headerTablet,
-        isDesktop && styles.headerDesktop
+        isDesktop && styles.headerDesktop,
+        // Add safe area padding for mobile
+        isMobile && { paddingTop: Math.max(insets.top, 12) }
       ],
       
       // Main content layout
@@ -278,7 +283,9 @@ const StreamingInterface: React.FC<StreamingInterfaceProps> = ({
         styles.bottomSection,
         isMobile && styles.bottomSectionMobile,
         isTablet && styles.bottomSectionTablet,
-        isDesktop && styles.bottomSectionDesktop
+        isDesktop && styles.bottomSectionDesktop,
+        // Add safe area padding for mobile
+        isMobile && { paddingBottom: Math.max(insets.bottom, 12) }
       ],
       
       // Monitoring container
@@ -294,7 +301,7 @@ const StreamingInterface: React.FC<StreamingInterfaceProps> = ({
   const responsiveStyles = getResponsiveStyles();
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
       
       {/* Header Section */}
@@ -339,8 +346,12 @@ const StreamingInterface: React.FC<StreamingInterfaceProps> = ({
               onPress={handleQuickAccessToggle}
               style={styles.menuButton}
             >
-              <View style={[styles.menuButtonCircle, isQuickAccessOpen && styles.menuButtonActive]}>
-                <IconSymbol name="line.horizontal.3" size={24} color={Colors.background} />
+              <View style={[
+                styles.menuButtonCircle, 
+                isQuickAccessOpen && styles.menuButtonActive,
+                deviceType.includes('phone') && styles.menuButtonCircleMobile
+              ]}>
+                <IconSymbol name="line.horizontal.3" size={deviceType.includes('phone') ? 14 : 24} color={Colors.background} />
               </View>
             </TouchableOpacity>
           </View>
@@ -351,7 +362,10 @@ const StreamingInterface: React.FC<StreamingInterfaceProps> = ({
       <View style={responsiveStyles.mainContent}>
         {/* Source Panel */}
         <View style={responsiveStyles.sourceSidebar}>
-          <View style={styles.sourceList}>
+          <View style={[
+            styles.sourceList,
+            deviceType.includes('phone') && isPortrait && styles.sourceListMobile
+          ]}>
             {sources.map((source) => (
               <SourceCard
                 key={source.id}
@@ -432,7 +446,7 @@ const StreamingInterface: React.FC<StreamingInterfaceProps> = ({
         onVolumeChange={handleVolumeChange}
         onZoomChange={handleZoomChange}
       />
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -451,9 +465,9 @@ const styles = StyleSheet.create({
     borderBottomColor: Colors.border,
   },
   headerMobile: {
-    paddingHorizontal: 12,
-    paddingTop: 12,
-    paddingBottom: 12,
+    paddingHorizontal: 4,
+    paddingTop: 4,
+    paddingBottom: 4,
   },
   headerTablet: {
     paddingHorizontal: 20,
@@ -498,6 +512,11 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
     elevation: 5,
   },
+  menuButtonCircleMobile: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+  },
   menuButtonActive: {
     backgroundColor: Colors.primaryHover,
   },
@@ -529,15 +548,15 @@ const styles = StyleSheet.create({
   },
   sourceSidebarMobilePortrait: {
     width: '100%',
-    height: 120,
+    height: 36,
     borderRightWidth: 0,
     borderBottomWidth: 1,
     borderBottomColor: Colors.border,
-    padding: 12,
+    padding: 2,
   },
   sourceSidebarMobileLandscape: {
-    width: 160,
-    padding: 12,
+    width: '20%',
+    padding: 4,
   },
   sourceSidebarTablet: {
     width: 200,
@@ -548,7 +567,14 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   sourceList: {
-    gap: 12,
+    gap: 8,
+  },
+  sourceListMobile: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-around',
+    alignItems: 'flex-start',
+    gap: 2,
   },
   
   // Video Preview Container Styles
@@ -557,7 +583,8 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   videoPreviewContainerMobile: {
-    padding: 12,
+    padding: 2,
+    flex: 1,
   },
   videoPreviewContainerTablet: {
     padding: 18,
@@ -579,11 +606,13 @@ const styles = StyleSheet.create({
     minHeight: 80,
   },
   bottomSectionMobile: {
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    minHeight: 70,
+    paddingHorizontal: 4,
+    paddingVertical: 4,
+    minHeight: 45,
     flexDirection: 'column',
-    gap: 12,
+    gap: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   bottomSectionTablet: {
     paddingHorizontal: 20,
@@ -607,6 +636,7 @@ const styles = StyleSheet.create({
     left: 'auto',
     bottom: 'auto',
     alignSelf: 'center',
+    marginBottom: 4,
   },
   monitoringContainerTablet: {
     left: 24,

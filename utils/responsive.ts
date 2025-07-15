@@ -10,7 +10,7 @@ export const getScreenDimensions = () => {
 
 // Responsive breakpoints
 export const breakpoints = {
-  xs: 480,   // Extra small devices (phones in portrait)
+  xs: 375,   // Extra small devices (phones in portrait)
   sm: 768,   // Small devices (phones in landscape, small tablets)
   md: 1024,  // Medium devices (tablets)
   lg: 1200,  // Large devices (desktops)
@@ -19,11 +19,13 @@ export const breakpoints = {
 
 // Device type detection
 export const getDeviceType = () => {
-  const { width } = Dimensions.get('window');
-  if (width < breakpoints.xs) return 'phone-portrait';
-  if (width < breakpoints.sm) return 'phone-landscape';
-  if (width < breakpoints.md) return 'tablet-portrait';
-  if (width < breakpoints.lg) return 'tablet-landscape';
+  const { width, height } = Dimensions.get('window');
+  const screenSize = Math.min(width, height);
+  
+  if (screenSize < breakpoints.xs) return 'phone-portrait';
+  if (width < breakpoints.sm) return width > height ? 'phone-landscape' : 'phone-portrait';
+  if (width < breakpoints.md) return width > height ? 'tablet-landscape' : 'tablet-portrait';
+  if (width < breakpoints.lg) return width > height ? 'tablet-landscape' : 'tablet-portrait';
   return 'desktop';
 };
 
@@ -95,6 +97,7 @@ export const getLayoutDimensions = () => {
   const { width, height } = Dimensions.get('window');
   const deviceType = getDeviceType();
   const orientation = getOrientation();
+  const isMobile = deviceType.includes('phone');
   
   const dimensions = {
     screenWidth: width,
@@ -103,19 +106,19 @@ export const getLayoutDimensions = () => {
     orientation,
     
     // Header dimensions
-    headerHeight: orientation === 'landscape' ? getSpacing(40) : getSpacing(60),
+    headerHeight: isMobile ? getSpacing(48) : orientation === 'landscape' ? getSpacing(40) : getSpacing(60),
     
     // Control panel dimensions
-    controlPanelHeight: orientation === 'landscape' ? getSpacing(80) : getSpacing(100),
+    controlPanelHeight: isMobile ? getSpacing(120) : orientation === 'landscape' ? getSpacing(80) : getSpacing(100),
     controlPanelWidth: deviceType.includes('tablet') || deviceType === 'desktop' 
       ? getSpacing(300) : getSpacing(250),
     
     // Button sizes
     buttonSize: {
-      small: getSpacing(32),
-      medium: getSpacing(44),
-      large: getSpacing(56),
-      xlarge: getSpacing(72)
+      small: isMobile ? getSpacing(36) : getSpacing(32),
+      medium: isMobile ? getSpacing(48) : getSpacing(44),
+      large: isMobile ? getSpacing(60) : getSpacing(56),
+      xlarge: isMobile ? getSpacing(80) : getSpacing(72)
     },
     
     // Icon sizes
@@ -127,13 +130,13 @@ export const getLayoutDimensions = () => {
     },
     
     // Safe areas
-    safeAreaHorizontal: getSpacing(16),
-    safeAreaVertical: getSpacing(12),
+    safeAreaHorizontal: isMobile ? getSpacing(12) : getSpacing(16),
+    safeAreaVertical: isMobile ? getSpacing(8) : getSpacing(12),
     
     // Grid layout
     columnCount: deviceType === 'desktop' ? 6 : 
                  deviceType.includes('tablet') ? 4 : 2,
-    gridGap: getSpacing(8)
+    gridGap: isMobile ? getSpacing(6) : getSpacing(8)
   };
   
   return dimensions;
@@ -198,6 +201,7 @@ export const getResponsiveStyles = () => {
 export const getDeviceCapabilities = () => {
   const { width } = Dimensions.get('window');
   const deviceType = getDeviceType();
+  const isMobile = deviceType.includes('phone');
   
   return {
     // Supports split screen layouts
@@ -215,8 +219,8 @@ export const getDeviceCapabilities = () => {
     // High density screen
     isHighDensity: PixelRatio.get() >= 2,
     
-    // Minimum touch target size
-    minTouchTarget: Platform.OS === 'ios' ? 44 : 48,
+    // Minimum touch target size - larger for mobile
+    minTouchTarget: isMobile ? 48 : Platform.OS === 'ios' ? 44 : 48,
   };
 };
 

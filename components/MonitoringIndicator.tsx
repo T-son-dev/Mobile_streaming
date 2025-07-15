@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { IconSymbol } from '@/components/ui/IconSymbol';
+import { useResponsive } from '../utils/responsive';
 
 interface MonitoringIndicatorProps {
   audioLevel: number;
@@ -17,13 +18,16 @@ const Colors = {
 };
 
 const MonitoringIndicator: React.FC<MonitoringIndicatorProps> = ({ audioLevel, bitrate, fps }) => {
+  const responsive = useResponsive();
+  const isMobile = responsive.deviceType.includes('phone');
+  
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, isMobile && styles.containerMobile]}>
       {/* Microphone Icon and Audio Bar */}
       <View style={styles.audioContainer}>
         <View style={styles.audioRow}>
-          <IconSymbol name="mic.fill" size={16} color={Colors.primary} />
-          <View style={styles.audioBar}>
+          <IconSymbol name="mic.fill" size={isMobile ? 10 : 16} color={Colors.primary} />
+          <View style={[styles.audioBar, isMobile && styles.audioBarMobile]}>
             <View style={[
               styles.audioLevel,
               { width: `${audioLevel}%` }
@@ -32,9 +36,9 @@ const MonitoringIndicator: React.FC<MonitoringIndicatorProps> = ({ audioLevel, b
         </View>
         
         {/* Stats */}
-        <View style={styles.statsRow}>
-          <Text style={styles.statText}>{bitrate}</Text>
-          <Text style={styles.statText}>{fps}</Text>
+        <View style={[styles.statsRow, isMobile && styles.statsRowMobile]}>
+          <Text style={[styles.statText, isMobile && styles.statTextMobile]}>{bitrate}</Text>
+          <Text style={[styles.statText, isMobile && styles.statTextMobile]}>{fps}</Text>
         </View>
       </View>
     </View>
@@ -44,6 +48,9 @@ const MonitoringIndicator: React.FC<MonitoringIndicatorProps> = ({ audioLevel, b
 const styles = StyleSheet.create({
   container: {
     alignItems: 'flex-start',
+  },
+  containerMobile: {
+    alignItems: 'center',
   },
   audioContainer: {
     gap: 8,
@@ -61,6 +68,10 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     position: 'relative',
   },
+  audioBarMobile: {
+    width: 40,
+    height: 3,
+  },
   audioLevel: {
     height: '100%',
     backgroundColor: Colors.primary,
@@ -75,10 +86,17 @@ const styles = StyleSheet.create({
     width: 120,
     marginLeft: 24, // Align with audio bar
   },
+  statsRowMobile: {
+    width: 40,
+    marginLeft: 8,
+  },
   statText: {
     fontSize: 10,
     color: Colors.text,
     fontWeight: '500',
+  },
+  statTextMobile: {
+    fontSize: 6,
   },
 });
 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, Alert, StatusBar } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import * as ScreenOrientation from 'expo-screen-orientation';
 import DualCameraView from '@/components/DualCameraView';
@@ -26,16 +27,21 @@ const LiveStreamScreen: React.FC = () => {
   } = useStreaming();
 
   useEffect(() => {
-    // Set orientation to landscape when component mounts
-    const setLandscapeOrientation = async () => {
+    // Only set landscape orientation on tablets/desktops, let mobile be flexible
+    const setOrientation = async () => {
       try {
-        await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
+        if (responsive.deviceType.includes('tablet') || responsive.deviceType === 'desktop') {
+          await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
+        } else {
+          // Allow both orientations on mobile
+          await ScreenOrientation.unlockAsync();
+        }
       } catch (error) {
-        console.error('Failed to set landscape orientation:', error);
+        console.error('Failed to set orientation:', error);
       }
     };
     
-    setLandscapeOrientation();
+    setOrientation();
     initializeStreamingSystem();
     
     return () => {
@@ -45,10 +51,10 @@ const LiveStreamScreen: React.FC = () => {
       }
       streamingService.dispose();
       
-      // Reset orientation to portrait when leaving screen
+      // Reset orientation when leaving screen
       ScreenOrientation.unlockAsync().catch(console.error);
     };
-  }, []);
+  }, [responsive.deviceType]);
 
   useEffect(() => {
     if (error) {

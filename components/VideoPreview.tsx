@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ImageBackground, PanResponder, Dimensions } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ImageBackground, PanResponder, Dimensions, Platform } from 'react-native';
 import { IconSymbol } from '@/components/ui/IconSymbol';
+import { useResponsive } from '../utils/responsive';
 
 interface VideoPreviewProps {
   isStreaming: boolean;
@@ -19,6 +20,9 @@ const Colors = {
 };
 
 const VideoPreview: React.FC<VideoPreviewProps> = ({ isStreaming, activeSource }) => {
+  const responsive = useResponsive();
+  const isMobile = responsive.deviceType.includes('phone');
+  const isPortrait = responsive.orientation === 'portrait';
   const [zoom, setZoom] = useState(1);
   const [sliderPosition, setSliderPosition] = useState(0.5); // 0 to 1
 
@@ -119,11 +123,11 @@ const styles = StyleSheet.create({
   },
   streamStatus: {
     position: 'absolute',
-    top: 16,
+    top: Platform.OS === 'ios' ? 20 : 16,
     left: 16,
     backgroundColor: Colors.danger,
     paddingHorizontal: 12,
-    paddingVertical: 4,
+    paddingVertical: 6,
     borderRadius: 20,
     flexDirection: 'row',
     alignItems: 'center',
@@ -144,11 +148,11 @@ const styles = StyleSheet.create({
   },
   sourceLabel: {
     position: 'absolute',
-    top: 16,
+    top: Platform.OS === 'ios' ? 20 : 16,
     right: 16,
     backgroundColor: Colors.overlay,
     paddingHorizontal: 12,
-    paddingVertical: 4,
+    paddingVertical: 6,
     borderRadius: 4,
     zIndex: 10,
   },
@@ -167,25 +171,25 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   playButton: {
-    width: 64,
-    height: 64,
+    width: 72,
+    height: 72,
     backgroundColor: 'rgba(34, 197, 94, 0.2)', // green-500/20
-    borderRadius: 32,
+    borderRadius: 36,
     justifyContent: 'center',
     alignItems: 'center',
   },
   zoomSliderContainer: {
     position: 'absolute',
-    right: 16,
+    right: 12,
     top: '50%',
-    transform: [{ translateY: -140 }],
+    transform: [{ translateY: -120 }],
     zIndex: 20,
   },
   zoomSlider: {
     backgroundColor: Colors.text,
     borderRadius: 3,
-    height: 280,
-    width: 12,
+    height: 240,
+    width: 10,
     position: 'relative',
   },
   zoomSliderTrack: {
@@ -199,11 +203,11 @@ const styles = StyleSheet.create({
   zoomHandle: {
     position: 'absolute',
     left: '50%',
-    transform: [{ translateX: -13.5 }, { translateY: -13.5 }],
-    width: 27,
-    height: 27,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    borderRadius: 13.5,
+    transform: [{ translateX: -12 }, { translateY: -12 }],
+    width: 24,
+    height: 24,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
   },

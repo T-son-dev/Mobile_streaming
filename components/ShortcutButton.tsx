@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { IconSymbol } from '@/components/ui/IconSymbol';
+import { useResponsive } from '../utils/responsive';
 
 interface ShortcutButtonProps {
   iconName: any;
@@ -18,23 +19,27 @@ const Colors = {
 };
 
 const ShortcutButton: React.FC<ShortcutButtonProps> = ({ iconName, label, isActive, onPress }) => {
+  const responsive = useResponsive();
+  const isMobile = responsive.deviceType.includes('phone');
+  
   return (
     <TouchableOpacity
       onPress={onPress}
-      style={styles.container}
+      style={[styles.container, isMobile && styles.containerMobile]}
       activeOpacity={0.7}
     >
       <View style={[
         styles.iconContainer,
-        isActive && styles.iconContainerActive
+        isActive && styles.iconContainerActive,
+        isMobile && styles.iconContainerMobile
       ]}>
         <IconSymbol 
           name={iconName} 
-          size={24} 
+          size={isMobile ? 14 : 24} 
           color={isActive ? Colors.textDark : Colors.text} 
         />
       </View>
-      <Text style={styles.label}>{label}</Text>
+      <Text style={[styles.label, isMobile && styles.labelMobile]}>{label}</Text>
     </TouchableOpacity>
   );
 };
@@ -44,6 +49,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 4,
     padding: 8,
+  },
+  containerMobile: {
+    gap: 1,
+    padding: 2,
   },
   iconContainer: {
     width: 48,
@@ -61,6 +70,11 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 2,
   },
+  iconContainerMobile: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+  },
   iconContainerActive: {
     backgroundColor: Colors.primary,
   },
@@ -69,6 +83,9 @@ const styles = StyleSheet.create({
     color: Colors.text,
     textAlign: 'center',
     fontWeight: '500',
+  },
+  labelMobile: {
+    fontSize: 8,
   },
 });
 
