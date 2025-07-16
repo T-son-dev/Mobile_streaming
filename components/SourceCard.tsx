@@ -21,8 +21,10 @@ const Colors = {
 
 const SourceCard: React.FC<SourceCardProps> = ({ name, isOnAir, isSelected, onPress }) => {
   const responsive = useResponsive();
-  const isMobile = responsive.deviceType.includes('phone');
+  const isMobile = responsive.isMobile;
+  const isNativeMobile = responsive.isNativeMobile;
   const isPortrait = responsive.orientation === 'portrait';
+  const isLandscape = responsive.orientation === 'landscape';
   const minTouchTarget = responsive.capabilities.minTouchTarget;
   
   return (
@@ -30,8 +32,9 @@ const SourceCard: React.FC<SourceCardProps> = ({ name, isOnAir, isSelected, onPr
       style={[
         styles.container,
         isSelected && styles.containerSelected,
-        isMobile && isPortrait && styles.containerMobile,
-        { minHeight: Math.max(minTouchTarget, 70) }
+        isNativeMobile && isPortrait && styles.containerMobile,
+        isNativeMobile && isLandscape && styles.containerMobileLandscape,
+        { minHeight: isNativeMobile && isLandscape ? Math.max(minTouchTarget, 52) : Math.max(minTouchTarget, 70) }
       ]}
       onPress={onPress}
       activeOpacity={0.7}
@@ -46,21 +49,28 @@ const SourceCard: React.FC<SourceCardProps> = ({ name, isOnAir, isSelected, onPr
       {/* Camera Icon */}
       <View style={[
         styles.content,
-        isMobile && isPortrait && styles.contentMobile
+        isNativeMobile && isPortrait && styles.contentMobile,
+        isNativeMobile && isLandscape && styles.contentMobileLandscape
       ]}>
         <View style={[
           styles.iconContainer,
-          isMobile && isPortrait && styles.iconContainerMobile
+          isNativeMobile && isPortrait && styles.iconContainerMobile,
+          isNativeMobile && isLandscape && styles.iconContainerMobileLandscape
         ]}>
-          <IconSymbol name="video.fill" size={isMobile && isPortrait ? 12 : 24} color={Colors.text} />
+          <IconSymbol 
+            name="video.fill" 
+            size={isNativeMobile && isLandscape ? 14 : isNativeMobile && isPortrait ? 12 : 24} 
+            color={Colors.text} 
+          />
         </View>
         
         {/* Source Name */}
         <View style={styles.nameContainer}>
           <Text style={[
             styles.nameText,
-            isMobile && isPortrait && styles.nameTextMobile
-          ]} numberOfLines={2}>{name}</Text>
+            isNativeMobile && isPortrait && styles.nameTextMobile,
+            isNativeMobile && isLandscape && styles.nameTextMobileLandscape
+          ]} numberOfLines={isNativeMobile && isLandscape ? 3 : 2}>{name}</Text>
         </View>
       </View>
     </TouchableOpacity>
@@ -89,6 +99,15 @@ const styles = StyleSheet.create({
     maxWidth: '47%',
     marginHorizontal: 1,
   },
+  containerMobileLandscape: {
+    padding: 4,
+    minHeight: 52, // Increased to match minHeight calculation
+    borderRadius: 4,
+    flex: 1,
+    marginHorizontal: 1,
+    marginVertical: 2,
+    justifyContent: 'center',
+  },
   statusBadge: {
     position: 'absolute',
     top: 1,
@@ -113,6 +132,13 @@ const styles = StyleSheet.create({
   contentMobile: {
     paddingTop: 4,
   },
+  contentMobileLandscape: {
+    paddingTop: 2,
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    flex: 1,
+  },
   iconContainer: {
     width: 40,
     height: 40,
@@ -128,8 +154,16 @@ const styles = StyleSheet.create({
     marginBottom: 1,
     borderRadius: 3,
   },
+  iconContainerMobileLandscape: {
+    width: 20,
+    height: 20,
+    marginBottom: 0,
+    marginRight: 6,
+    borderRadius: 4,
+  },
   nameContainer: {
     alignItems: 'center',
+    flex: 1,
   },
   nameText: {
     fontSize: 10,
@@ -142,6 +176,14 @@ const styles = StyleSheet.create({
     fontSize: 6,
     lineHeight: 8,
     fontWeight: '600',
+  },
+  nameTextMobileLandscape: {
+    fontSize: 7, // Reduced from 8 to fit better
+    lineHeight: 9,
+    fontWeight: '600',
+    textAlign: 'left',
+    flexWrap: 'wrap',
+    numberOfLines: 2,
   },
 });
 

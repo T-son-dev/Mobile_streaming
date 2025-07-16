@@ -2,7 +2,6 @@ import { IconSymbol } from '@/components/ui/IconSymbol';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
-  Dimensions,
   StatusBar,
   StyleSheet,
   TouchableOpacity,
@@ -23,20 +22,7 @@ import SourceCard from './SourceCard';
 import StreamButton from './StreamButton';
 import VideoPreview from './VideoPreview';
 
-const { width, height } = Dimensions.get('window');
-
-// Responsive breakpoint definitions
-const breakpoints = {
-  mobile: 768,
-  tablet: 1024,
-  desktop: 1200
-};
-
-const getDeviceType = () => {
-  if (width < breakpoints.mobile) return 'mobile';
-  if (width < breakpoints.tablet) return 'tablet';
-  return 'desktop';
-};
+// Use centralized responsive utilities instead of local device detection
 
 const Colors = {
   background: '#0f172a', // slate-900
@@ -236,9 +222,10 @@ const StreamingInterface: React.FC<StreamingInterfaceProps> = ({
 
   // Responsive style functions
   const getResponsiveStyles = () => {
-    const isMobile = deviceType.includes('phone');
-    const isTablet = deviceType.includes('tablet');
-    const isDesktop = deviceType === 'desktop';
+    const isMobile = responsive.isMobile;
+    const isNativeMobile = responsive.isNativeMobile;
+    const isTablet = responsive.deviceType.includes('tablet');
+    const isDesktop = responsive.deviceType === 'desktop';
     const minTouchTarget = responsive.capabilities.minTouchTarget;
 
     return {
@@ -248,51 +235,57 @@ const StreamingInterface: React.FC<StreamingInterfaceProps> = ({
         isMobile && styles.headerMobile,
         isTablet && styles.headerTablet,
         isDesktop && styles.headerDesktop,
-        // Add safe area padding for mobile
-        isMobile && { paddingTop: Math.max(insets.top, 12) }
+        // Add safe area padding for mobile, prioritize native mobile
+        (isMobile || isNativeMobile) && { paddingTop: Math.max(insets.top, 12) }
       ],
       
       // Main content layout
       mainContent: [
         styles.mainContent,
-        isMobile && isPortrait && styles.mainContentMobilePortrait,
-        isMobile && !isPortrait && styles.mainContentMobileLandscape,
-        isTablet && styles.mainContentTablet,
+        (isMobile || isNativeMobile) && isPortrait && styles.mainContentMobilePortrait,
+        (isMobile || isNativeMobile) && !isPortrait && styles.mainContentMobileLandscape,
+        isTablet && !isNativeMobile && styles.mainContentTablet,
         isDesktop && styles.mainContentDesktop
       ],
       
       // Source sidebar
       sourceSidebar: [
         styles.sourceSidebar,
-        isMobile && isPortrait && styles.sourceSidebarMobilePortrait,
-        isMobile && !isPortrait && styles.sourceSidebarMobileLandscape,
-        isTablet && styles.sourceSidebarTablet,
+        (isMobile || isNativeMobile) && isPortrait && styles.sourceSidebarMobilePortrait,
+        (isMobile || isNativeMobile) && !isPortrait && {
+          ...styles.sourceSidebarMobileLandscape,
+          width: responsive.controlPanelWidth || 120,
+        },
+        isTablet && !isNativeMobile && styles.sourceSidebarTablet,
         isDesktop && styles.sourceSidebarDesktop
       ],
       
       // Video preview container
       videoPreviewContainer: [
         styles.videoPreviewContainer,
-        isMobile && styles.videoPreviewContainerMobile,
-        isTablet && styles.videoPreviewContainerTablet,
+        (isMobile || isNativeMobile) && styles.videoPreviewContainerMobile,
+        isNativeMobile && !isPortrait && styles.videoPreviewContainerMobileLandscape,
+        isTablet && !isNativeMobile && styles.videoPreviewContainerTablet,
         isDesktop && styles.videoPreviewContainerDesktop
       ],
       
       // Bottom section
       bottomSection: [
         styles.bottomSection,
-        isMobile && styles.bottomSectionMobile,
-        isTablet && styles.bottomSectionTablet,
+        (isMobile || isNativeMobile) && isPortrait && styles.bottomSectionMobile,
+        (isMobile || isNativeMobile) && !isPortrait && styles.bottomSectionMobileLandscape,
+        isTablet && !isNativeMobile && styles.bottomSectionTablet,
         isDesktop && styles.bottomSectionDesktop,
-        // Add safe area padding for mobile
-        isMobile && { paddingBottom: Math.max(insets.bottom, 12) }
+        // Add safe area padding for mobile, prioritize native mobile
+        (isMobile || isNativeMobile) && { paddingBottom: Math.max(insets.bottom, 12) }
       ],
       
       // Monitoring container
       monitoringContainer: [
         styles.monitoringContainer,
-        isMobile && styles.monitoringContainerMobile,
-        isTablet && styles.monitoringContainerTablet,
+        (isMobile || isNativeMobile) && isPortrait && styles.monitoringContainerMobile,
+        (isMobile || isNativeMobile) && !isPortrait && styles.monitoringContainerMobileLandscape,
+        isTablet && !isNativeMobile && styles.monitoringContainerTablet,
         isDesktop && styles.monitoringContainerDesktop
       ]
     };
@@ -531,6 +524,8 @@ const styles = StyleSheet.create({
   },
   mainContentMobileLandscape: {
     flexDirection: 'row',
+    flex: 1,
+    alignItems: 'stretch',
   },
   mainContentTablet: {
     flexDirection: 'row',
@@ -555,8 +550,10 @@ const styles = StyleSheet.create({
     padding: 2,
   },
   sourceSidebarMobileLandscape: {
-    width: '20%',
+    width: 120,
     padding: 4,
+    minWidth: 110,
+    maxWidth: 130,
   },
   sourceSidebarTablet: {
     width: 200,
@@ -586,6 +583,13 @@ const styles = StyleSheet.create({
     padding: 2,
     flex: 1,
   },
+  videoPreviewContainerMobileLandscape: {
+    padding: 2, // Reduced padding to maximize space
+    flex: 2, // Increased flex weight to dominate space
+    minHeight: '90%', // Increased by 5% from 85% to 90%
+    height: '95%', // Added explicit height for better control
+    position: 'relative',
+  },
   videoPreviewContainerTablet: {
     padding: 18,
   },
@@ -614,6 +618,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  bottomSectionMobileLandscape: {
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+    minHeight: 40, // Reduced height for more video space
+    flexDirection: 'column',
+    gap: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
   bottomSectionTablet: {
     paddingHorizontal: 20,
     paddingVertical: 18,
@@ -637,6 +651,12 @@ const styles = StyleSheet.create({
     bottom: 'auto',
     alignSelf: 'center',
     marginBottom: 4,
+  },
+  monitoringContainerMobileLandscape: {
+    position: 'absolute',
+    left: 8,
+    bottom: 8,
+    zIndex: 20,
   },
   monitoringContainerTablet: {
     left: 24,

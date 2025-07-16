@@ -19,15 +19,29 @@ const Colors = {
 
 const MonitoringIndicator: React.FC<MonitoringIndicatorProps> = ({ audioLevel, bitrate, fps }) => {
   const responsive = useResponsive();
-  const isMobile = responsive.deviceType.includes('phone');
+  const isMobile = responsive.isMobile;
+  const isNativeMobile = responsive.isNativeMobile;
+  const isLandscape = responsive.orientation === 'landscape';
   
   return (
-    <View style={[styles.container, isMobile && styles.containerMobile]}>
+    <View style={[
+      styles.container, 
+      isMobile && styles.containerMobile,
+      isNativeMobile && isLandscape && styles.containerMobileLandscape
+    ]}>
       {/* Microphone Icon and Audio Bar */}
       <View style={styles.audioContainer}>
         <View style={styles.audioRow}>
-          <IconSymbol name="mic.fill" size={isMobile ? 10 : 16} color={Colors.primary} />
-          <View style={[styles.audioBar, isMobile && styles.audioBarMobile]}>
+          <IconSymbol 
+            name="mic.fill" 
+            size={isNativeMobile && isLandscape ? 12 : isMobile ? 10 : 16} 
+            color={Colors.primary} 
+          />
+          <View style={[
+            styles.audioBar, 
+            isMobile && styles.audioBarMobile,
+            isNativeMobile && isLandscape && styles.audioBarMobileLandscape
+          ]}>
             <View style={[
               styles.audioLevel,
               { width: `${audioLevel}%` }
@@ -36,9 +50,21 @@ const MonitoringIndicator: React.FC<MonitoringIndicatorProps> = ({ audioLevel, b
         </View>
         
         {/* Stats */}
-        <View style={[styles.statsRow, isMobile && styles.statsRowMobile]}>
-          <Text style={[styles.statText, isMobile && styles.statTextMobile]}>{bitrate}</Text>
-          <Text style={[styles.statText, isMobile && styles.statTextMobile]}>{fps}</Text>
+        <View style={[
+          styles.statsRow, 
+          isMobile && styles.statsRowMobile,
+          isNativeMobile && isLandscape && styles.statsRowMobileLandscape
+        ]}>
+          <Text style={[
+            styles.statText, 
+            isMobile && styles.statTextMobile,
+            isNativeMobile && isLandscape && styles.statTextMobileLandscape
+          ]}>{bitrate}</Text>
+          <Text style={[
+            styles.statText, 
+            isMobile && styles.statTextMobile,
+            isNativeMobile && isLandscape && styles.statTextMobileLandscape
+          ]}>{fps}</Text>
         </View>
       </View>
     </View>
@@ -51,6 +77,9 @@ const styles = StyleSheet.create({
   },
   containerMobile: {
     alignItems: 'center',
+  },
+  containerMobileLandscape: {
+    alignItems: 'flex-start',
   },
   audioContainer: {
     gap: 8,
@@ -72,6 +101,10 @@ const styles = StyleSheet.create({
     width: 40,
     height: 3,
   },
+  audioBarMobileLandscape: {
+    width: 60,
+    height: 4,
+  },
   audioLevel: {
     height: '100%',
     backgroundColor: Colors.primary,
@@ -90,6 +123,10 @@ const styles = StyleSheet.create({
     width: 40,
     marginLeft: 8,
   },
+  statsRowMobileLandscape: {
+    width: 60,
+    marginLeft: 12,
+  },
   statText: {
     fontSize: 10,
     color: Colors.text,
@@ -97,6 +134,9 @@ const styles = StyleSheet.create({
   },
   statTextMobile: {
     fontSize: 6,
+  },
+  statTextMobileLandscape: {
+    fontSize: 8,
   },
 });
 

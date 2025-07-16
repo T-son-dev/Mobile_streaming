@@ -18,7 +18,9 @@ const Colors = {
 
 const StreamButton: React.FC<StreamButtonProps> = ({ isStreaming, onToggle }) => {
   const responsive = useResponsive();
-  const isMobile = responsive.deviceType.includes('phone');
+  const isMobile = responsive.isMobile;
+  const isNativeMobile = responsive.isNativeMobile;
+  const isLandscape = responsive.orientation === 'landscape';
   const minTouchTarget = responsive.capabilities.minTouchTarget;
   
   return (
@@ -28,14 +30,16 @@ const StreamButton: React.FC<StreamButtonProps> = ({ isStreaming, onToggle }) =>
         styles.button,
         isStreaming ? styles.buttonDanger : styles.buttonPrimary,
         isMobile && styles.buttonMobile,
-        { minHeight: minTouchTarget }
+        isNativeMobile && isLandscape && styles.buttonMobileLandscape,
+        { minHeight: isNativeMobile && isLandscape ? Math.min(minTouchTarget, 40) : minTouchTarget }
       ]}
       activeOpacity={0.8}
     >
       <Text style={[
         styles.buttonText,
         isStreaming ? styles.buttonTextLight : styles.buttonTextDark,
-        isMobile && styles.buttonTextMobile
+        isMobile && styles.buttonTextMobile,
+        isNativeMobile && isLandscape && styles.buttonTextMobileLandscape
       ]}>
         {isStreaming ? 'STOP STREAMING' : 'START STREAMING'}
       </Text>
@@ -66,6 +70,14 @@ const styles = StyleSheet.create({
     minWidth: 120,
     maxWidth: '70%',
   },
+  buttonMobileLandscape: {
+    paddingVertical: 6, // Reduced from 8 to 6
+    paddingHorizontal: 16,
+    borderRadius: 5,
+    minWidth: 100,
+    maxWidth: '60%',
+    height: 36, // Fixed compact height
+  },
   buttonPrimary: {
     backgroundColor: Colors.primary,
   },
@@ -78,6 +90,10 @@ const styles = StyleSheet.create({
   },
   buttonTextMobile: {
     fontSize: 12,
+    fontWeight: '700',
+  },
+  buttonTextMobileLandscape: {
+    fontSize: 11,
     fontWeight: '700',
   },
   buttonTextLight: {

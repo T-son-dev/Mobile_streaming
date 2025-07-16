@@ -20,26 +20,37 @@ const Colors = {
 
 const ShortcutButton: React.FC<ShortcutButtonProps> = ({ iconName, label, isActive, onPress }) => {
   const responsive = useResponsive();
-  const isMobile = responsive.deviceType.includes('phone');
+  const isMobile = responsive.isMobile;
+  const isNativeMobile = responsive.isNativeMobile;
+  const isLandscape = responsive.orientation === 'landscape';
   
   return (
     <TouchableOpacity
       onPress={onPress}
-      style={[styles.container, isMobile && styles.containerMobile]}
+      style={[
+        styles.container, 
+        isMobile && styles.containerMobile,
+        isNativeMobile && isLandscape && styles.containerMobileLandscape
+      ]}
       activeOpacity={0.7}
     >
       <View style={[
         styles.iconContainer,
         isActive && styles.iconContainerActive,
-        isMobile && styles.iconContainerMobile
+        isMobile && styles.iconContainerMobile,
+        isNativeMobile && isLandscape && styles.iconContainerMobileLandscape
       ]}>
         <IconSymbol 
           name={iconName} 
-          size={isMobile ? 14 : 24} 
+          size={isNativeMobile && isLandscape ? 16 : isMobile ? 14 : 24} 
           color={isActive ? Colors.textDark : Colors.text} 
         />
       </View>
-      <Text style={[styles.label, isMobile && styles.labelMobile]}>{label}</Text>
+      <Text style={[
+        styles.label, 
+        isMobile && styles.labelMobile,
+        isNativeMobile && isLandscape && styles.labelMobileLandscape
+      ]}>{label}</Text>
     </TouchableOpacity>
   );
 };
@@ -53,6 +64,10 @@ const styles = StyleSheet.create({
   containerMobile: {
     gap: 1,
     padding: 2,
+  },
+  containerMobileLandscape: {
+    gap: 2,
+    padding: 4,
   },
   iconContainer: {
     width: 48,
@@ -75,6 +90,11 @@ const styles = StyleSheet.create({
     height: 28,
     borderRadius: 14,
   },
+  iconContainerMobileLandscape: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+  },
   iconContainerActive: {
     backgroundColor: Colors.primary,
   },
@@ -86,6 +106,9 @@ const styles = StyleSheet.create({
   },
   labelMobile: {
     fontSize: 8,
+  },
+  labelMobileLandscape: {
+    fontSize: 9,
   },
 });
 

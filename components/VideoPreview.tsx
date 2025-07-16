@@ -21,7 +21,8 @@ const Colors = {
 
 const VideoPreview: React.FC<VideoPreviewProps> = ({ isStreaming, activeSource }) => {
   const responsive = useResponsive();
-  const isMobile = responsive.deviceType.includes('phone');
+  const isMobile = responsive.isMobile;
+  const isNativeMobile = responsive.isNativeMobile;
   const isPortrait = responsive.orientation === 'portrait';
   const [zoom, setZoom] = useState(1);
   const [sliderPosition, setSliderPosition] = useState(0.5); // 0 to 1
@@ -60,15 +61,30 @@ const VideoPreview: React.FC<VideoPreviewProps> = ({ isStreaming, activeSource }
         >
           {/* Stream Status Overlay */}
           {isStreaming && (
-            <View style={styles.streamStatus}>
-              <View style={styles.liveDot} />
-              <Text style={styles.liveText}>LIVE</Text>
+            <View style={[
+              styles.streamStatus,
+              isNativeMobile && styles.streamStatusMobile
+            ]}>
+              <View style={[
+                styles.liveDot,
+                isNativeMobile && styles.liveDotMobile
+              ]} />
+              <Text style={[
+                styles.liveText,
+                isNativeMobile && styles.liveTextMobile
+              ]}>LIVE</Text>
             </View>
           )}
           
           {/* Active Source Label */}
-          <View style={styles.sourceLabel}>
-            <Text style={styles.sourceLabelText}>{activeSource}</Text>
+          <View style={[
+            styles.sourceLabel,
+            isNativeMobile && styles.sourceLabelMobile
+          ]}>
+            <Text style={[
+              styles.sourceLabelText,
+              isNativeMobile && styles.sourceLabelTextMobile
+            ]}>{activeSource}</Text>
           </View>
           
           {/* Play Button (when not streaming) */}
@@ -134,6 +150,14 @@ const styles = StyleSheet.create({
     gap: 8,
     zIndex: 10,
   },
+  streamStatusMobile: {
+    top: Platform.OS === 'ios' ? 12 : 8,
+    left: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    gap: 4,
+  },
   liveDot: {
     width: 8,
     height: 8,
@@ -141,10 +165,19 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     opacity: 0.9,
   },
+  liveDotMobile: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
   liveText: {
     color: Colors.text,
     fontSize: 14,
     fontWeight: '600',
+  },
+  liveTextMobile: {
+    fontSize: 10,
+    fontWeight: '700',
   },
   sourceLabel: {
     position: 'absolute',
@@ -156,9 +189,20 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     zIndex: 10,
   },
+  sourceLabelMobile: {
+    top: Platform.OS === 'ios' ? 12 : 8,
+    right: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 3,
+  },
   sourceLabelText: {
     color: Colors.text,
     fontSize: 14,
+  },
+  sourceLabelTextMobile: {
+    fontSize: 10, // Reduced from 14 to 10 for mobile
+    fontWeight: '600',
   },
   playButtonContainer: {
     position: 'absolute',

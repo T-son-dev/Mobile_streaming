@@ -27,13 +27,18 @@ const LiveStreamScreen: React.FC = () => {
   } = useStreaming();
 
   useEffect(() => {
-    // Only set landscape orientation on tablets/desktops, let mobile be flexible
+    // Enhanced orientation handling for mobile devices and emulators
     const setOrientation = async () => {
       try {
-        if (responsive.deviceType.includes('tablet') || responsive.deviceType === 'desktop') {
+        // Check if we're on native mobile platform
+        if (responsive.isNativeMobile) {
+          // For native mobile, allow both orientations but optimize layout
+          await ScreenOrientation.unlockAsync();
+        } else if (responsive.deviceType.includes('tablet') || responsive.deviceType === 'desktop') {
+          // For tablets and desktops, prefer landscape
           await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
         } else {
-          // Allow both orientations on mobile
+          // For web mobile, allow both orientations
           await ScreenOrientation.unlockAsync();
         }
       } catch (error) {
