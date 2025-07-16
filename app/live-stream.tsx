@@ -159,7 +159,6 @@ const LiveStreamScreen: React.FC = () => {
     <View style={responsiveStyles.container}>
       <StatusBar hidden={true} />
       
-      {/* Dual Camera View */}
       <View style={responsiveStyles.cameraContainer}>
         <DualCameraView
           layout={cameraLayout}
@@ -169,7 +168,6 @@ const LiveStreamScreen: React.FC = () => {
         />
       </View>
 
-      {/* Streaming Interface Overlay */}
       <View style={responsiveStyles.interfaceContainer}>
         <StreamingInterface
           isStreaming={isStreaming}
@@ -195,6 +193,7 @@ const createResponsiveStyles = (responsive: ReturnType<typeof useResponsive>) =>
     },
     cameraContainer: {
       flex: 1,
+      zIndex: 1,
       // Add responsive positioning for different orientations
       ...(orientation === 'landscape' && {
         paddingHorizontal: safeAreaHorizontal / 2,
@@ -202,7 +201,7 @@ const createResponsiveStyles = (responsive: ReturnType<typeof useResponsive>) =>
     },
     camera: {
       flex: 1,
-      borderRadius: orientation === 'landscape' ? responsive.styles.cameraView.borderRadius : 0,
+      borderRadius: orientation === 'landscape' ? responsive.styles?.cameraView?.borderRadius || 0 : 0,
     },
     interfaceContainer: {
       position: 'absolute',
@@ -210,7 +209,8 @@ const createResponsiveStyles = (responsive: ReturnType<typeof useResponsive>) =>
       left: 0,
       right: 0,
       bottom: 0,
-      pointerEvents: 'box-none', // Allow camera interactions to pass through
+      zIndex: 10, 
+      pointerEvents: 'box-none', 
       // Add responsive padding for different device types
       ...(deviceType.includes('tablet') && {
         paddingHorizontal: safeAreaHorizontal * 2,
@@ -227,6 +227,7 @@ const createResponsiveStyles = (responsive: ReturnType<typeof useResponsive>) =>
       alignItems: 'center',
       backgroundColor: '#333',
       padding: safeAreaHorizontal,
+      zIndex: 5,
     },
   });
 };

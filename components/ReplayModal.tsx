@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Switch } from 'react-native';
-import { IconSymbol } from '@/components/ui/IconSymbol';
+import { StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
 import { useResponsive } from '../utils/responsive';
 
 interface ReplayModalProps {
@@ -52,7 +51,7 @@ const ReplayModal: React.FC<ReplayModalProps> = ({
       const headerPadding = responsive.safeAreaHorizontal || 8;
       const rightSectionStart = screenWidth / 2; 
       const buttonSize = 32; // Mobile landscape button size
-      const modalWidth = 120; // Mobile landscape modal width
+      const modalWidth = 180; // Increased modal width
       
       // First button in headerRight section
       const firstButtonLeft = rightSectionStart + headerPadding;
@@ -67,7 +66,7 @@ const ReplayModal: React.FC<ReplayModalProps> = ({
       const headerPadding = responsive.safeAreaHorizontal || 8;
       const rightSectionStart = screenWidth / 2;
       const buttonSize = 28; // Mobile portrait button size
-      const modalWidth = 140; // Mobile portrait modal width
+      const modalWidth = 200; // Increased modal width
       
       const firstButtonLeft = rightSectionStart + headerPadding;
       const firstButtonCenter = firstButtonLeft + (buttonSize / 2);
@@ -81,7 +80,7 @@ const ReplayModal: React.FC<ReplayModalProps> = ({
       const headerPadding = 16;
       const rightSectionStart = screenWidth / 2;
       const buttonSize = 48; // Desktop button size
-      const modalWidth = 170; // Desktop modal width
+      const modalWidth = 220; // Increased modal width
       
       const firstButtonLeft = rightSectionStart + headerPadding;
       const firstButtonCenter = firstButtonLeft + (buttonSize / 2);
@@ -158,20 +157,31 @@ const ReplayModal: React.FC<ReplayModalProps> = ({
           styles.content,
           isNativeMobile && styles.contentMobile
         ]}>
-          {/* Main Row - Replay Toggle and Seconds Controller side by side */}
+          {/* Header Row with Labels */}
           <View style={[
-            styles.mainRow,
-            isNativeMobile && styles.mainRowMobile
+            styles.headerRow,
+            isNativeMobile && styles.headerRowMobile
+          ]}>
+            <Text style={[
+              styles.headerLabel,
+              isNativeMobile && styles.headerLabelMobile
+            ]}>Replay</Text>
+            <Text style={[
+              styles.headerLabel,
+              isNativeMobile && styles.headerLabelMobile
+            ]}>Segundos</Text>
+          </View>
+          
+          {/* Controls Row */}
+          <View style={[
+            styles.controlsRow,
+            isNativeMobile && styles.controlsRowMobile
           ]}>
             {/* Left Side - Replay Toggle */}
             <View style={[
               styles.replaySection,
               isNativeMobile && styles.replaySectionMobile
             ]}>
-              <Text style={[
-                styles.replayLabel,
-                isNativeMobile && styles.replayLabelMobile
-              ]}>Replay</Text>
               <Switch
                 value={isReplayEnabled}
                 onValueChange={handleReplayToggle}
@@ -189,10 +199,6 @@ const ReplayModal: React.FC<ReplayModalProps> = ({
               styles.secondsSection,
               isNativeMobile && styles.secondsSectionMobile
             ]}>
-              <Text style={[
-                styles.secondsLabel,
-                isNativeMobile && styles.secondsLabelMobile
-              ]}>Segundos</Text>
               <View style={[
                 styles.secondsController,
                 isNativeMobile && styles.secondsControllerMobile
@@ -260,10 +266,10 @@ const styles = StyleSheet.create({
   container: {
     position: 'absolute',
     backgroundColor: Colors.surface,
-    borderRadius: 6,
-    padding: 8,
-    minWidth: 150,
-    maxWidth: 170,
+    borderRadius: 8,
+    padding: 12,
+    minWidth: 200,
+    maxWidth: 220,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -275,22 +281,22 @@ const styles = StyleSheet.create({
     zIndex: 1999,
   },
   containerMobile: {
-    padding: 6,
-    minWidth: 120,
-    maxWidth: 140,
-    borderRadius: 4,
+    padding: 8,
+    minWidth: 160,
+    maxWidth: 200,
+    borderRadius: 6,
     shadowRadius: 2,
   },
   containerMobileLandscape: {
-    padding: 4,
-    minWidth: 100,
-    maxWidth: 120,
-    borderRadius: 3,
+    padding: 6,
+    minWidth: 140,
+    maxWidth: 180,
+    borderRadius: 4,
   },
   triangle: {
     position: 'absolute',
     top: -6,
-    left: '50%', // Center horizontally on modal
+    left: '65%', // Center horizontally on modal
     marginLeft: -6, // Offset by half triangle width
     width: 0,
     height: 0,
@@ -334,116 +340,117 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   content: {
-    paddingTop: 4,
+    paddingTop: 12,
   },
   contentMobile: {
-    paddingTop: 2,
+    paddingTop: 6,
   },
-  mainRow: {
+  headerRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 16,
+    justifyContent: 'space-between',
+    marginBottom: 8,
+    paddingHorizontal: 4,
   },
-  mainRowMobile: {
-    gap: 8, // Much smaller gap for mobile
+  headerRowMobile: {
+    marginBottom: 0,
+    paddingHorizontal: 2,
+  },
+  headerLabel: {
+    fontSize: 14,
+    color: Colors.text,
+    fontWeight: '600',
+    flex: 1,
+    textAlign: 'center',
+  },
+  headerLabelMobile: {
+    fontSize: 10,
+    fontWeight: '500',
+  },
+  controlsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  controlsRowMobile: {
+    alignItems: 'center',
   },
   replaySection: {
     flex: 1,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   replaySectionMobile: {
     flex: 1,
   },
-  replayLabel: {
-    fontSize: 12,
-    color: Colors.text,
-    fontWeight: '500',
-    marginBottom: 4,
-    textAlign: 'center',
-  },
-  replayLabelMobile: {
-    fontSize: 9, // Much smaller for mobile
-    marginBottom: 2,
-  },
   switch: {
-    transform: [{ scaleX: 0.8 }, { scaleY: 0.8 }],
+    transform: [{ scaleX: 1.0 }, { scaleY: 1.0 }],
   },
   switchMobile: {
-    transform: [{ scaleX: 0.6 }, { scaleY: 0.6 }], // Much smaller for mobile
+    transform: [{ scaleX: 0.8 }, { scaleY: 0.8 }],
   },
   secondsSection: {
     flex: 1,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   secondsSectionMobile: {
-    flex: 1,
-  },
-  secondsLabel: {
-    fontSize: 12,
-    color: Colors.text,
-    fontWeight: '500',
-    marginBottom: 4,
-    textAlign: 'center',
-  },
-  secondsLabelMobile: {
-    fontSize: 9, // Much smaller for mobile
-    marginBottom: 2,
+    flex: 0,
   },
   secondsController: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: Colors.primary,
+    borderRadius: 20,
+    paddingHorizontal: 4,
+    paddingVertical: 4,
+  },
+  secondsControllerMobile: {
     borderRadius: 16,
     paddingHorizontal: 2,
     paddingVertical: 2,
   },
-  secondsControllerMobile: {
-    borderRadius: 10,
-    paddingHorizontal: 1,
-    paddingVertical: 1,
-  },
   secondsButton: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   secondsButtonMobile: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
+    width: 22,
+    height: 14,
+    borderRadius: 11,
   },
   secondsButtonDisabled: {
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
   secondsButtonText: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: 'bold',
     color: '#ffffff',
   },
   secondsButtonTextMobile: {
-    fontSize: 10,
+    fontSize: 8,
   },
   secondsButtonTextDisabled: {
     color: 'rgba(255, 255, 255, 0.5)',
   },
   secondsDisplay: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+  },
+  secondsDisplayMobile: {
     paddingHorizontal: 8,
     paddingVertical: 2,
   },
-  secondsDisplayMobile: {
-    paddingHorizontal: 4,
-    paddingVertical: 1,
-  },
   secondsValue: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#ffffff',
   },
   secondsValueMobile: {
-    fontSize: 12,
+    fontSize: 10,
   },
 });
 

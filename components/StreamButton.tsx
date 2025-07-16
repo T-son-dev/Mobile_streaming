@@ -1,5 +1,5 @@
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, Platform } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity } from 'react-native';
 import { useResponsive } from '../utils/responsive';
 
 interface StreamButtonProps {
@@ -31,7 +31,7 @@ const StreamButton: React.FC<StreamButtonProps> = ({ isStreaming, onToggle }) =>
         isStreaming ? styles.buttonDanger : styles.buttonPrimary,
         isMobile && styles.buttonMobile,
         isNativeMobile && isLandscape && styles.buttonMobileLandscape,
-        { minHeight: isNativeMobile && isLandscape ? Math.min(minTouchTarget, 40) : minTouchTarget }
+        { minHeight: isNativeMobile && isLandscape ? Math.min(minTouchTarget, 35) : minTouchTarget }
       ]}
       activeOpacity={0.8}
     >
@@ -54,10 +54,11 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     minWidth: 200,
     alignItems: 'center',
+    justifyContent: 'center', // Added for proper vertical centering
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 0,
     },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
@@ -71,12 +72,11 @@ const styles = StyleSheet.create({
     maxWidth: '70%',
   },
   buttonMobileLandscape: {
-    paddingVertical: 6, // Reduced from 8 to 6
+    paddingVertical: 3, // Reduced from 6 to 3
     paddingHorizontal: 16,
     borderRadius: 5,
     minWidth: 100,
     maxWidth: '60%',
-    height: 36, // Fixed compact height
   },
   buttonPrimary: {
     backgroundColor: Colors.primary,
@@ -87,6 +87,7 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 18,
     fontWeight: '600',
+    textAlign: 'center', // Added for proper horizontal centering
   },
   buttonTextMobile: {
     fontSize: 12,

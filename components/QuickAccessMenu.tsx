@@ -1,6 +1,7 @@
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useResponsive } from '../utils/responsive';
 
 interface QuickAccessMenuProps {
   isOpen: boolean;
@@ -17,8 +18,55 @@ const Colors = {
   border: '#e5e7eb', // gray-200
 };
 
-const QuickAccessMenu: React.FC<QuickAccessMenuProps> = ({ isOpen, onClose, onProModeClick }) => {
+const QuickAccessMenu: React.FC<QuickAccessMenuProps> = ({ 
+  isOpen, 
+  onClose, 
+  onProModeClick 
+}) => {
+  const responsive = useResponsive();
+  const isNativeMobile = responsive.isNativeMobile;
+  const isLandscape = responsive.orientation === 'landscape';
+
   if (!isOpen) return null;
+
+  // Dynamic positioning based on responsive layout to position below Menu button
+  const getModalPosition = () => {
+    const headerHeight = responsive.headerHeight || 48;
+    const gap = 4; // Small gap between button and modal
+    const screenWidth = responsive.screenWidth || 375;
+    const rightPadding = 16; // Standard right padding
+    
+    if (isNativeMobile && isLandscape) {
+      // For mobile landscape - position under menu button (last button in headerRight)
+      const modalWidth = 200; // Mobile landscape modal width
+      
+      return {
+        top: headerHeight + gap,
+        right: rightPadding,
+        width: modalWidth,
+      };
+    } else if (isNativeMobile) {
+      // For mobile portrait
+      const modalWidth = 240; // Mobile portrait modal width
+      
+      return {
+        top: headerHeight + gap,
+        right: rightPadding,
+        width: modalWidth,
+      };
+    } else {
+      // For desktop
+      const modalWidth = 300; // Desktop modal width
+      
+      return {
+        top: headerHeight + gap,
+        right: rightPadding,
+        width: modalWidth,
+      };
+    }
+  };
+
+  const modalPosition = getModalPosition();
 
   return (
     <>
@@ -29,57 +77,159 @@ const QuickAccessMenu: React.FC<QuickAccessMenuProps> = ({ isOpen, onClose, onPr
         activeOpacity={1}
       />
       
-      <View style={styles.container}>
+      <View style={[
+        styles.container,
+        isNativeMobile && styles.containerMobile,
+        isNativeMobile && isLandscape && styles.containerMobileLandscape,
+        {
+          top: modalPosition.top,
+          right: modalPosition.right,
+          width: modalPosition.width,
+        }
+      ]}>
         {/* Triangle pointer */}
-        <View style={styles.triangle} />
+        <View style={[
+          styles.triangle,
+          isNativeMobile && styles.triangleMobile
+        ]} />
         
-        <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-          <Text style={styles.closeButtonText}>×</Text>
+        <TouchableOpacity style={[
+          styles.closeButton,
+          isNativeMobile && styles.closeButtonMobile
+        ]} onPress={onClose}>
+          <Text style={[
+            styles.closeButtonText,
+            isNativeMobile && styles.closeButtonTextMobile
+          ]}>×</Text>
         </TouchableOpacity>
         
-        <View style={styles.menuGrid}>
+        <View style={[
+          styles.menuGrid,
+          isNativeMobile && styles.menuGridMobile,
+          isNativeMobile && isLandscape && styles.menuGridMobileLandscape
+        ]}>
           {/* Top Row */}
-          <TouchableOpacity style={styles.menuItem}>
-            <View style={styles.menuIcon}>
-              <Text style={styles.menuIconText}>#</Text>
+          <TouchableOpacity style={[
+            styles.menuItem,
+            isNativeMobile && styles.menuItemMobile
+          ]}>
+            <View style={[
+              styles.menuIcon,
+              isNativeMobile && styles.menuIconMobile
+            ]}>
+              <Text style={[
+                styles.menuIconText,
+                isNativeMobile && styles.menuIconTextMobile
+              ]}>#</Text>
             </View>
-            <Text style={styles.menuLabel}>Grid</Text>
+            <Text style={[
+              styles.menuLabel,
+              isNativeMobile && styles.menuLabelMobile
+            ]}>Grid</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.menuItem}>
-            <View style={styles.menuIcon}>
-              <IconSymbol name="flashlight.on.fill" size={20} color={Colors.text} />
+          <TouchableOpacity style={[
+            styles.menuItem,
+            isNativeMobile && styles.menuItemMobile
+          ]}>
+            <View style={[
+              styles.menuIcon,
+              isNativeMobile && styles.menuIconMobile
+            ]}>
+              <IconSymbol 
+                name="flashlight.on.fill" 
+                size={isNativeMobile ? 14 : 20} 
+                color={Colors.text} 
+              />
             </View>
-            <Text style={styles.menuLabel}>Flashlight</Text>
+            <Text style={[
+              styles.menuLabel,
+              isNativeMobile && styles.menuLabelMobile
+            ]}>Flashlight</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.menuItem} onPress={onProModeClick}>
-            <View style={[styles.menuIcon, styles.proIcon]}>
-              <Text style={styles.proText}>PRO</Text>
+          <TouchableOpacity 
+            style={[
+              styles.menuItem,
+              isNativeMobile && styles.menuItemMobile
+            ]} 
+            onPress={onProModeClick}
+          >
+            <View style={[
+              styles.menuIcon, 
+              styles.proIcon,
+              isNativeMobile && styles.menuIconMobile
+            ]}>
+              <Text style={[
+                styles.proText,
+                isNativeMobile && styles.proTextMobile
+              ]}>PRO</Text>
             </View>
-            <Text style={styles.menuLabel}>PRO Mode</Text>
+            <Text style={[
+              styles.menuLabel,
+              isNativeMobile && styles.menuLabelMobile
+            ]}>PRO Mode</Text>
           </TouchableOpacity>
 
           {/* Bottom Row */}
-          <TouchableOpacity style={styles.menuItem}>
-            <View style={[styles.menuIcon, styles.screenIcon]}>
-              <View style={styles.screenRect} />
+          <TouchableOpacity style={[
+            styles.menuItem,
+            isNativeMobile && styles.menuItemMobile
+          ]}>
+            <View style={[
+              styles.menuIcon, 
+              styles.screenIcon,
+              isNativeMobile && styles.menuIconMobile
+            ]}>
+              <View style={[
+                styles.screenRect,
+                isNativeMobile && styles.screenRectMobile
+              ]} />
             </View>
-            <Text style={styles.menuLabel}>Home Screen</Text>
+            <Text style={[
+              styles.menuLabel,
+              isNativeMobile && styles.menuLabelMobile
+            ]}>Home Screen</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.menuItem}>
-            <View style={styles.menuIcon}>
-              <IconSymbol name="mic.slash.fill" size={20} color={Colors.text} />
+          <TouchableOpacity style={[
+            styles.menuItem,
+            isNativeMobile && styles.menuItemMobile
+          ]}>
+            <View style={[
+              styles.menuIcon,
+              isNativeMobile && styles.menuIconMobile
+            ]}>
+              <IconSymbol 
+                name="mic.slash.fill" 
+                size={isNativeMobile ? 14 : 20} 
+                color={Colors.text} 
+              />
             </View>
-            <Text style={styles.menuLabel}>Mute</Text>
+            <Text style={[
+              styles.menuLabel,
+              isNativeMobile && styles.menuLabelMobile
+            ]}>Mute</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.menuItem}>
-            <View style={styles.menuIcon}>
-              <IconSymbol name="gearshape.fill" size={20} color={Colors.text} />
+          <TouchableOpacity style={[
+            styles.menuItem,
+            isNativeMobile && styles.menuItemMobile
+          ]}>
+            <View style={[
+              styles.menuIcon,
+              isNativeMobile && styles.menuIconMobile
+            ]}>
+              <IconSymbol 
+                name="gearshape.fill" 
+                size={isNativeMobile ? 14 : 20} 
+                color={Colors.text} 
+              />
             </View>
-            <Text style={styles.menuLabel}>Settings</Text>
+            <Text style={[
+              styles.menuLabel,
+              isNativeMobile && styles.menuLabelMobile
+            ]}>Settings</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -99,12 +249,9 @@ const styles = StyleSheet.create({
   },
   container: {
     position: 'absolute',
-    top: 90, // Adjust this value based on your navbar height
-    right: 16,
     backgroundColor: Colors.surface,
     borderRadius: 12,
     padding: 20,
-    width: 300,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -114,6 +261,15 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 10,
     zIndex: 999,
+  },
+  containerMobile: {
+    borderRadius: 8,
+    padding: 12,
+    shadowRadius: 4,
+  },
+  containerMobileLandscape: {
+    borderRadius: 6,
+    padding: 8,
   },
   triangle: {
     position: 'absolute',
@@ -129,6 +285,13 @@ const styles = StyleSheet.create({
     borderBottomColor: Colors.surface,
     zIndex: 1000,
   },
+  triangleMobile: {
+    top: -6,
+    right: 4,
+    borderLeftWidth: 6,
+    borderRightWidth: 6,
+    borderBottomWidth: 6,
+  },
   closeButton: {
     position: 'absolute',
     top: 8,
@@ -139,10 +302,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     zIndex: 1,
   },
+  closeButtonMobile: {
+    top: 4,
+    right: 8,
+    width: 20,
+    height: 20,
+  },
   closeButtonText: {
     fontSize: 20,
     color: Colors.textSecondary,
     fontWeight: 'bold',
+  },
+  closeButtonTextMobile: {
+    fontSize: 16,
   },
   menuGrid: {
     flexDirection: 'row',
@@ -150,10 +322,19 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingTop: 20,
   },
+  menuGridMobile: {
+    paddingTop: 12,
+  },
+  menuGridMobileLandscape: {
+    paddingTop: 8,
+  },
   menuItem: {
     width: '30%',
     alignItems: 'center',
     marginBottom: 20,
+  },
+  menuItemMobile: {
+    marginBottom: 12,
   },
   menuIcon: {
     width: 48,
@@ -166,10 +347,19 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.border,
   },
+  menuIconMobile: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    marginBottom: 4,
+  },
   menuIconText: {
     fontSize: 20,
     color: Colors.text,
     fontWeight: 'bold',
+  },
+  menuIconTextMobile: {
+    fontSize: 14,
   },
   proIcon: {
     backgroundColor: '#1f2937', // gray-800
@@ -178,6 +368,9 @@ const styles = StyleSheet.create({
     color: Colors.surface,
     fontSize: 12,
     fontWeight: 'bold',
+  },
+  proTextMobile: {
+    fontSize: 8,
   },
   screenIcon: {
     backgroundColor: '#3b82f6', // blue-500
@@ -188,11 +381,20 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surface,
     borderRadius: 2,
   },
+  screenRectMobile: {
+    width: 16,
+    height: 10,
+    borderRadius: 1,
+  },
   menuLabel: {
     fontSize: 12,
     color: Colors.text,
     textAlign: 'center',
     fontWeight: '500',
+  },
+  menuLabelMobile: {
+    fontSize: 8,
+    lineHeight: 10,
   },
 });
 

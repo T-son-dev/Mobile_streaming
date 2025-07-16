@@ -1,12 +1,9 @@
-import { IconSymbol } from '@/components/ui/IconSymbol';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
   StatusBar,
   StyleSheet,
-  TouchableOpacity,
-  View,
-  Platform
+  View
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useResponsive } from '../utils/responsive';
@@ -335,18 +332,12 @@ const StreamingInterface: React.FC<StreamingInterfaceProps> = ({
               isActive={isStreaming}
               onPress={handleCameraControlsToggle}
             />
-            <TouchableOpacity
+            <ShortcutButton
+              iconName="line.horizontal.3"
+              label=""
+              isActive={isStreaming}
               onPress={handleQuickAccessToggle}
-              style={styles.menuButton}
-            >
-              <View style={[
-                styles.menuButtonCircle, 
-                isQuickAccessOpen && styles.menuButtonActive,
-                deviceType.includes('phone') && styles.menuButtonCircleMobile
-              ]}>
-                <IconSymbol name="line.horizontal.3" size={deviceType.includes('phone') ? 14 : 24} color={Colors.background} />
-              </View>
-            </TouchableOpacity>
+            />
           </View>
         </View>
       </View>
@@ -489,31 +480,7 @@ const styles = StyleSheet.create({
   menuButton: {
     padding: 8,
   },
-  menuButtonCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: Colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  menuButtonCircleMobile: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-  },
-  menuButtonActive: {
-    backgroundColor: Colors.primaryHover,
-  },
-  
+   
   // Main Content Styles
   mainContent: {
     flex: 1,

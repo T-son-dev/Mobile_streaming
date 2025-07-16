@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Switch, PanResponder, Animated } from 'react-native';
 import { IconSymbol } from '@/components/ui/IconSymbol';
+import { useResponsive } from '../utils/responsive';
 
 interface MicrophoneModalProps {
   isOpen: boolean;
@@ -33,9 +34,10 @@ interface CustomSliderProps {
   trackColor: string;
   thumbColor: string;
   activeTrackColor: string;
+  isMobile?: boolean;
 }
 
-  const CustomSlider: React.FC<CustomSliderProps> = ({
+const CustomSlider: React.FC<CustomSliderProps> = ({
   value,
   onValueChange,
   minimumValue,
@@ -43,9 +45,10 @@ interface CustomSliderProps {
   trackColor,
   thumbColor,
   activeTrackColor,
+  isMobile = false,
 }) => {
-  const sliderWidth = 200; // Adjusted width
-  const thumbSize = 20;
+  const sliderWidth = isMobile ? 120 : 200; // Adjusted width for mobile
+  const thumbSize = isMobile ? 14 : 20;
   
   const panResponder = useRef(
     PanResponder.create({
@@ -72,11 +75,14 @@ interface CustomSliderProps {
   
   // Create gradient effect with segments
   const renderGradientTrack = () => {
-    const segments = 100;
+    const segments = isMobile ? 50 : 100; // Fewer segments for mobile
     const activeSegments = Math.floor((value / 100) * segments);
     
     return (
-      <View style={styles.gradientTrackContainer}>
+      <View style={[
+        styles.gradientTrackContainer,
+        isMobile && styles.gradientTrackContainerMobile
+      ]}>
         {Array.from({ length: segments }, (_, index) => {
           const segmentPosition = index / segments;
           let segmentColor = '#e5e7eb'; // Default gray
@@ -106,14 +112,18 @@ interface CustomSliderProps {
   };
   
   return (
-    <View style={styles.customSliderContainer} {...panResponder.panHandlers}>
+    <View style={[
+      styles.customSliderContainer,
+      isMobile && styles.customSliderContainerMobile
+    ]} {...panResponder.panHandlers}>
       {/* Gradient track */}
       {renderGradientTrack()}
       
       {/* Thumb */}
       <View 
         style={[
-          styles.customSliderThumb, 
+          styles.customSliderThumb,
+          isMobile && styles.customSliderThumbMobile,
           { 
             backgroundColor: thumbColor,
             left: thumbPosition 
@@ -134,8 +144,71 @@ const MicrophoneModal: React.FC<MicrophoneModalProps> = ({
   const [isMicrophoneEnabled, setIsMicrophoneEnabled] = useState(true);
   const [isZoomEnabled, setIsZoomEnabled] = useState(true);
   const [volumeLevel, setVolumeLevel] = useState(75);
+  const responsive = useResponsive();
+  const isNativeMobile = responsive.isNativeMobile;
+  const isLandscape = responsive.orientation === 'landscape';
 
   if (!isOpen) return null;
+
+  // Dynamic positioning based on responsive layout to position below Microphone button
+  const getModalPosition = () => {
+    const headerHeight = responsive.headerHeight || 48;
+    const gap = 4; // Small gap between button and modal
+    const screenWidth = responsive.screenWidth || 375;
+    
+    if (isNativeMobile && isLandscape) {
+      // For mobile landscape - position under third button in headerRight (microphone button)
+      const headerPadding = responsive.safeAreaHorizontal || 8;
+      const rightSectionStart = screenWidth / 2; 
+      const buttonSize = 32; // Mobile landscape button size
+      const buttonGap = 8; // Gap between buttons
+      const modalWidth = 240; // Mobile landscape modal width
+      
+      // Third button in headerRight section
+      const firstButtonLeft = rightSectionStart + headerPadding;
+      const thirdButtonLeft = firstButtonLeft + (buttonSize + buttonGap) * 2;
+      const thirdButtonCenter = thirdButtonLeft + (buttonSize / 2);
+      
+      return {
+        top: headerHeight + gap,
+        left: Math.max(8, thirdButtonCenter - (modalWidth / 2)), // Ensure modal doesn't go off screen
+      };
+    } else if (isNativeMobile) {
+      // For mobile portrait
+      const headerPadding = responsive.safeAreaHorizontal || 8;
+      const rightSectionStart = screenWidth / 2;
+      const buttonSize = 28; // Mobile portrait button size
+      const buttonGap = 8;
+      const modalWidth = 280; // Mobile portrait modal width
+      
+      const firstButtonLeft = rightSectionStart + headerPadding;
+      const thirdButtonLeft = firstButtonLeft + (buttonSize + buttonGap) * 2;
+      const thirdButtonCenter = thirdButtonLeft + (buttonSize / 2);
+      
+      return {
+        top: headerHeight + gap,
+        left: Math.max(8, thirdButtonCenter - (modalWidth / 2)),
+      };
+    } else {
+      // For desktop
+      const headerPadding = 16;
+      const rightSectionStart = screenWidth / 2;
+      const buttonSize = 48; // Desktop button size
+      const buttonGap = 12;
+      const modalWidth = 360; // Desktop modal width
+      
+      const firstButtonLeft = rightSectionStart + headerPadding;
+      const thirdButtonLeft = firstButtonLeft + (buttonSize + buttonGap) * 2;
+      const thirdButtonCenter = thirdButtonLeft + (buttonSize / 2);
+      
+      return {
+        top: headerHeight + gap,
+        left: Math.max(16, thirdButtonCenter - (modalWidth / 2)),
+      };
+    }
+  };
+
+  const modalPosition = getModalPosition();
 
   const handleMicrophoneToggle = (value: boolean) => {
     setIsMicrophoneEnabled(value);
@@ -158,35 +231,6 @@ const MicrophoneModal: React.FC<MicrophoneModalProps> = ({
     return Colors.volumeRed;
   };
 
-  const renderVolumeBar = () => {
-    const segments = 20;
-    const activeSegments = Math.floor((volumeLevel / 100) * segments);
-    
-    return (
-      <View style={styles.volumeBarContainer}>
-        {Array.from({ length: segments }, (_, index) => {
-          const isActive = index < activeSegments;
-          let segmentColor = Colors.sliderTrack;
-          
-          if (isActive) {
-            const segmentLevel = ((index + 1) / segments) * 100;
-            segmentColor = getVolumeColor(segmentLevel);
-          }
-          
-          return (
-            <View
-              key={index}
-              style={[
-                styles.volumeSegment,
-                { backgroundColor: segmentColor }
-              ]}
-            />
-          );
-        })}
-      </View>
-    );
-  };
-
   return (
     <>
       {/* Overlay to close when clicking outside */}
@@ -196,45 +240,92 @@ const MicrophoneModal: React.FC<MicrophoneModalProps> = ({
         activeOpacity={1}
       />
       
-      <View style={styles.container}>
+      <View style={[
+        styles.container,
+        isNativeMobile && styles.containerMobile,
+        isNativeMobile && isLandscape && styles.containerMobileLandscape,
+        {
+          top: modalPosition.top,
+          left: modalPosition.left,
+        }
+      ]}>
         {/* Triangle pointer */}
-        <View style={styles.triangle} />
+        <View style={[
+          styles.triangle,
+          isNativeMobile && styles.triangleMobile
+        ]} />
         
         {/* Close button */}
-        <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-          <Text style={styles.closeButtonText}>×</Text>
+        <TouchableOpacity style={[
+          styles.closeButton,
+          isNativeMobile && styles.closeButtonMobile
+        ]} onPress={onClose}>
+          <Text style={[
+            styles.closeButtonText,
+            isNativeMobile && styles.closeButtonTextMobile
+          ]}>×</Text>
         </TouchableOpacity>
         
-        <View style={styles.content}>
+        <View style={[
+          styles.content,
+          isNativeMobile && styles.contentMobile
+        ]}>
           {/* Controls in horizontal layout */}
-          <View style={styles.horizontalLayout}>
+          <View style={[
+            styles.horizontalLayout,
+            isNativeMobile && styles.horizontalLayoutMobile
+          ]}>
             {/* Microphone Control */}
-            <View style={styles.controlColumn}>
+            <View style={[
+              styles.controlColumn,
+              isNativeMobile && styles.controlColumnMobile
+            ]}>
               <Switch
                 value={isMicrophoneEnabled}
                 onValueChange={handleMicrophoneToggle}
                 trackColor={{ false: '#d1d5db', true: Colors.primary }}
                 thumbColor={isMicrophoneEnabled ? '#ffffff' : '#f3f4f6'}
-                style={styles.switch}
+                style={[
+                  styles.switch,
+                  isNativeMobile && styles.switchMobile
+                ]}
               />
-              <Text style={styles.controlLabel}>Enable{'\n'}microphone</Text>
+              <Text style={[
+                styles.controlLabel,
+                isNativeMobile && styles.controlLabelMobile
+              ]}>Enable{'\n'}microphone</Text>
             </View>
             
             {/* Zoom Control */}
-            <View style={styles.controlColumn}>
+            <View style={[
+              styles.controlColumn,
+              isNativeMobile && styles.controlColumnMobile
+            ]}>
               <Switch
                 value={isZoomEnabled}
                 onValueChange={handleZoomToggle}
                 trackColor={{ false: '#d1d5db', true: Colors.primary }}
                 thumbColor={isZoomEnabled ? '#ffffff' : '#f3f4f6'}
-                style={styles.switch}
+                style={[
+                  styles.switch,
+                  isNativeMobile && styles.switchMobile
+                ]}
               />
-              <Text style={styles.controlLabel}>Zoom{'\n'}volume</Text>
+              <Text style={[
+                styles.controlLabel,
+                isNativeMobile && styles.controlLabelMobile
+              ]}>Zoom{'\n'}volume</Text>
             </View>
             
             {/* Volume Control */}
-            <View style={styles.volumeColumn}>
-              <View style={styles.volumeSliderContainer}>
+            <View style={[
+              styles.volumeColumn,
+              isNativeMobile && styles.volumeColumnMobile
+            ]}>
+              <View style={[
+                styles.volumeSliderContainer,
+                isNativeMobile && styles.volumeSliderContainerMobile
+              ]}>
                 <CustomSlider
                   value={volumeLevel}
                   onValueChange={handleVolumeChange}
@@ -243,6 +334,7 @@ const MicrophoneModal: React.FC<MicrophoneModalProps> = ({
                   trackColor={Colors.sliderTrack}
                   thumbColor={Colors.sliderThumb}
                   activeTrackColor={getVolumeColor(volumeLevel)}
+                  isMobile={isNativeMobile}
                 />
               </View>
             </View>
@@ -265,8 +357,6 @@ const styles = StyleSheet.create({
   },
   container: {
     position: 'absolute',
-    top: 90,
-    left: 128,
     backgroundColor: Colors.surface,
     borderRadius: 12,
     padding: 20,
@@ -280,6 +370,17 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 10,
     zIndex: 999,
+  },
+  containerMobile: {
+    borderRadius: 8,
+    padding: 4,
+    width: 280,
+    shadowRadius: 4,
+  },
+  containerMobileLandscape: {
+    borderRadius: 6,
+    padding: 0,
+    width: 240,
   },
   triangle: {
     position: 'absolute',
@@ -295,6 +396,13 @@ const styles = StyleSheet.create({
     borderBottomColor: Colors.surface,
     zIndex: 1000,
   },
+  triangleMobile: {
+    top: -6,
+    left: 201,
+    borderLeftWidth: 6,
+    borderRightWidth: 6,
+    borderBottomWidth: 6,
+  },
   closeButton: {
     position: 'absolute',
     top: 8,
@@ -305,13 +413,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     zIndex: 1,
   },
+  closeButtonMobile: {
+    top: 4,
+    right: 8,
+    width: 20,
+    height: 20,
+  },
   closeButtonText: {
     fontSize: 20,
     color: Colors.textSecondary,
     fontWeight: 'bold',
   },
+  closeButtonTextMobile: {
+    fontSize: 16,
+  },
   content: {
     paddingTop: 8,
+  },
+  contentMobile: {
+    paddingTop: 4,
   },
   horizontalLayout: {
     flexDirection: 'row',
@@ -319,15 +439,25 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 8,
   },
+  horizontalLayoutMobile: {
+    paddingHorizontal: 0,
+  },
   controlColumn: {
     alignItems: 'center',
     gap: 8,
     minWidth: 80,
   },
+  controlColumnMobile: {
+    gap: 0,
+    minWidth: 50,
+  },
   volumeColumn: {
     flex: 1,
     marginLeft: 20,
     alignItems: 'center',
+  },
+  volumeColumnMobile: {
+    marginLeft: 8,
   },
   controlLabel: {
     fontSize: 11,
@@ -336,11 +466,21 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 14,
   },
+  controlLabelMobile: {
+    fontSize: 6,
+    lineHeight: 8,
+  },
   switch: {
     transform: [{ scaleX: 0.9 }, { scaleY: 0.9 }],
   },
+  switchMobile: {
+    transform: [{ scaleX: 0.7 }, { scaleY: 0.7 }],
+  },
   volumeSliderContainer: {
     width: 180,
+  },
+  volumeSliderContainerMobile: {
+    width: 120,
   },
   customSliderContainer: {
     height: 30,
@@ -348,11 +488,18 @@ const styles = StyleSheet.create({
     position: 'relative',
     width: '100%',
   },
+  customSliderContainerMobile: {
+    height: 20,
+  },
   gradientTrackContainer: {
     flexDirection: 'row',
     height: 8,
     borderRadius: 4,
     overflow: 'hidden',
+  },
+  gradientTrackContainerMobile: {
+    height: 6,
+    borderRadius: 3,
   },
   gradientSegment: {
     flex: 1,
@@ -372,6 +519,12 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
     elevation: 4,
     top: -6, // Center on the track
+  },
+  customSliderThumbMobile: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    top: -4,
   },
 });
 
