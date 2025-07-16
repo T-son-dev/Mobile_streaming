@@ -6,6 +6,7 @@ const path = require('path');
 // Express server for viewing streams
 const app = express();
 app.use(cors());
+app.use(express.json());
 
 // Serve static files
 app.use(express.static('public'));
@@ -205,6 +206,35 @@ app.get('/api/streams', (req, res) => {
   res.json(getActiveStreams());
 });
 
+// Test stream endpoint for mobile app
+app.post('/api/test-stream', (req, res) => {
+  const { action, streamKey, config } = req.body;
+  
+  console.log(`📱 Mobile app ${action} stream:`, streamKey);
+  console.log('Config:', config);
+  
+  // Simulate stream activity
+  if (action === 'start') {
+    console.log('🎬 Test stream started from mobile app');
+    res.json({ 
+      success: true, 
+      message: 'Stream started successfully',
+      streamUrl: `http://localhost:8000/live/${streamKey}.flv`
+    });
+  } else if (action === 'stop') {
+    console.log('🛑 Test stream stopped from mobile app');
+    res.json({ 
+      success: true, 
+      message: 'Stream stopped successfully' 
+    });
+  } else {
+    res.status(400).json({ 
+      success: false, 
+      message: 'Invalid action' 
+    });
+  }
+});
+
 // Node Media Server Configuration
 const config = {
   logType: 3, // 0-None, 1-Error, 2-Normal, 3-Debug
@@ -223,20 +253,20 @@ const config = {
     allow_origin: '*'
   },
   
-  trans: {
-    ffmpeg: '/usr/local/bin/ffmpeg',
-    tasks: [
-      {
-        app: 'live',
-        hls: true,
-        hlsFlags: '[hls_time=2:hls_list_size=3:hls_flags=delete_segments]',
-        hlsKeep: false,
-        dash: true,
-        dashFlags: '[f=dash:window_size=3:extra_window_size=5]',
-        dashKeep: false
-      }
-    ]
-  }
+  // trans: {
+  //   ffmpeg: '/usr/local/bin/ffmpeg',
+  //   tasks: [
+  //     {
+  //       app: 'live',
+  //       hls: true,
+  //       hlsFlags: '[hls_time=2:hls_list_size=3:hls_flags=delete_segments]',
+  //       hlsKeep: false,
+  //       dash: true,
+  //       dashFlags: '[f=dash:window_size=3:extra_window_size=5]',
+  //       dashKeep: false
+  //     }
+  //   ]
+  // }
 };
 
 const nms = new NodeMediaServer(config);
@@ -256,7 +286,8 @@ nms.on('doneConnect', (id, args) => {
 
 nms.on('prePublish', (id, StreamPath, args) => {
   console.log('[NodeEvent on prePublish]', `id=${id} StreamPath=${StreamPath} args=${JSON.stringify(args)}`);
-  console.log('🎥 Stream Started:', StreamPath);
+  console.log('🎥 REAL Video Stream Started:', StreamPath);
+  console.log('📹 You should now see video at: http://146.19.215.133:8000/live' + StreamPath + '.flv');
 });
 
 nms.on('postPublish', (id, StreamPath, args) => {

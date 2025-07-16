@@ -2,11 +2,14 @@ import { IconSymbol } from '@/components/ui/IconSymbol';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useResponsive } from '../utils/responsive';
+import { useRouter } from 'expo-router';
 
 interface QuickAccessMenuProps {
   isOpen: boolean;
   onClose: () => void;
   onProModeClick: () => void;
+  onHomeClick?: () => void;
+  onSettingsClick?: () => void;
 }
 
 const Colors = {
@@ -21,11 +24,32 @@ const Colors = {
 const QuickAccessMenu: React.FC<QuickAccessMenuProps> = ({ 
   isOpen, 
   onClose, 
-  onProModeClick 
+  onProModeClick,
+  onHomeClick,
+  onSettingsClick
 }) => {
   const responsive = useResponsive();
   const isNativeMobile = responsive.isNativeMobile;
   const isLandscape = responsive.orientation === 'landscape';
+  const router = useRouter();
+
+  const handleHomeClick = () => {
+    if (onHomeClick) {
+      onHomeClick();
+    } else {
+      router.push('/');
+    }
+    onClose();
+  };
+
+  const handleSettingsClick = () => {
+    if (onSettingsClick) {
+      onSettingsClick();
+    } else {
+      router.push('/settings');
+    }
+    onClose();
+  };
 
   if (!isOpen) return null;
 
@@ -172,10 +196,13 @@ const QuickAccessMenu: React.FC<QuickAccessMenuProps> = ({
           </TouchableOpacity>
 
           {/* Bottom Row */}
-          <TouchableOpacity style={[
-            styles.menuItem,
-            isNativeMobile && styles.menuItemMobile
-          ]}>
+          <TouchableOpacity 
+            style={[
+              styles.menuItem,
+              isNativeMobile && styles.menuItemMobile
+            ]}
+            onPress={handleHomeClick}
+          >
             <View style={[
               styles.menuIcon, 
               styles.screenIcon,
@@ -212,10 +239,13 @@ const QuickAccessMenu: React.FC<QuickAccessMenuProps> = ({
             ]}>Mute</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={[
-            styles.menuItem,
-            isNativeMobile && styles.menuItemMobile
-          ]}>
+          <TouchableOpacity 
+            style={[
+              styles.menuItem,
+              isNativeMobile && styles.menuItemMobile
+            ]}
+            onPress={handleSettingsClick}
+          >
             <View style={[
               styles.menuIcon,
               isNativeMobile && styles.menuIconMobile

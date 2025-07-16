@@ -9,6 +9,7 @@ import { CameraLayout } from '@/services/DualCameraManager';
 import { useStreaming } from '@/hooks/useStreaming';
 import streamingService from '@/services/streamingService';
 import { useResponsive } from '@/utils/responsive';
+import { CURRENT_STREAMING_CONFIG } from '@/config/streamingConfig';
 
 const LiveStreamScreen: React.FC = () => {
   const router = useRouter();
@@ -71,17 +72,8 @@ const LiveStreamScreen: React.FC = () => {
 
   const initializeStreamingSystem = async () => {
     try {
-      // Initialize with default stream configuration
-      const defaultConfig = {
-        rtmpUrl: 'rtmp://146.19.215.133:1935/live/',
-        streamKey: 'test',
-        platform: 'custom' as const,
-        quality: '720p' as const,
-        bitrate: 3000,
-        fps: 30,
-        enableAudio: true,
-        cameraLayout: CameraLayout.SINGLE_BACK
-      };
+      // Use configuration from streamingConfig.ts
+      const defaultConfig = CURRENT_STREAMING_CONFIG;
 
       const success = await initializeStream(defaultConfig);
       setIsInitialized(success);
@@ -193,7 +185,7 @@ const createResponsiveStyles = (responsive: ReturnType<typeof useResponsive>) =>
     },
     cameraContainer: {
       flex: 1,
-      zIndex: 1,
+      zIndex: 50,
       // Add responsive positioning for different orientations
       ...(orientation === 'landscape' && {
         paddingHorizontal: safeAreaHorizontal / 2,

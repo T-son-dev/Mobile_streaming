@@ -64,7 +64,7 @@ const SettingsScreen: React.FC = () => {
   };
 
   const handleBack = () => {
-    router.back();
+    router.push('/live-stream');
   };
 
   return (

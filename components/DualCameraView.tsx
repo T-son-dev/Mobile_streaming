@@ -1,8 +1,8 @@
+import { CameraType, CameraView } from 'expo-camera';
 import React, { useEffect, useRef, useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, Alert } from 'react-native';
-import { CameraView, CameraType } from 'expo-camera';
-import { dualCameraManager, CameraLayout, DualCameraState } from '../services/DualCameraManager';
-import { useResponsive, getResponsiveStyles } from '../utils/responsive';
+import { Alert, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { CameraLayout, dualCameraManager, DualCameraState } from '../services/DualCameraManager';
+import { useResponsive } from '../utils/responsive';
 
 interface DualCameraViewProps {
   layout: CameraLayout;
@@ -313,8 +313,8 @@ const createResponsiveStyles = (responsive: ReturnType<typeof useResponsive>) =>
     },
     pipWindow: {
       position: 'absolute',
-      top: safeAreaVertical * 2,
-      right: safeAreaHorizontal,
+      top: 100, //safeAreaVertical * 2,
+      right: 100, //safeAreaHorizontal,
       width: orientation === 'landscape' ? screenWidth * 0.25 : screenWidth * 0.3,
       height: orientation === 'landscape' ? screenHeight * 0.4 : screenHeight * 0.25,
       borderRadius: responsive.styles.cameraView.borderRadius,

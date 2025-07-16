@@ -98,10 +98,6 @@ const HomeScreen: React.FC = () => {
     });
   };
 
-  const navigateToSettings = () => {
-    router.push('/settings');
-  };
-
   const navigateToOverlay = () => {
     router.push('/overlay');
   };
@@ -143,14 +139,6 @@ const HomeScreen: React.FC = () => {
 
         {/* Action Buttons */}
         <View style={styles.actionsContainer}>
-          <TouchableOpacity style={styles.actionButton} onPress={navigateToSettings}>
-            <IconSymbol name="bolt.fill" size={24} color={Colors.primary} />
-            <View style={styles.actionContent}>
-              <Text style={styles.actionTitle}>Settings</Text>
-              <Text style={styles.actionDescription}>Adjust quality and settings</Text>
-            </View>
-            <Text style={styles.actionArrow}>›</Text>
-          </TouchableOpacity>
 
           <TouchableOpacity style={styles.actionButton} onPress={navigateToOverlay}>
             <IconSymbol name="photo.fill" size={24} color={Colors.primary} />

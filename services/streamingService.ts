@@ -1,7 +1,222 @@
 import { Alert } from 'react-native';
-import { MockRTMPPublisher, RTMPConfig } from './MockRTMPService';
 import { dualCameraManager, CameraLayout } from './DualCameraManager';
 import { videoComposer, VideoCompositionConfig } from './VideoComposer';
+
+// RTMP Publisher interface for better abstraction
+interface RTMPPublisher {
+  setRTMPUrl(url: string): void;
+  setVideoConfig(config: any): void;
+  setAudioConfig(config: any): void;
+  start(): void;
+  stop(): void;
+  on(event: string, callback: (data: any) => void): void;
+  getStats(): any;
+  removeAllListeners(): void;
+}
+
+// Test RTMP Publisher that notifies your local server
+class TestRTMPPublisher implements RTMPPublisher {
+  private listeners: { [key: string]: ((data: any) => void)[] } = {};
+  private isActive = false;
+  private config: any = {};
+  private statusInterval: NodeJS.Timeout | null = null;
+  
+  setRTMPUrl(url: string): void {
+    console.log('🧪 Test RTMP URL set:', url);
+    this.config.url = url;
+  }
+  
+  setVideoConfig(config: any): void {
+    console.log('🧪 Test video config set:', config);
+    this.config.video = config;
+  }
+  
+  setAudioConfig(config: any): void {
+    console.log('🧪 Test audio config set:', config);
+    this.config.audio = config;
+  }
+  
+  start(): void {
+    console.log('🧪 Test RTMP streaming started - notifying local server!');
+    console.log('📡 Test RTMP URL:', this.config.url);
+    this.isActive = true;
+    this.emit('onStateChange', 'CONNECTING');
+    
+    // Notify local server about stream start
+    this.notifyServer('start');
+    
+    setTimeout(() => {
+      this.emit('onStateChange', 'CONNECTED');
+      this.startStatusUpdates();
+    }, 1000);
+  }
+  
+  stop(): void {
+    console.log('🧪 Test RTMP streaming stopped');
+    this.isActive = false;
+    this.emit('onStateChange', 'DISCONNECTED');
+    
+    // Notify local server about stream stop
+    this.notifyServer('stop');
+    
+    if (this.statusInterval) {
+      clearInterval(this.statusInterval);
+      this.statusInterval = null;
+    }
+  }
+  
+  private async notifyServer(action: 'start' | 'stop'): Promise<void> {
+    try {
+      const response = await fetch('http://146.19.215.133:3000/api/test-stream', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action,
+          streamKey: this.config.url?.split('/').pop() || 'test',
+          config: this.config
+        })
+      });
+      
+      if (response.ok) {
+        console.log(`✅ Server notified about stream ${action}`);
+      } else {
+        console.warn(`⚠️  Failed to notify server about stream ${action}`);
+      }
+    } catch (error) {
+      console.warn('⚠️  Could not reach local server:', error);
+    }
+  }
+  
+  private startStatusUpdates(): void {
+    this.statusInterval = setInterval(() => {
+      if (this.isActive) {
+        this.notifyServer('start'); // Keep alive
+      }
+    }, 5000);
+  }
+  
+  on(event: string, callback: (data: any) => void): void {
+    if (!this.listeners[event]) {
+      this.listeners[event] = [];
+    }
+    this.listeners[event].push(callback);
+  }
+  
+  private emit(event: string, data: any): void {
+    if (this.listeners[event]) {
+      this.listeners[event].forEach(callback => callback(data));
+    }
+  }
+  
+  getStats(): any {
+    return {
+      videoBitrate: this.config.video?.bitrate || 3000,
+      fps: this.config.video?.fps || 30,
+      networkSpeed: 5000,
+      droppedFrames: Math.floor(Math.random() * 5),
+      totalFrames: 1000,
+      audioLevel: 0.5,
+      videoLevel: 0.8
+    };
+  }
+  
+  removeAllListeners(): void {
+    this.listeners = {};
+  }
+}
+
+// Real RTMP Publisher using react-native-nodemediaclient
+class RealRTMPPublisher implements RTMPPublisher {
+  private client: any;
+  private isStreaming = false;
+  
+  constructor() {
+    try {
+      const { NodeMediaClient } = require('react-native-nodemediaclient');
+      this.client = new NodeMediaClient();
+      console.log('✅ Real RTMP Publisher initialized with NodeMediaClient');
+      
+      // Set up default video settings for actual streaming
+      this.client.setVideoConfig({
+        preset: 1, // 720p
+        bitrate: 3000000, // 3 Mbps
+        profile: 1,
+        fps: 30,
+        videoFrontMirror: false,
+      });
+      
+      this.client.setAudioConfig({
+        bitrate: 128000, // 128 kbps
+        profile: 1,
+        samplerate: 44100,
+      });
+      
+    } catch (error) {
+      console.warn('❌ NodeMediaClient not available, falling back to test:', error);
+      throw error;
+    }
+  }
+  
+  setRTMPUrl(url: string): void {
+    console.log('🔗 Setting RTMP URL for real streaming:', url);
+    this.client.setRTMPUrl(url);
+  }
+  
+  setVideoConfig(config: any): void {
+    console.log('📹 Setting real video config:', config);
+    this.client.setVideoConfig(config);
+  }
+  
+  setAudioConfig(config: any): void {
+    console.log('🎵 Setting real audio config:', config);
+    this.client.setAudioConfig(config);
+  }
+  
+  start(): void {
+    console.log('🎬 Starting REAL video streaming with camera capture!');
+    console.log('📡 This will stream actual video to the server');
+    
+    this.isStreaming = true;
+    
+    // Start the actual RTMP streaming with camera input
+    this.client.start();
+    
+    // Log streaming status
+    console.log('✅ Real RTMP streaming started - video should appear on server');
+  }
+  
+  stop(): void {
+    console.log('🛑 Stopping real RTMP streaming...');
+    this.isStreaming = false;
+    this.client.stop();
+  }
+  
+  on(event: string, callback: (data: any) => void): void {
+    this.client.on(event, callback);
+  }
+  
+  getStats(): any {
+    if (this.client.getStats) {
+      return this.client.getStats();
+    }
+    // Fallback stats for real streaming
+    return {
+      videoBitrate: 3000000,
+      fps: 30,
+      networkSpeed: 5000000,
+      droppedFrames: 0,
+      totalFrames: this.isStreaming ? 1000 : 0,
+      audioLevel: 0.7,
+      videoLevel: 0.9
+    };
+  }
+  
+  removeAllListeners(): void {
+    this.client.removeAllListeners();
+  }
+}
 
 export interface StreamConfig {
   rtmpUrl: string;
@@ -40,7 +255,7 @@ class StreamingService {
   private statsInterval: ReturnType<typeof setInterval> | null = null;
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
-  private rtmpPublisher: MockRTMPPublisher | null = null;
+  private rtmpPublisher: RTMPPublisher | null = null;
   private totalFrames = 0;
   private droppedFrames = 0;
   private networkSpeed = 0;
@@ -79,16 +294,39 @@ class StreamingService {
         throw new Error('Failed to initialize video composer');
       }
 
-      // Initialize RTMP publisher
-      this.rtmpPublisher = new MockRTMPPublisher();
+      // Initialize RTMP publisher - try real first, then test
+      try {
+        this.rtmpPublisher = new RealRTMPPublisher();
+        console.log('🎬 Using REAL RTMP publisher for video streaming');
+      } catch (error) {
+        console.warn('Real RTMP publisher not available, using test publisher:', error);
+        console.log('⚠️  For real video streaming, make sure react-native-nodemediaclient is properly configured');
+        this.rtmpPublisher = new TestRTMPPublisher();
+      }
       
       // Configure RTMP publisher
-      const rtmpConfig: RTMPConfig = {
-        url: config.rtmpUrl,
-        streamKey: config.streamKey,
-        ...this.buildRTMPConfig(config)
+      const fullRtmpUrl = `${config.rtmpUrl}${config.streamKey}`;
+      this.rtmpPublisher.setRTMPUrl(fullRtmpUrl);
+      
+      // Configure video settings
+      const videoConfig = {
+        preset: this.getVideoPreset(config.quality),
+        bitrate: config.bitrate * 1000,
+        profile: 1,
+        fps: config.fps,
+        videoFrontMirror: false,
       };
-      this.rtmpPublisher.setConfig(rtmpConfig);
+      this.rtmpPublisher.setVideoConfig(videoConfig);
+      
+      // Configure audio settings if enabled
+      if (config.enableAudio) {
+        const audioConfig = {
+          bitrate: 32000,
+          profile: 1,
+          samplerate: 44100,
+        };
+        this.rtmpPublisher.setAudioConfig(audioConfig);
+      }
 
       // Setup event listeners
       this.setupRTMPEventListeners();
@@ -132,7 +370,7 @@ class StreamingService {
       // Start RTMP publishing
       console.log('Starting RTMP publisher...');
       
-      await this.rtmpPublisher.start();
+      this.rtmpPublisher.start();
       
       this.isStreaming = true;
       this.startTime = Date.now();
@@ -175,7 +413,7 @@ class StreamingService {
       
       // Stop RTMP streaming
       if (this.rtmpPublisher) {
-        await this.rtmpPublisher.stop();
+        this.rtmpPublisher.stop();
       }
       
       // Stop video composition
@@ -304,10 +542,10 @@ class StreamingService {
       const stats = this.rtmpPublisher.getStats();
       
       // Update network speed based on actual bitrate
-      this.networkSpeed = stats.bitrate;
+      this.networkSpeed = stats.videoBitrate || 0;
       
       // Update frame stats
-      const newDroppedFrames = stats.droppedFrames;
+      const newDroppedFrames = stats.droppedFrames || 0;
       if (newDroppedFrames > this.droppedFrames) {
         this.droppedFrames = newDroppedFrames;
       }
@@ -368,22 +606,6 @@ class StreamingService {
     return this.streamConfig;
   }
 
-  private buildRTMPConfig(config: StreamConfig): any {
-    return {
-      audio: {
-        bitrate: 32000,
-        profile: 1,
-        samplerate: 44100,
-      },
-      video: {
-        preset: this.getVideoPreset(config.quality),
-        bitrate: config.bitrate * 1000,
-        profile: 1,
-        fps: config.fps,
-        videoFrontMirror: false,
-      },
-    };
-  }
 
   private getVideoPreset(quality: string): number {
     switch (quality) {
@@ -440,7 +662,7 @@ class StreamingService {
       }
       
       if (this.rtmpPublisher) {
-        await this.rtmpPublisher.stop();
+        this.rtmpPublisher.stop();
       }
     } catch (error) {
       console.error('Error during cleanup:', error);

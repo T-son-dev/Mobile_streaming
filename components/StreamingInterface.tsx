@@ -396,6 +396,8 @@ const StreamingInterface: React.FC<StreamingInterfaceProps> = ({
         isOpen={isQuickAccessOpen}
         onClose={() => setIsQuickAccessOpen(false)}
         onProModeClick={handleProModeOpen}
+        onHomeClick={() => router.push('/')}
+        onSettingsClick={() => router.push('/settings')}
       />
 
       <CameraControls
