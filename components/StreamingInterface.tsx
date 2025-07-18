@@ -41,6 +41,7 @@ interface StreamingInterfaceProps {
   onQualityChange: (quality: '720p' | '1080p' | '480p' | '4K') => void;
   onLayoutChange: (layout: any) => void;
   currentLayout: any;
+  cameraView?: React.ReactNode;
 }
 
 const StreamingInterface: React.FC<StreamingInterfaceProps> = ({
@@ -50,7 +51,8 @@ const StreamingInterface: React.FC<StreamingInterfaceProps> = ({
   onStartStop,
   onQualityChange,
   onLayoutChange,
-  currentLayout
+  currentLayout,
+  cameraView
 }) => {
   const router = useRouter();
   const responsive = useResponsive();
@@ -367,6 +369,7 @@ const StreamingInterface: React.FC<StreamingInterfaceProps> = ({
           <VideoPreview 
             isStreaming={isStreaming}
             activeSource={sources[activeSource].name}
+            cameraView={cameraView}
           />
         </View>
       </View>

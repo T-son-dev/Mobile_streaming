@@ -151,26 +151,23 @@ const LiveStreamScreen: React.FC = () => {
     <View style={responsiveStyles.container}>
       <StatusBar hidden={true} />
       
-      <View style={responsiveStyles.cameraContainer}>
-        <DualCameraView
-          layout={cameraLayout}
-          onLayoutChange={handleLayoutChange}
-          onCameraSwitch={handleCameraSwitch}
-          style={responsiveStyles.camera}
-        />
-      </View>
-
-      <View style={responsiveStyles.interfaceContainer}>
-        <StreamingInterface
-          isStreaming={isStreaming}
-          streamStats={streamStats}
-          isInitializing={isInitializing}
-          onStartStop={handleStartStreaming}
-          onQualityChange={handleQualityChange}
-          onLayoutChange={handleLayoutChange}
-          currentLayout={cameraLayout}
-        />
-      </View>
+      <StreamingInterface
+        isStreaming={isStreaming}
+        streamStats={streamStats}
+        isInitializing={isInitializing}
+        onStartStop={handleStartStreaming}
+        onQualityChange={handleQualityChange}
+        onLayoutChange={handleLayoutChange}
+        currentLayout={cameraLayout}
+        cameraView={
+          <DualCameraView
+            layout={cameraLayout}
+            onLayoutChange={handleLayoutChange}
+            onCameraSwitch={handleCameraSwitch}
+            style={{ flex: 1 }}
+          />
+        }
+      />
     </View>
   );
 };
@@ -182,36 +179,6 @@ const createResponsiveStyles = (responsive: ReturnType<typeof useResponsive>) =>
     container: {
       flex: 1,
       backgroundColor: '#000',
-    },
-    cameraContainer: {
-      flex: 1,
-      zIndex: 50,
-      // Add responsive positioning for different orientations
-      ...(orientation === 'landscape' && {
-        paddingHorizontal: safeAreaHorizontal / 2,
-      })
-    },
-    camera: {
-      flex: 1,
-      borderRadius: orientation === 'landscape' ? responsive.styles?.cameraView?.borderRadius || 0 : 0,
-    },
-    interfaceContainer: {
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      zIndex: 10, 
-      pointerEvents: 'box-none', 
-      // Add responsive padding for different device types
-      ...(deviceType.includes('tablet') && {
-        paddingHorizontal: safeAreaHorizontal * 2,
-        paddingVertical: safeAreaVertical,
-      }),
-      ...(deviceType === 'desktop' && {
-        paddingHorizontal: safeAreaHorizontal * 3,
-        paddingVertical: safeAreaVertical * 2,
-      })
     },
     errorContainer: {
       flex: 1,

@@ -6,6 +6,7 @@ import { useResponsive } from '../utils/responsive';
 interface VideoPreviewProps {
   isStreaming: boolean;
   activeSource: string;
+  cameraView?: React.ReactNode;
 }
 
 const { width, height } = Dimensions.get('window');
@@ -19,7 +20,7 @@ const Colors = {
   overlay: 'rgba(15, 23, 42, 0.8)', // slate-900/80
 };
 
-const VideoPreview: React.FC<VideoPreviewProps> = ({ isStreaming, activeSource }) => {
+const VideoPreview: React.FC<VideoPreviewProps> = ({ isStreaming, activeSource, cameraView }) => {
   const responsive = useResponsive();
   const isMobile = responsive.isMobile;
   const isNativeMobile = responsive.isNativeMobile;
@@ -48,54 +49,65 @@ const VideoPreview: React.FC<VideoPreviewProps> = ({ isStreaming, activeSource }
 
   return (
     <View style={styles.container}>
-      {/* Preview Area with Basketball Court Background */}
+      {/* Preview Area with Camera or Background */}
       <View style={styles.previewArea}>
-        {/* Basketball Court Background Image */}
-        <ImageBackground
-          source={basketballCourtImage}
-          style={[
+        {/* Camera View or Basketball Court Background */}
+        {cameraView ? (
+          // Real camera view
+          <View style={[
             styles.backgroundImage,
             { transform: [{ scale: zoom }] }
-          ]}
-          resizeMode="cover"
-        >
-          {/* Stream Status Overlay */}
-          {isStreaming && (
-            <View style={[
-              styles.streamStatus,
-              isNativeMobile && styles.streamStatusMobile
-            ]}>
-              <View style={[
-                styles.liveDot,
-                isNativeMobile && styles.liveDotMobile
-              ]} />
-              <Text style={[
-                styles.liveText,
-                isNativeMobile && styles.liveTextMobile
-              ]}>LIVE</Text>
-            </View>
-          )}
-          
-          {/* Active Source Label */}
-          <View style={[
-            styles.sourceLabel,
-            isNativeMobile && styles.sourceLabelMobile
           ]}>
-            <Text style={[
-              styles.sourceLabelText,
-              isNativeMobile && styles.sourceLabelTextMobile
-            ]}>{activeSource}</Text>
+            {cameraView}
           </View>
-          
-          {/* Play Button (when not streaming) */}
-          {!isStreaming && (
-            <View style={styles.playButtonContainer}>
-              <View style={styles.playButton}>
-                <IconSymbol name="play.fill" size={32} color={Colors.primary} />
-              </View>
+        ) : (
+          // Fallback background image
+          <ImageBackground
+            source={basketballCourtImage}
+            style={[
+              styles.backgroundImage,
+              { transform: [{ scale: zoom }] }
+            ]}
+            resizeMode="cover"
+          />
+        )}
+        
+        {/* Stream Status Overlay */}
+        {isStreaming && (
+          <View style={[
+            styles.streamStatus,
+            isNativeMobile && styles.streamStatusMobile
+          ]}>
+            <View style={[
+              styles.liveDot,
+              isNativeMobile && styles.liveDotMobile
+            ]} />
+            <Text style={[
+              styles.liveText,
+              isNativeMobile && styles.liveTextMobile
+            ]}>LIVE</Text>
+          </View>
+        )}
+        
+        {/* Active Source Label */}
+        <View style={[
+          styles.sourceLabel,
+          isNativeMobile && styles.sourceLabelMobile
+        ]}>
+          <Text style={[
+            styles.sourceLabelText,
+            isNativeMobile && styles.sourceLabelTextMobile
+          ]}>{activeSource}</Text>
+        </View>
+        
+        {/* Play Button (when not streaming) */}
+        {!isStreaming && (
+          <View style={styles.playButtonContainer}>
+            <View style={styles.playButton}>
+              <IconSymbol name="play.fill" size={32} color={Colors.primary} />
             </View>
-          )}
-        </ImageBackground>
+          </View>
+        )}
         
         {/* Draggable Zoom Slider - Right Edge */}
         <View style={styles.zoomSliderContainer}>
