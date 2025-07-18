@@ -204,7 +204,7 @@ const DualCameraView: React.FC<DualCameraViewProps> = ({
   const renderOverlayLayout = () => {
     const responsiveStyles = createResponsiveStyles(responsive);
     return (
-      <View style={responsiveStyles.overlayContainer}>
+      <View style={responsiveStyles.overlayCameraContainer}>
         {/* Background camera (back) */}
         <CameraView
           ref={backCameraRef}
@@ -357,7 +357,7 @@ const createResponsiveStyles = (responsive: ReturnType<typeof useResponsive>) =>
     },
     
     // Overlay Layout Styles - Responsive
-    overlayContainer: {
+    overlayCameraContainer: {
       flex: 1,
       position: 'relative',
     },

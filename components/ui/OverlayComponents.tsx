@@ -5,13 +5,20 @@ import {
   StyleSheet,
   TouchableOpacity,
   TextInput,
-  ScrollView,
   Image,
 } from 'react-native';
 import { Colors } from '@/constants/Colors';
 import { Overlay, OverlayType } from '@/types/overlay';
 import { ColorPicker } from './SettingsComponents';
 import { IconSymbol } from '@/components/ui/IconSymbol';
+
+// Conditional import for FastImage
+let FastImage: any = null;
+try {
+  FastImage = require('react-native-fast-image');
+} catch (error) {
+  console.warn('react-native-fast-image not available, using standard Image:', error);
+}
 
 interface OverlayTypeCardProps {
   type: OverlayType;
@@ -96,11 +103,20 @@ export const OverlayPreview: React.FC<OverlayPreviewProps> = ({
                 </Text>
               )}
               {overlay.type === 'image' && (
-                <Image
-                  source={{ uri: overlay.url }}
-                  style={{ width: '100%', height: '100%', opacity: overlay.opacity }}
-                  resizeMode="contain"
-                />
+                FastImage ? (
+                  <FastImage
+                    source={{ uri: overlay.url }}
+                    style={{ width: '100%', height: '100%', opacity: overlay.opacity }}
+                    resizeMode={FastImage.resizeMode.contain}
+                    fallback
+                  />
+                ) : (
+                  <Image
+                    source={{ uri: overlay.url }}
+                    style={{ width: '100%', height: '100%', opacity: overlay.opacity }}
+                    resizeMode="contain"
+                  />
+                )
               )}
               {(overlay.type === 'web' || overlay.type === 'video') && (
                 <View style={styles.placeholderOverlay}>

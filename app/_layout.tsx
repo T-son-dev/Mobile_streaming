@@ -3,7 +3,8 @@ import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
-import { BackHandler } from 'react-native';
+import { BackHandler, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import 'react-native-reanimated';
 
 const CustomDarkTheme = {
@@ -21,6 +22,7 @@ export default function RootLayout() {
   const [loaded] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     // Handle Android back button for streaming screen
@@ -38,89 +40,85 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={CustomDarkTheme}>
-      <Stack
-        screenOptions={{
-          headerStyle: {
-            backgroundColor: '#1a1a2e',
-            elevation: 0,
-            shadowOpacity: 0,
-            borderBottomWidth: 1,
-            borderBottomColor: '#2a2a3e',
-          },
-          headerTintColor: '#7ED321',
-          headerTitleStyle: {
-            fontWeight: 'bold',
-            color: '#ffffff',
-            fontSize: 18,
-          },
-          contentStyle: {
-            backgroundColor: '#0f0f23',
-          },
-          // Animation timing
-          transitionSpec: {
-            open: {
-              animation: 'timing',
-              config: {
-                duration: 300,
-              },
-            },
-            close: {
-              animation: 'timing',
-              config: {
-                duration: 250,
-              },
-            },
-          },
-        }}>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen 
-          name="home" 
-          options={{ 
-            title: 'STREAMING APPLICATION',
-            headerShown: true,
-            headerTitleAlign: 'center',
+      <View style={{ flex: 1 }}>
+        {/* Status bar background */}
+        <View 
+          style={{ 
+            height: insets.top, 
+            backgroundColor: '#0f0f23' 
+          }} 
+        />
+        <Stack
+          screenOptions={{
             headerStyle: {
               backgroundColor: '#1a1a2e',
               elevation: 0,
               shadowOpacity: 0,
+              borderBottomWidth: 1,
+              borderBottomColor: '#2a2a3e',
             },
-          }} 
-        />
-        <Stack.Screen 
-          name="live-stream" 
-          options={{ 
-            title: 'Live Stream',
-            headerShown: false,
-            gestureEnabled: false, // Prevent swipe to dismiss
-            // Full screen modal-like presentation
-            presentation: 'fullScreenModal',
-          }} 
-        />
-        <Stack.Screen 
-          name="settings" 
-          options={{ 
-            title: 'Settings',
-            presentation: 'modal',
-            headerLeft: () => null, // Remove back button, use custom close
-          }} 
-        />
-        <Stack.Screen 
-          name="overlay" 
-          options={{ 
-            title: 'Overlay Manager',
-            presentation: 'modal',
-            headerLeft: () => null,
-          }} 
-        />
-        <Stack.Screen 
-          name="relay" 
-          options={{ 
-            title: 'Replay Gallery',
-          }} 
-        />
-        <Stack.Screen name="+not-found" />
-      </Stack>
-      <StatusBar style="light" backgroundColor="#0f0f23" translucent />
+            headerTintColor: '#7ED321',
+            headerTitleStyle: {
+              fontWeight: 'bold',
+              color: '#ffffff',
+              fontSize: 18,
+            },
+            contentStyle: {
+              backgroundColor: '#0f0f23',
+            },
+            // Animation timing
+            transitionSpec: {
+              open: {
+                animation: 'timing',
+                config: {
+                  duration: 300,
+                },
+              },
+              close: {
+                animation: 'timing',
+                config: {
+                  duration: 250,
+                },
+              },
+            },
+          }}>
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen 
+            name="live-stream" 
+            options={{ 
+              title: 'Live Stream',
+              headerShown: false,
+              gestureEnabled: false, // Prevent swipe to dismiss
+              // Full screen modal-like presentation
+              presentation: 'fullScreenModal',
+            }} 
+          />
+          <Stack.Screen 
+            name="settings" 
+            options={{ 
+              title: 'Settings',
+              presentation: 'modal',
+              headerLeft: () => null, // Remove back button, use custom close
+            }} 
+          />
+          <Stack.Screen 
+            name="overlay" 
+            options={{ 
+              title: 'Overlay Manager',
+              presentation: 'modal',
+              headerLeft: () => null,
+            }} 
+          />
+          <Stack.Screen 
+            name="relay" 
+            options={{ 
+              title: 'Replay Gallery',
+            }} 
+          />
+          <Stack.Screen name="+not-found" />
+        </Stack>
+        <StatusBar style="light" translucent />
+      </View>
     </ThemeProvider>
   );
 }

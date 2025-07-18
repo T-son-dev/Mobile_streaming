@@ -435,6 +435,7 @@ const StreamingInterface: React.FC<StreamingInterfaceProps> = ({
         onVolumeChange={handleVolumeChange}
         onZoomChange={handleZoomChange}
       />
+
     </SafeAreaView>
   );
 };

@@ -17,9 +17,10 @@ import {
   PositionControl,
   TextStyleEditor,
 } from '@/components/ui/OverlayComponents';
-import { Overlay, OverlayType, TextOverlay } from '@/types/overlay';
+import { Overlay, OverlayType, TextOverlay, ImageOverlay } from '@/types/overlay';
 import { Colors } from '@/constants/Colors';
 import { IconSymbol } from '@/components/ui/IconSymbol';
+import { assetManager } from '@/services/AssetManager';
 
 const OverlayScreen: React.FC = () => {
   const [overlays, setOverlays] = useState<Overlay[]>([]);
@@ -29,7 +30,42 @@ const OverlayScreen: React.FC = () => {
 
   const selectedOverlay = overlays.find(o => o.id === selectedOverlayId);
 
-  const createOverlay = (type: OverlayType) => {
+  const createOverlay = async (type: OverlayType) => {
+    // For image overlays, open image picker first
+    if (type === 'image') {
+      try {
+        const asset = await assetManager.selectImageFromLibrary();
+        if (!asset) {
+          setShowTypeSelector(false);
+          return; // User cancelled
+        }
+
+        const newOverlay: ImageOverlay = {
+          id: Date.now().toString(),
+          type: 'image',
+          name: asset.name || 'Image Overlay',
+          enabled: true,
+          position: { x: 10, y: 10 },
+          size: { width: 200, height: 150 },
+          zIndex: overlays.length,
+          url: asset.uri,
+          opacity: 1,
+        };
+
+        setOverlays([...overlays, newOverlay]);
+        setSelectedOverlayId(newOverlay.id);
+        setEditingOverlay(newOverlay);
+        setShowTypeSelector(false);
+        return;
+      } catch (error) {
+        console.error('Error selecting image:', error);
+        Alert.alert('Error', 'Failed to select image');
+        setShowTypeSelector(false);
+        return;
+      }
+    }
+
+    // For other overlay types, create normally
     const newOverlay: Overlay = {
       id: Date.now().toString(),
       type,
@@ -47,10 +83,6 @@ const OverlayScreen: React.FC = () => {
           backgroundColor: 'rgba(0, 0, 0, 0.5)',
           padding: 8,
         },
-      }),
-      ...(type === 'image' && {
-        url: '',
-        opacity: 1,
       }),
       ...(type === 'web' && {
         url: '',
@@ -180,7 +212,7 @@ const OverlayScreen: React.FC = () => {
                 type="image"
                 iconName="photo.fill"
                 title="Image"
-                description="Display images from URL"
+                description="Select image from gallery"
                 onPress={() => createOverlay('image')}
               />
               <OverlayTypeCard
@@ -257,8 +289,33 @@ const OverlayScreen: React.FC = () => {
                     />
                   )}
 
-                  {(editingOverlay.type === 'image' ||
-                    editingOverlay.type === 'web' ||
+                  {editingOverlay.type === 'image' && (
+                    <View style={styles.editorSection}>
+                      <Text style={styles.inputLabel}>Image Source</Text>
+                      <TouchableOpacity
+                        style={styles.changeImageButton}
+                        onPress={async () => {
+                          try {
+                            const asset = await assetManager.selectImageFromLibrary();
+                            if (asset) {
+                              updateOverlay(editingOverlay.id, {
+                                url: asset.uri,
+                                name: asset.name || editingOverlay.name,
+                              });
+                            }
+                          } catch (error) {
+                            console.error('Error selecting new image:', error);
+                            Alert.alert('Error', 'Failed to select image');
+                          }
+                        }}
+                      >
+                        <IconSymbol name="photo.fill" size={20} color={Colors.dark.tint} />
+                        <Text style={styles.changeImageText}>Change Image</Text>
+                      </TouchableOpacity>
+                    </View>
+                  )}
+
+                  {(editingOverlay.type === 'web' ||
                     editingOverlay.type === 'video') && (
                     <View style={styles.editorSection}>
                       <Text style={styles.inputLabel}>URL</Text>
@@ -413,6 +470,21 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
     fontSize: 16,
+  },
+  changeImageButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.dark.surface,
+    padding: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    gap: 12,
+  },
+  changeImageText: {
+    color: Colors.dark.tint,
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
 
