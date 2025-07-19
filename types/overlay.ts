@@ -25,6 +25,23 @@ export interface TextOverlay extends BaseOverlay {
     fontFamily: string;
     backgroundColor?: string;
     padding?: number;
+    fontWeight?: string;
+    fontStyle?: 'normal' | 'italic';
+    textAlign?: 'left' | 'center' | 'right' | 'justify';
+    textDecorationLine?: 'none' | 'underline' | 'line-through';
+    textShadowColor?: string;
+    textShadowOffset?: { width: number; height: number };
+    textShadowRadius?: number;
+    letterSpacing?: number;
+    lineHeight?: number;
+    textTransform?: 'none' | 'capitalize' | 'uppercase' | 'lowercase';
+    opacity?: number;
+    animation?: {
+      type: 'fadeIn' | 'slideUp' | 'typewriter' | 'pulse' | 'bounce' | 'glow' | 'none';
+      duration?: number;
+      delay?: number;
+      loop?: boolean;
+    };
   };
 }
 

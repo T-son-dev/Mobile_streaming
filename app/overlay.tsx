@@ -102,9 +102,9 @@ const OverlayScreen: React.FC = () => {
   };
 
   const updateOverlay = (id: string, updates: Partial<Overlay>) => {
-    setOverlays(overlays.map(o => o.id === id ? { ...o, ...updates } : o));
+    setOverlays(overlays.map(o => o.id === id ? { ...o, ...updates } as Overlay : o));
     if (editingOverlay && editingOverlay.id === id) {
-      setEditingOverlay({ ...editingOverlay, ...updates });
+      setEditingOverlay({ ...editingOverlay, ...updates } as Overlay);
     }
   };
 
@@ -463,7 +463,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   textInput: {
-    backgroundColor: Colors.dark.surface,
+    backgroundColor: '#1e293b',
     color: Colors.dark.text,
     padding: 12,
     borderRadius: 8,
@@ -474,7 +474,7 @@ const styles = StyleSheet.create({
   changeImageButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.dark.surface,
+    backgroundColor: '#1e293b',
     padding: 16,
     borderRadius: 8,
     borderWidth: 1,

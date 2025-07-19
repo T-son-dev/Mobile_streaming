@@ -10,6 +10,7 @@ interface QuickAccessMenuProps {
   onProModeClick: () => void;
   onHomeClick?: () => void;
   onSettingsClick?: () => void;
+  onOverlayClick?: () => void;
 }
 
 const Colors = {
@@ -26,7 +27,8 @@ const QuickAccessMenu: React.FC<QuickAccessMenuProps> = ({
   onClose, 
   onProModeClick,
   onHomeClick,
-  onSettingsClick
+  onSettingsClick,
+  onOverlayClick
 }) => {
   const responsive = useResponsive();
   const isNativeMobile = responsive.isNativeMobile;
@@ -219,16 +221,24 @@ const QuickAccessMenu: React.FC<QuickAccessMenuProps> = ({
             ]}>Home Screen</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={[
-            styles.menuItem,
-            isNativeMobile && styles.menuItemMobile
-          ]}>
+          <TouchableOpacity 
+            style={[
+              styles.menuItem,
+              isNativeMobile && styles.menuItemMobile
+            ]}
+            onPress={() => {
+              if (onOverlayClick) {
+                onOverlayClick();
+              }
+              onClose();
+            }}
+          >
             <View style={[
               styles.menuIcon,
               isNativeMobile && styles.menuIconMobile
             ]}>
               <IconSymbol 
-                name="mic.slash.fill" 
+                name="text.alignleft" 
                 size={isNativeMobile ? 14 : 20} 
                 color={Colors.text} 
               />
@@ -236,7 +246,7 @@ const QuickAccessMenu: React.FC<QuickAccessMenuProps> = ({
             <Text style={[
               styles.menuLabel,
               isNativeMobile && styles.menuLabelMobile
-            ]}>Mute</Text>
+            ]}>Overlays</Text>
           </TouchableOpacity>
 
           <TouchableOpacity 

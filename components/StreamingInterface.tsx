@@ -18,6 +18,9 @@ import ShortcutButton from './ShortcutButton';
 import SourceCard from './SourceCard';
 import StreamButton from './StreamButton';
 import VideoPreview from './VideoPreview';
+import UniversalOverlayManager from './UniversalOverlayManager';
+import OverlayRenderer from './OverlayRenderer';
+import { overlayService } from '@/services/OverlayService';
 
 // Use centralized responsive utilities instead of local device detection
 
@@ -68,6 +71,9 @@ const StreamingInterface: React.FC<StreamingInterfaceProps> = ({
   const [isReplayModalOpen, setIsReplayModalOpen] = useState(false);
   const [isEffectsModalOpen, setIsEffectsModalOpen] = useState(false);
   const [isMicrophoneModalOpen, setIsMicrophoneModalOpen] = useState(false);
+  const [isOverlayManagerOpen, setIsOverlayManagerOpen] = useState(false);
+  const [selectedOverlayId, setSelectedOverlayId] = useState<string | null>(null);
+  const [editingOverlayId, setEditingOverlayId] = useState<string | null>(null);
   
   const [replaySettings, setReplaySettings] = useState({
     enabled: false,
@@ -90,6 +96,15 @@ const StreamingInterface: React.FC<StreamingInterfaceProps> = ({
   useEffect(() => {
     setIsStreaming(propIsStreaming);
   }, [propIsStreaming]);
+
+  // Handle overlay selection outside of overlay manager
+  const handleOverlaySelect = (overlayId: string | null) => {
+    setSelectedOverlayId(overlayId);
+  };
+
+  const handleEditingChange = (overlayId: string | null) => {
+    setEditingOverlayId(overlayId);
+  };
 
   // Update responsive state when dimensions change
   useEffect(() => {
@@ -126,6 +141,16 @@ const StreamingInterface: React.FC<StreamingInterfaceProps> = ({
 
   const handleQuickAccessToggle = () => {
     setIsQuickAccessOpen(!isQuickAccessOpen);
+    setIsProModeOpen(false);
+    setIsReplayModalOpen(false);
+    setIsEffectsModalOpen(false);
+    setIsMicrophoneModalOpen(false);
+    setIsOverlayManagerOpen(false);
+  };
+
+  const handleOverlayManagerToggle = () => {
+    setIsOverlayManagerOpen(!isOverlayManagerOpen);
+    setIsQuickAccessOpen(false);
     setIsProModeOpen(false);
     setIsReplayModalOpen(false);
     setIsEffectsModalOpen(false);
@@ -371,6 +396,14 @@ const StreamingInterface: React.FC<StreamingInterfaceProps> = ({
             activeSource={sources[activeSource].name}
             cameraView={cameraView}
           />
+          {/* Overlays */}
+          <OverlayRenderer
+            style={StyleSheet.absoluteFillObject}
+            onOverlaySelect={handleOverlaySelect}
+            selectedOverlayId={selectedOverlayId}
+            editingOverlayId={editingOverlayId}
+            onEditingChange={handleEditingChange}
+          />
         </View>
       </View>
 
@@ -401,6 +434,7 @@ const StreamingInterface: React.FC<StreamingInterfaceProps> = ({
         onProModeClick={handleProModeOpen}
         onHomeClick={() => router.push('/')}
         onSettingsClick={() => router.push('/settings')}
+        onOverlayClick={handleOverlayManagerToggle}
       />
 
       <CameraControls
@@ -434,6 +468,11 @@ const StreamingInterface: React.FC<StreamingInterfaceProps> = ({
         onMicrophoneToggle={handleMicrophoneToggle}
         onVolumeChange={handleVolumeChange}
         onZoomChange={handleZoomChange}
+      />
+
+      <UniversalOverlayManager
+        visible={isOverlayManagerOpen}
+        onClose={() => setIsOverlayManagerOpen(false)}
       />
 
     </SafeAreaView>
