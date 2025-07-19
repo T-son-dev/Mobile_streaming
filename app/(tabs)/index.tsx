@@ -98,10 +98,6 @@ const HomeScreen: React.FC = () => {
     });
   };
 
-  const navigateToOverlay = () => {
-    router.push('/overlay');
-  };
-
   const navigateToReplay = () => {
     router.push('/relay');
   };
@@ -139,15 +135,6 @@ const HomeScreen: React.FC = () => {
 
         {/* Action Buttons */}
         <View style={styles.actionsContainer}>
-
-          <TouchableOpacity style={styles.actionButton} onPress={navigateToOverlay}>
-            <IconSymbol name="photo.fill" size={24} color={Colors.primary} />
-            <View style={styles.actionContent}>
-              <Text style={styles.actionTitle}>Manage Overlays</Text>
-              <Text style={styles.actionDescription}>Add visual elements</Text>
-            </View>
-            <Text style={styles.actionArrow}>›</Text>
-          </TouchableOpacity>
 
           <TouchableOpacity style={styles.actionButton} onPress={navigateToReplay}>
             <IconSymbol name="globe" size={24} color={Colors.primary} />
