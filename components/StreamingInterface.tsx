@@ -20,6 +20,7 @@ import StreamButton from './StreamButton';
 import VideoPreview from './VideoPreview';
 import UniversalOverlayManager from './UniversalOverlayManager';
 import OverlayRenderer from './OverlayRenderer';
+import AssetBrowser from './AssetBrowser';
 import { overlayService } from '@/services/OverlayService';
 
 // Use centralized responsive utilities instead of local device detection
@@ -72,6 +73,7 @@ const StreamingInterface: React.FC<StreamingInterfaceProps> = ({
   const [isEffectsModalOpen, setIsEffectsModalOpen] = useState(false);
   const [isMicrophoneModalOpen, setIsMicrophoneModalOpen] = useState(false);
   const [isOverlayManagerOpen, setIsOverlayManagerOpen] = useState(false);
+  const [isMediaLibraryOpen, setIsMediaLibraryOpen] = useState(false);
   const [selectedOverlayId, setSelectedOverlayId] = useState<string | null>(null);
   const [editingOverlayId, setEditingOverlayId] = useState<string | null>(null);
   
@@ -146,6 +148,7 @@ const StreamingInterface: React.FC<StreamingInterfaceProps> = ({
     setIsEffectsModalOpen(false);
     setIsMicrophoneModalOpen(false);
     setIsOverlayManagerOpen(false);
+    setIsMediaLibraryOpen(false);
   };
 
   const handleOverlayManagerToggle = () => {
@@ -155,6 +158,17 @@ const StreamingInterface: React.FC<StreamingInterfaceProps> = ({
     setIsReplayModalOpen(false);
     setIsEffectsModalOpen(false);
     setIsMicrophoneModalOpen(false);
+    setIsMediaLibraryOpen(false);
+  };
+
+  const handleMediaLibraryToggle = () => {
+    setIsMediaLibraryOpen(!isMediaLibraryOpen);
+    setIsQuickAccessOpen(false);
+    setIsProModeOpen(false);
+    setIsReplayModalOpen(false);
+    setIsEffectsModalOpen(false);
+    setIsMicrophoneModalOpen(false);
+    setIsOverlayManagerOpen(false);
   };
 
   const handleProModeOpen = () => {
@@ -163,6 +177,7 @@ const StreamingInterface: React.FC<StreamingInterfaceProps> = ({
     setIsReplayModalOpen(false);
     setIsEffectsModalOpen(false);
     setIsMicrophoneModalOpen(false);
+    setIsMediaLibraryOpen(false);
   };
 
   const handleProModeClose = () => {
@@ -176,6 +191,7 @@ const StreamingInterface: React.FC<StreamingInterfaceProps> = ({
     setIsReplayModalOpen(false);
     setIsEffectsModalOpen(false);
     setIsMicrophoneModalOpen(false);
+    setIsMediaLibraryOpen(false);
   };
 
   const handleReplayModalToggle = () => {
@@ -185,6 +201,7 @@ const StreamingInterface: React.FC<StreamingInterfaceProps> = ({
     setIsCameraControlsOpen(false);
     setIsEffectsModalOpen(false);
     setIsMicrophoneModalOpen(false);
+    setIsMediaLibraryOpen(false);
   };
 
   const handleEffectsModalToggle = () => {
@@ -194,6 +211,7 @@ const StreamingInterface: React.FC<StreamingInterfaceProps> = ({
     setIsCameraControlsOpen(false);
     setIsReplayModalOpen(false);
     setIsMicrophoneModalOpen(false);
+    setIsMediaLibraryOpen(false);
   };
 
   const handleMicrophoneModalToggle = () => {
@@ -203,6 +221,7 @@ const StreamingInterface: React.FC<StreamingInterfaceProps> = ({
     setIsCameraControlsOpen(false);
     setIsReplayModalOpen(false);
     setIsEffectsModalOpen(false);
+    setIsMediaLibraryOpen(false);
   };
 
   const handleReplaySettingsChange = (enabled: boolean, seconds: number) => {
@@ -360,6 +379,12 @@ const StreamingInterface: React.FC<StreamingInterfaceProps> = ({
               onPress={handleCameraControlsToggle}
             />
             <ShortcutButton
+              iconName="photo.stack"
+              label=""
+              isActive={isMediaLibraryOpen}
+              onPress={handleMediaLibraryToggle}
+            />
+            <ShortcutButton
               iconName="line.horizontal.3"
               label=""
               isActive={isStreaming}
@@ -435,6 +460,7 @@ const StreamingInterface: React.FC<StreamingInterfaceProps> = ({
         onHomeClick={() => router.push('/')}
         onSettingsClick={() => router.push('/settings')}
         onOverlayClick={handleOverlayManagerToggle}
+        onMediaLibraryClick={handleMediaLibraryToggle}
       />
 
       <CameraControls
@@ -473,6 +499,14 @@ const StreamingInterface: React.FC<StreamingInterfaceProps> = ({
       <UniversalOverlayManager
         visible={isOverlayManagerOpen}
         onClose={() => setIsOverlayManagerOpen(false)}
+      />
+
+      <AssetBrowser
+        visible={isMediaLibraryOpen}
+        onClose={() => setIsMediaLibraryOpen(false)}
+        title="Media Library"
+        showUploadButton={true}
+        showStorageManager={true}
       />
 
     </SafeAreaView>

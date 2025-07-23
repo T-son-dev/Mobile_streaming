@@ -1,6 +1,9 @@
 import { Alert, Platform } from 'react-native';
 import { launchImageLibrary, ImagePickerResponse, MediaType } from 'react-native-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import MediaStorageManager from './MediaStorageManager';
+import { MediaAsset } from '../database/AssetDatabase';
+import AssetBrowser from '../components/AssetBrowser';
 
 // Conditional import for permissions
 let PermissionsAndroid: any = null;
@@ -79,8 +82,115 @@ export class AssetManager {
     }
   }
 
-  // Image selection and import
+  // Image selection and import - Enhanced with Media Library Integration
   async selectImageFromLibrary(): Promise<AssetInfo | null> {
+    try {
+      // Initialize MediaStorageManager if not already done
+      await MediaStorageManager.initialize();
+      
+      // Use the new Asset Browser for a better selection experience
+      return new Promise((resolve) => {
+        // For now, fall back to the enhanced media selection with better UX
+        this.selectFromEnhancedLibrary()
+          .then(resolve)
+          .catch((error) => {
+            console.error('Error with enhanced library selection:', error);
+            // Fall back to original method if enhanced fails
+            this.selectFromOriginalLibrary()
+              .then(resolve)
+              .catch(() => resolve(null));
+          });
+      });
+    } catch (error) {
+      console.error('Error selecting image from library:', error);
+      return null;
+    }
+  }
+
+  // Enhanced selection using MediaStorageManager
+  private async selectFromEnhancedLibrary(): Promise<AssetInfo | null> {
+    try {
+      // Get existing assets from MediaStorageManager
+      const existingAssets = await MediaStorageManager.getAssets({ 
+        limit: 50 // Show recent 50 assets
+      });
+
+      if (existingAssets.length > 0) {
+        // Show selection UI - for now use Alert, but could be enhanced with modal
+        return new Promise((resolve) => {
+          const assetNames = existingAssets.slice(0, 10).map(asset => asset.original_name);
+          assetNames.push('Upload New Image');
+          assetNames.push('Cancel');
+
+          Alert.alert(
+            'Select Image',
+            'Choose from existing assets or upload new:',
+            assetNames.map((name, index) => ({
+              text: name,
+              onPress: async () => {
+                if (name === 'Cancel') {
+                  resolve(null);
+                } else if (name === 'Upload New Image') {
+                  const newAsset = await this.selectFromOriginalLibrary();
+                  resolve(newAsset);
+                } else {
+                  const selectedAsset = existingAssets[index];
+                  const assetInfo = await this.convertMediaAssetToAssetInfo(selectedAsset);
+                  resolve(assetInfo);
+                }
+              }
+            }))
+          );
+        });
+      } else {
+        // No existing assets, upload new one
+        return await this.selectFromOriginalLibrary();
+      }
+    } catch (error) {
+      console.error('Error in enhanced library selection:', error);
+      throw error;
+    }
+  }
+
+  // Convert MediaAsset to AssetInfo for compatibility
+  private async convertMediaAssetToAssetInfo(mediaAsset: MediaAsset): Promise<AssetInfo> {
+    // Log usage in MediaStorageManager
+    await MediaStorageManager.logAssetUsage(mediaAsset.id!, 'use');
+
+    return {
+      id: mediaAsset.id!.toString(),
+      name: mediaAsset.original_name,
+      uri: `file://${mediaAsset.file_path}`,
+      originalUri: `file://${mediaAsset.file_path}`,
+      size: mediaAsset.file_size,
+      width: mediaAsset.width || 0,
+      height: mediaAsset.height || 0,
+      mimeType: this.getContentTypeFromFormat(mediaAsset.format),
+      createdAt: new Date(mediaAsset.created_at),
+      compressed: false // MediaStorageManager handles optimization separately
+    };
+  }
+
+  private getContentTypeFromFormat(format: string): string {
+    switch (format.toLowerCase()) {
+      case 'jpg':
+      case 'jpeg':
+        return 'image/jpeg';
+      case 'png':
+        return 'image/png';
+      case 'gif':
+        return 'image/gif';
+      case 'webp':
+        return 'image/webp';
+      case 'svg':
+        return 'image/svg+xml';
+      default:
+        return 'image/jpeg';
+    }
+  }
+
+  // Original library selection method as fallback
+  private async selectFromOriginalLibrary(): Promise<AssetInfo | null> {
     try {
       // Check permissions on Android
       if (Platform.OS === 'android' && PermissionsAndroid) {
@@ -119,7 +229,7 @@ export class AssetManager {
 
           if (response.assets && response.assets[0]) {
             const asset = response.assets[0];
-            this.processSelectedImage(asset)
+            this.processSelectedImageAndStore(asset)
               .then(resolve)
               .catch((error) => {
                 console.error('Error processing selected image:', error);
@@ -132,7 +242,7 @@ export class AssetManager {
         });
       });
     } catch (error) {
-      console.error('Error selecting image from library:', error);
+      console.error('Error selecting image from original library:', error);
       return null;
     }
   }
@@ -168,7 +278,7 @@ export class AssetManager {
     }
   }
 
-  private async processSelectedImage(asset: any): Promise<AssetInfo | null> {
+  private async processSelectedImageAndStore(asset: any): Promise<AssetInfo | null> {
     try {
       if (!asset.uri || !asset.type) {
         throw new Error('Invalid asset data');
@@ -200,17 +310,36 @@ export class AssetManager {
         return null;
       }
 
-      // Process and optimize image
-      const assetInfo = await this.createAssetInfo(asset, fileInfo);
-      
-      // Copy to assets directory and optimize if needed
-      const finalAsset = await this.optimizeAndStore(assetInfo);
-      
-      // Store asset info
-      this.assets.set(finalAsset.id, finalAsset);
-      await this.saveAssets();
-      
-      return finalAsset;
+      // Store in MediaStorageManager first
+      try {
+        const mediaAsset = await MediaStorageManager.storeFile(asset.uri, {
+          originalName: asset.fileName || `Image_${Date.now()}`,
+          category: 'overlays', // Default category for overlay images
+          tags: ['overlay', 'user-upload'],
+          generateThumbnail: true,
+          optimize: true
+        });
+
+        // Convert to AssetInfo for backward compatibility
+        const assetInfo = await this.convertMediaAssetToAssetInfo(mediaAsset);
+        
+        // Also store in legacy system for compatibility
+        this.assets.set(assetInfo.id, assetInfo);
+        await this.saveAssets();
+        
+        return assetInfo;
+      } catch (storageError) {
+        console.warn('MediaStorageManager failed, falling back to legacy storage:', storageError);
+        
+        // Fall back to legacy storage method
+        const assetInfo = await this.createAssetInfo(asset, fileInfo);
+        const finalAsset = await this.optimizeAndStore(assetInfo);
+        
+        this.assets.set(finalAsset.id, finalAsset);
+        await this.saveAssets();
+        
+        return finalAsset;
+      }
     } catch (error) {
       console.error('Error processing selected image:', error);
       return null;
