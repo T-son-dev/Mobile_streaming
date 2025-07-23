@@ -36,6 +36,7 @@ interface ImageOverlayProps {
   otherOverlays: ImageOverlayType[];
   onUpdate: (updates: Partial<ImageOverlayType>) => void;
   onSelect: () => void;
+  onDragEnd?: () => void;
   containerSize?: { width: number; height: number };
   showCollisionWarning?: boolean;
   showAlignmentGuides?: boolean;
@@ -47,6 +48,7 @@ const ImageOverlay: React.FC<ImageOverlayProps> = ({
   otherOverlays,
   onUpdate,
   onSelect,
+  onDragEnd,
   containerSize,
   showCollisionWarning = true,
   showAlignmentGuides = true,
@@ -180,6 +182,9 @@ const ImageOverlay: React.FC<ImageOverlayProps> = ({
           useNativeDriver: true,
           friction: 5,
         }).start();
+        
+        // Notify parent that dragging ended
+        onDragEnd?.();
       },
     })
   ).current;

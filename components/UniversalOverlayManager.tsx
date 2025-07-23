@@ -44,24 +44,7 @@ const UniversalOverlayManager: React.FC<UniversalOverlayManagerProps> = ({
       initializeService();
     }
 
-    // Subscribe to overlay events
-    const handleOverlayChange = () => {
-      setOverlays(overlayService.getAllOverlays());
-    };
-
-    overlayService.on('overlayCreated', handleOverlayChange);
-    overlayService.on('overlayUpdated', handleOverlayChange);
-    overlayService.on('overlayDeleted', handleOverlayChange);
-    overlayService.on('overlaysCleared', handleOverlayChange);
-    overlayService.on('overlaysUpdated', handleOverlayChange);
-
-    return () => {
-      overlayService.off('overlayCreated', handleOverlayChange);
-      overlayService.off('overlayUpdated', handleOverlayChange);
-      overlayService.off('overlayDeleted', handleOverlayChange);
-      overlayService.off('overlaysCleared', handleOverlayChange);
-      overlayService.off('overlaysUpdated', handleOverlayChange);
-    };
+    // Events disabled to prevent recursion - using manual updates
   }, [visible]);
 
   const handleCreateText = useCallback(() => {
@@ -81,14 +64,21 @@ const UniversalOverlayManager: React.FC<UniversalOverlayManagerProps> = ({
         padding: 8,
       },
     } as TextOverlay);
+    
+    // Manually update state since events are disabled
+    setOverlays(overlayService.getAllOverlays());
     setSelectedOverlayId(newOverlay.id);
     setShowTypeSelector(false);
   }, [overlays.length]);
 
   const handleCreateImage = useCallback(async () => {
     try {
+      console.log('Starting image selection...');
       const asset = await assetManager.selectImageFromLibrary();
+      console.log('Asset selected:', asset);
+      
       if (!asset) {
+        console.log('No asset selected');
         setShowTypeSelector(false);
         return;
       }
@@ -103,11 +93,16 @@ const UniversalOverlayManager: React.FC<UniversalOverlayManagerProps> = ({
         url: asset.uri,
         opacity: 1,
       } as ImageOverlay);
+      
+      console.log('New overlay created:', newOverlay);
+      
+      // Manually update state since events are disabled
+      setOverlays(overlayService.getAllOverlays());
       setSelectedOverlayId(newOverlay.id);
       setShowTypeSelector(false);
     } catch (error) {
       console.error('Error selecting image:', error);
-      Alert.alert('Error', 'Failed to select image');
+      Alert.alert('Error', 'Failed to select image: ' + error.message);
       setShowTypeSelector(false);
     }
   }, [overlays.length]);
@@ -123,6 +118,8 @@ const UniversalOverlayManager: React.FC<UniversalOverlayManagerProps> = ({
           style: 'destructive',
           onPress: () => {
             overlayService.deleteOverlay(id);
+            // Manually update state since events are disabled
+            setOverlays(overlayService.getAllOverlays());
             if (selectedOverlayId === id) {
               setSelectedOverlayId(null);
             }
@@ -134,6 +131,8 @@ const UniversalOverlayManager: React.FC<UniversalOverlayManagerProps> = ({
 
   const handleToggleOverlay = useCallback((id: string) => {
     overlayService.toggleOverlay(id);
+    // Manually update state since events are disabled
+    setOverlays(overlayService.getAllOverlays());
   }, []);
 
   const handleToggleAll = useCallback(() => {
@@ -143,6 +142,8 @@ const UniversalOverlayManager: React.FC<UniversalOverlayManagerProps> = ({
     } else {
       overlayService.enableAllOverlays();
     }
+    // Manually update state since events are disabled
+    setOverlays(overlayService.getAllOverlays());
   }, [overlays]);
 
   const handleClearAll = useCallback(() => {
@@ -156,6 +157,8 @@ const UniversalOverlayManager: React.FC<UniversalOverlayManagerProps> = ({
           style: 'destructive',
           onPress: () => {
             overlayService.clearAllOverlays();
+            // Manually update state since events are disabled
+            setOverlays(overlayService.getAllOverlays());
             setSelectedOverlayId(null);
             setEditingOverlayId(null);
           },

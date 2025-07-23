@@ -35,30 +35,13 @@ const OverlayRenderer: React.FC<OverlayRendererProps> = ({
 
     initializeService();
 
-    // Subscribe to overlay changes
-    const handleOverlayChange = () => {
-      setOverlays(overlayService.getEnabledOverlays());
-    };
-
-    overlayService.on('overlayCreated', handleOverlayChange);
-    overlayService.on('overlayUpdated', handleOverlayChange);
-    overlayService.on('overlayDeleted', handleOverlayChange);
-    overlayService.on('overlaysCleared', handleOverlayChange);
-    overlayService.on('overlaysUpdated', handleOverlayChange);
-    overlayService.on('overlaysReordered', handleOverlayChange);
-
-    return () => {
-      overlayService.off('overlayCreated', handleOverlayChange);
-      overlayService.off('overlayUpdated', handleOverlayChange);
-      overlayService.off('overlayDeleted', handleOverlayChange);
-      overlayService.off('overlaysCleared', handleOverlayChange);
-      overlayService.off('overlaysUpdated', handleOverlayChange);
-      overlayService.off('overlaysReordered', handleOverlayChange);
-    };
+    // Events disabled to prevent recursion
   }, []);
 
   const handleOverlayUpdate = (overlayId: string, updates: Partial<Overlay>) => {
     overlayService.updateOverlay(overlayId, updates);
+    // Don't update state here to prevent infinite loop during dragging
+    // State will be updated when dragging ends
   };
 
   const renderOverlay = (overlay: Overlay) => {
@@ -80,6 +63,7 @@ const OverlayRenderer: React.FC<OverlayRendererProps> = ({
             onSelect={() => onOverlaySelect?.(overlay.id)}
             onStartEdit={() => onEditingChange?.(overlay.id)}
             onEndEdit={() => onEditingChange?.(null)}
+            onDragEnd={() => setOverlays(overlayService.getEnabledOverlays())}
             containerSize={containerSize}
           />
         );
@@ -94,6 +78,7 @@ const OverlayRenderer: React.FC<OverlayRendererProps> = ({
             otherOverlays={overlays.filter(o => o.id !== overlay.id) as ImageOverlayType[]}
             onUpdate={(updates) => handleOverlayUpdate(overlay.id, updates)}
             onSelect={() => onOverlaySelect?.(overlay.id)}
+            onDragEnd={() => setOverlays(overlayService.getEnabledOverlays())}
             containerSize={containerSize}
           />
         );

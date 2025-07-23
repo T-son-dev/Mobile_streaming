@@ -119,7 +119,7 @@ export class OverlayService {
 
     this.overlays.set(newOverlay.id, newOverlay);
     this.saveOverlays();
-    this.emit('overlayCreated', newOverlay);
+    // this.emit('overlayCreated', newOverlay); // Temporarily disabled to prevent recursion
     return newOverlay;
   }
 
@@ -131,7 +131,7 @@ export class OverlayService {
     const updatedOverlay = { ...overlay, ...updates } as Overlay;
     this.overlays.set(id, updatedOverlay);
     this.saveOverlays();
-    this.emit('overlayUpdated', updatedOverlay);
+    // this.emit('overlayUpdated', updatedOverlay); // Temporarily disabled to prevent recursion
     return updatedOverlay;
   }
 
@@ -142,7 +142,7 @@ export class OverlayService {
 
     this.overlays.delete(id);
     this.saveOverlays();
-    this.emit('overlayDeleted', id);
+    // this.emit('overlayDeleted', id); // Temporarily disabled to prevent recursion
     return true;
   }
 
@@ -156,7 +156,7 @@ export class OverlayService {
       }
     });
     this.saveOverlays();
-    this.emit('overlaysReordered', this.getAllOverlays());
+    // this.emit('overlaysReordered', this.getAllOverlays());
   }
 
   // Enable/disable overlay
@@ -167,7 +167,7 @@ export class OverlayService {
     overlay.enabled = !overlay.enabled;
     this.overlays.set(id, overlay);
     this.saveOverlays();
-    this.emit('overlayUpdated', overlay);
+    // this.emit('overlayUpdated', overlay);
     return overlay;
   }
 
@@ -177,7 +177,7 @@ export class OverlayService {
       overlay.enabled = true;
     });
     this.saveOverlays();
-    this.emit('overlaysUpdated', this.getAllOverlays());
+    // this.emit('overlaysUpdated', this.getAllOverlays());
   }
 
   // Disable all overlays
@@ -186,14 +186,14 @@ export class OverlayService {
       overlay.enabled = false;
     });
     this.saveOverlays();
-    this.emit('overlaysUpdated', this.getAllOverlays());
+    // this.emit('overlaysUpdated', this.getAllOverlays());
   }
 
   // Clear all overlays
   clearAllOverlays(): void {
     this.overlays.clear();
     this.saveOverlays();
-    this.emit('overlaysCleared');
+    // this.emit('overlaysCleared');
   }
 
   // Import overlays from array
@@ -202,7 +202,7 @@ export class OverlayService {
       this.overlays.set(overlay.id, overlay);
     });
     this.saveOverlays();
-    this.emit('overlaysImported', this.getAllOverlays());
+    // this.emit('overlaysImported', this.getAllOverlays());
   }
 
   // Export overlays to array

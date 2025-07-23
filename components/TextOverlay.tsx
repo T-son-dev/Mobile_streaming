@@ -33,6 +33,7 @@ interface TextOverlayProps {
   onSelect: () => void;
   onStartEdit: () => void;
   onEndEdit: () => void;
+  onDragEnd?: () => void;
   containerSize?: { width: number; height: number };
   showCollisionWarning?: boolean;
   showAlignmentGuides?: boolean;
@@ -47,6 +48,7 @@ const TextOverlay: React.FC<TextOverlayProps> = ({
   onSelect,
   onStartEdit,
   onEndEdit,
+  onDragEnd,
   containerSize,
   showCollisionWarning = true,
   showAlignmentGuides = true,
@@ -199,6 +201,9 @@ const TextOverlay: React.FC<TextOverlayProps> = ({
         // Reset pan position
         pan.setValue({ x: 0, y: 0 });
         setCollision(false);
+        
+        // Notify parent that dragging ended
+        onDragEnd?.();
       },
     })
   ).current;
