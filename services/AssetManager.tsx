@@ -1,6 +1,7 @@
 import { Alert, Platform } from 'react-native';
 import { launchImageLibrary, ImagePickerResponse, MediaType } from 'react-native-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as FileSystem from 'expo-file-system';
 import MediaStorageManager from './MediaStorageManager';
 import { MediaAsset } from '../database/AssetDatabase';
 import AssetBrowser from '../components/AssetBrowser';
@@ -16,14 +17,7 @@ try {
 }
 
 // Conditional imports for native modules
-let RNFS: any = null;
 let ImageResizer: any = null;
-
-try {
-  RNFS = require('react-native-fs');
-} catch (error) {
-  console.warn('react-native-fs not available:', error);
-}
 
 try {
   ImageResizer = require('react-native-image-resizer');
@@ -52,9 +46,7 @@ export class AssetManager {
   private readonly supportedFormats = ['image/jpeg', 'image/jpg', 'image/png', 'image/svg+xml'];
 
   constructor() {
-    this.assetsDirectory = RNFS 
-      ? `${RNFS.DocumentDirectoryPath}/overlay_assets`
-      : `/tmp/overlay_assets`; // Fallback for web/environments without RNFS
+    this.assetsDirectory = `${FileSystem.documentDirectory}overlay_assets/`;
     this.initializeDirectory();
     this.loadAssets();
   }
@@ -68,14 +60,9 @@ export class AssetManager {
 
   private async initializeDirectory(): Promise<void> {
     try {
-      if (!RNFS) {
-        console.warn('RNFS not available, skipping directory initialization');
-        return;
-      }
-      
-      const exists = await RNFS.exists(this.assetsDirectory);
-      if (!exists) {
-        await RNFS.mkdir(this.assetsDirectory);
+      const dirInfo = await FileSystem.getInfoAsync(this.assetsDirectory);
+      if (!dirInfo.exists) {
+        await FileSystem.makeDirectoryAsync(this.assetsDirectory, { intermediates: true });
       }
     } catch (error) {
       console.error('Error initializing assets directory:', error);
@@ -293,7 +280,7 @@ export class AssetManager {
       // Get file info
       let fileInfo;
       if (RNFS) {
-        fileInfo = await RNFS.stat(asset.uri);
+        fileInfo = await FileSystem.getInfoAsync(asset.uri);
       } else {
         // Fallback for environments without RNFS
         fileInfo = {
@@ -302,7 +289,7 @@ export class AssetManager {
       }
       
       // Check file size
-      if (fileInfo.size > this.maxFileSize) {
+      if (fileInfo.size && fileInfo.size > this.maxFileSize) {
         Alert.alert(
           'File Too Large', 
           `Image is ${(fileInfo.size / 1024 / 1024).toFixed(1)}MB. Maximum size is ${this.maxFileSize / 1024 / 1024}MB.`
@@ -355,7 +342,7 @@ export class AssetManager {
       name,
       uri: asset.uri,
       originalUri: asset.uri,
-      size: fileInfo.size,
+      size: fileInfo.size || 0,
       width: asset.width || 0,
       height: asset.height || 0,
       mimeType: asset.type,
@@ -388,12 +375,12 @@ export class AssetManager {
           { mode: 'contain' }
         );
 
-        const optimizedInfo = await RNFS.stat(resized.uri);
+        const optimizedInfo = await FileSystem.getInfoAsync(resized.uri);
         
         return {
           ...assetInfo,
           uri: resized.uri,
-          size: optimizedInfo.size,
+          size: optimizedInfo.size || assetInfo.size,
           width: resized.width,
           height: resized.height,
           mimeType: 'image/jpeg',
@@ -401,7 +388,7 @@ export class AssetManager {
         };
       } else {
         // Just copy the file
-        await RNFS.copyFile(assetInfo.uri, targetPath);
+        await FileSystem.copyAsync({ from: assetInfo.uri, to: targetPath });
         
         return {
           ...assetInfo,
@@ -423,8 +410,9 @@ export class AssetManager {
       // Delete file if RNFS is available
       if (RNFS) {
         try {
-          if (await RNFS.exists(asset.uri)) {
-            await RNFS.unlink(asset.uri);
+          const fileInfo = await FileSystem.getInfoAsync(asset.uri);
+          if (fileInfo.exists) {
+            await FileSystem.deleteAsync(asset.uri);
           }
         } catch (fileError) {
           console.warn('Error deleting file:', fileError);
@@ -534,7 +522,8 @@ export class AssetManager {
           let fileExists = true;
           if (RNFS) {
             try {
-              fileExists = await RNFS.exists(assetData.uri);
+              const fileInfo = await FileSystem.getInfoAsync(assetData.uri);
+              fileExists = fileInfo.exists;
             } catch (error) {
               console.warn('Error checking file existence:', error);
               fileExists = false;

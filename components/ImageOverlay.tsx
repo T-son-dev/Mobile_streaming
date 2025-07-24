@@ -11,15 +11,7 @@ import {
 } from 'react-native';
 import { ImageOverlay as ImageOverlayType } from '@/types/overlay';
 import { positioningEngine } from '@/services/PositioningEngine';
-let HapticFeedback: any = null;
-try {
-  HapticFeedback = require('react-native-haptic-feedback').default;
-} catch (error) {
-  console.warn('react-native-haptic-feedback not available:', error);
-  HapticFeedback = {
-    trigger: () => {},
-  };
-}
+import * as Haptics from 'expo-haptics';
 
 // Conditional import for FastImage
 let FastImage: any = null;
@@ -95,7 +87,7 @@ const ImageOverlay: React.FC<ImageOverlayProps> = ({
         onSelect();
         setShowGuides(showAlignmentGuides);
         if (Platform.OS === 'ios') {
-          HapticFeedback.trigger('impactLight');
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         }
         
         // Slight scale animation on drag start
@@ -141,7 +133,7 @@ const ImageOverlay: React.FC<ImageOverlayProps> = ({
         if (hasCollision !== collision) {
           setCollision(hasCollision);
           if (hasCollision && showCollisionWarning && Platform.OS === 'ios') {
-            HapticFeedback.trigger('notificationWarning');
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
           }
         }
       },

@@ -1,7 +1,7 @@
-import RNFS from 'react-native-fs';
+import * as FileSystem from 'expo-file-system';
 import AssetDatabase, { MediaAsset } from '../database/AssetDatabase';
 import { Platform } from 'react-native';
-import * as crypto from 'crypto';
+import CryptoJS from 'react-native-crypto-js';
 
 export interface MediaStorageConfig {
   maxStorageSize: number; // in bytes
@@ -45,9 +45,7 @@ class MediaStorageManager {
     };
 
     // Initialize storage structure paths
-    const baseDir = Platform.OS === 'ios' 
-      ? RNFS.DocumentDirectoryPath 
-      : RNFS.ExternalDirectoryPath || RNFS.DocumentDirectoryPath;
+    const baseDir = FileSystem.documentDirectory || '';
 
     this.storageStructure = {
       mediaLibrary: `${baseDir}/media_library`,
@@ -110,9 +108,9 @@ class MediaStorageManager {
 
     for (const dir of directories) {
       try {
-        const exists = await RNFS.exists(dir);
-        if (!exists) {
-          await RNFS.mkdir(dir);
+        const dirInfo = await FileSystem.getInfoAsync(dir);
+        if (!dirInfo.exists) {
+          await FileSystem.makeDirectoryAsync(dir, { intermediates: true });
           console.log(`Created directory: ${dir}`);
         }
       } catch (error) {
@@ -133,8 +131,8 @@ class MediaStorageManager {
 
   private async generateFileHash(filePath: string): Promise<string> {
     try {
-      const fileData = await RNFS.readFile(filePath, 'base64');
-      return crypto.createHash('md5').update(fileData).digest('hex');
+      const fileData = await FileSystem.readAsStringAsync(filePath, { encoding: FileSystem.EncodingType.Base64 });
+      return CryptoJS.MD5(fileData).toString();
     } catch (error) {
       console.error('Error generating file hash:', error);
       return '';
@@ -168,22 +166,22 @@ class MediaStorageManager {
       const targetPath = `${categoryDir}/${fileName}`;
 
       // Copy file to storage
-      await RNFS.copyFile(sourceUri, targetPath);
+      await FileSystem.copyAsync({ from: sourceUri, to: targetPath });
 
       // Get file info
-      const fileInfo = await RNFS.stat(targetPath);
+      const fileInfo = await FileSystem.getInfoAsync(targetPath);
       const fileHash = await this.generateFileHash(targetPath);
 
       // Check for duplicates
       const existingAssets = await AssetDatabase.getAssets();
       const duplicate = existingAssets.find(asset => 
-        asset.file_size === fileInfo.size && 
+        asset.file_size === (fileInfo.size || 0) && 
         asset.filename === fileName
       );
 
       if (duplicate) {
         // Remove the new file and return existing asset
-        await RNFS.unlink(targetPath);
+        await FileSystem.deleteAsync(targetPath);
         console.log('Duplicate file detected, using existing asset');
         return duplicate;
       }
@@ -193,7 +191,7 @@ class MediaStorageManager {
         filename: fileName,
         original_name: options.originalName,
         file_path: targetPath,
-        file_size: fileInfo.size,
+        file_size: fileInfo.size || 0,
         format: fileName.split('.').pop() || 'unknown',
         usage_count: 0,
         category: options.category || 'custom',
@@ -229,7 +227,7 @@ class MediaStorageManager {
       return {
         ...asset,
         id: assetId,
-        created_at: fileInfo.ctime ? new Date(fileInfo.ctime).toISOString() : new Date().toISOString()
+        created_at: fileInfo.modificationTime ? new Date(fileInfo.modificationTime * 1000).toISOString() : new Date().toISOString()
       };
 
     } catch (error) {
@@ -251,7 +249,7 @@ class MediaStorageManager {
 
       // This would use react-native-image-resizer
       // For now, we'll copy the original as placeholder
-      await RNFS.copyFile(originalPath, thumbnailPath);
+      await FileSystem.copyAsync({ from: originalPath, to: thumbnailPath });
 
       return thumbnailPath;
     } catch (error) {
@@ -267,7 +265,7 @@ class MediaStorageManager {
 
       // This would use react-native-image-resizer for compression
       // For now, we'll copy the original as placeholder
-      await RNFS.copyFile(originalPath, optimizedPath);
+      await FileSystem.copyAsync({ from: originalPath, to: optimizedPath });
 
       return optimizedPath;
     } catch (error) {
@@ -286,20 +284,23 @@ class MediaStorageManager {
       }
 
       // Delete physical files
-      if (await RNFS.exists(asset.file_path)) {
-        await RNFS.unlink(asset.file_path);
+      const fileInfo = await FileSystem.getInfoAsync(asset.file_path);
+      if (fileInfo.exists) {
+        await FileSystem.deleteAsync(asset.file_path);
       }
 
       // Delete thumbnail if exists
       const thumbnailPath = `${this.storageStructure.images.thumbnails}/thumb_${assetId}.jpg`;
-      if (await RNFS.exists(thumbnailPath)) {
-        await RNFS.unlink(thumbnailPath);
+      const thumbInfo = await FileSystem.getInfoAsync(thumbnailPath);
+      if (thumbInfo.exists) {
+        await FileSystem.deleteAsync(thumbnailPath);
       }
 
       // Delete optimized version if exists
       const optimizedPath = `${this.storageStructure.images.optimized}/opt_${assetId}.jpg`;
-      if (await RNFS.exists(optimizedPath)) {
-        await RNFS.unlink(optimizedPath);
+      const optInfo = await FileSystem.getInfoAsync(optimizedPath);
+      if (optInfo.exists) {
+        await FileSystem.deleteAsync(optimizedPath);
       }
 
       // Delete from database
@@ -357,17 +358,21 @@ class MediaStorageManager {
 
   private async getDirectorySize(dirPath: string): Promise<number> {
     try {
-      const exists = await RNFS.exists(dirPath);
-      if (!exists) return 0;
+      const dirInfo = await FileSystem.getInfoAsync(dirPath);
+      if (!dirInfo.exists) return 0;
 
-      const items = await RNFS.readDir(dirPath);
+      const items = await FileSystem.readDirectoryAsync(dirPath);
       let totalSize = 0;
 
-      for (const item of items) {
-        if (item.isDirectory()) {
-          totalSize += await this.getDirectorySize(item.path);
-        } else {
-          totalSize += item.size;
+      for (const itemName of items) {
+        const itemPath = `${dirPath}/${itemName}`;
+        const itemInfo = await FileSystem.getInfoAsync(itemPath);
+        if (itemInfo.exists) {
+          if (itemInfo.isDirectory) {
+            totalSize += await this.getDirectorySize(itemPath);
+          } else {
+            totalSize += itemInfo.size || 0;
+          }
         }
       }
 
@@ -406,12 +411,12 @@ class MediaStorageManager {
   private async cleanupTempFiles(): Promise<void> {
     try {
       const tempDir = this.storageStructure.cache.temp;
-      const exists = await RNFS.exists(tempDir);
+      const dirInfo = await FileSystem.getInfoAsync(tempDir);
       
-      if (exists) {
-        const files = await RNFS.readDir(tempDir);
-        for (const file of files) {
-          await RNFS.unlink(file.path);
+      if (dirInfo.exists) {
+        const files = await FileSystem.readDirectoryAsync(tempDir);
+        for (const fileName of files) {
+          await FileSystem.deleteAsync(`${tempDir}/${fileName}`);
         }
         console.log(`Cleaned up ${files.length} temporary files`);
       }
@@ -423,18 +428,19 @@ class MediaStorageManager {
   private async cleanupOldCache(): Promise<void> {
     try {
       const cacheDir = this.storageStructure.cache.processed;
-      const exists = await RNFS.exists(cacheDir);
+      const dirInfo = await FileSystem.getInfoAsync(cacheDir);
       
-      if (!exists) return;
+      if (!dirInfo.exists) return;
 
-      const files = await RNFS.readDir(cacheDir);
+      const files = await FileSystem.readDirectoryAsync(cacheDir);
       const cutoffTime = Date.now() - this.config.cacheMaxAge;
       let cleanedCount = 0;
 
-      for (const file of files) {
-        const stat = await RNFS.stat(file.path);
-        if (stat.mtime && new Date(stat.mtime).getTime() < cutoffTime) {
-          await RNFS.unlink(file.path);
+      for (const fileName of files) {
+        const filePath = `${cacheDir}/${fileName}`;
+        const fileInfo = await FileSystem.getInfoAsync(filePath);
+        if (fileInfo.modificationTime && fileInfo.modificationTime * 1000 < cutoffTime) {
+          await FileSystem.deleteAsync(filePath);
           cleanedCount++;
         }
       }

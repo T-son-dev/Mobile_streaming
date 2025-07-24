@@ -1,14 +1,6 @@
 import { Dimensions, Platform } from 'react-native';
 import { Overlay } from '@/types/overlay';
-let HapticFeedback: any = null;
-try {
-  HapticFeedback = require('react-native-haptic-feedback').default;
-} catch (error) {
-  console.warn('react-native-haptic-feedback not available:', error);
-  HapticFeedback = {
-    trigger: () => {},
-  };
-}
+import * as Haptics from 'expo-haptics';
 
 interface Position {
   x: number;
@@ -395,14 +387,14 @@ export class PositioningEngine {
       if (distanceX < threshold * snapPoint.strength) {
         snappedPosition.x = snapPoint.position.x;
         if (Platform.OS === 'ios') {
-          HapticFeedback.trigger('impactLight');
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         }
       }
       
       if (distanceY < threshold * snapPoint.strength) {
         snappedPosition.y = snapPoint.position.y;
         if (Platform.OS === 'ios') {
-          HapticFeedback.trigger('impactLight');
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         }
       }
     });

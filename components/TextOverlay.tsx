@@ -14,15 +14,7 @@ import { TextOverlay as TextOverlayType } from '@/types/overlay';
 import { positioningEngine } from '@/services/PositioningEngine';
 import { typographyManager } from '@/services/TypographyManager';
 import { textOverlayManager } from '@/services/TextOverlayManager';
-let HapticFeedback: any = null;
-try {
-  HapticFeedback = require('react-native-haptic-feedback').default;
-} catch (error) {
-  console.warn('react-native-haptic-feedback not available:', error);
-  HapticFeedback = {
-    trigger: () => {},
-  };
-}
+import * as Haptics from 'expo-haptics';
 
 interface TextOverlayProps {
   overlay: TextOverlayType;
@@ -126,7 +118,7 @@ const TextOverlay: React.FC<TextOverlayProps> = ({
         }).start();
         
         if (Platform.OS === 'ios') {
-          HapticFeedback.trigger('impactLight');
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         }
       },
       
@@ -189,7 +181,7 @@ const TextOverlay: React.FC<TextOverlayProps> = ({
         if (collisionResult.collides && collisionResult.suggestedPosition) {
           newPercentPos = collisionResult.suggestedPosition;
           if (Platform.OS === 'ios') {
-            HapticFeedback.trigger('notificationWarning');
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
           }
         }
         
@@ -212,7 +204,7 @@ const TextOverlay: React.FC<TextOverlayProps> = ({
     if (!isEditing) {
       onStartEdit();
       if (Platform.OS === 'ios') {
-        HapticFeedback.trigger('selection');
+        Haptics.selectionAsync();
       }
     }
   }, [isEditing, onStartEdit]);

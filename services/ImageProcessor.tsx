@@ -1,5 +1,5 @@
 import ImageResizer from 'react-native-image-resizer';
-import RNFS from 'react-native-fs';
+import * as FileSystem from 'expo-file-system';
 import { Platform } from 'react-native';
 
 export interface ImageDimensions {
@@ -49,9 +49,7 @@ class ImageProcessor {
   private readonly tempDir: string;
 
   constructor() {
-    this.tempDir = Platform.OS === 'ios' 
-      ? RNFS.TemporaryDirectoryPath 
-      : RNFS.CachesDirectoryPath;
+    this.tempDir = FileSystem.cacheDirectory || '';
   }
 
   // Smart compression with quality preservation
@@ -61,8 +59,8 @@ class ImageProcessor {
     options: CompressionOptions = { quality: 80 }
   ): Promise<ProcessingResult> {
     try {
-      const originalStats = await RNFS.stat(inputPath);
-      const originalSize = originalStats.size;
+      const originalStats = await FileSystem.getInfoAsync(inputPath);
+      const originalSize = originalStats.size || 0;
 
       // Get image metadata first
       const metadata = await this.extractMetadata(inputPath);
@@ -85,8 +83,8 @@ class ImageProcessor {
         }
       );
 
-      const processedStats = await RNFS.stat(result.path);
-      const processedSize = processedStats.size;
+      const processedStats = await FileSystem.getInfoAsync(result.path);
+      const processedSize = processedStats.size || 0;
       const compressionRatio = ((originalSize - processedSize) / originalSize) * 100;
 
       return {
@@ -139,15 +137,15 @@ class ImageProcessor {
           }
         );
 
-        const originalStats = await RNFS.stat(inputPath);
-        const processedStats = await RNFS.stat(result.path);
+        const originalStats = await FileSystem.getInfoAsync(inputPath);
+        const processedStats = await FileSystem.getInfoAsync(result.path);
 
         results.push({
           success: true,
           outputPath: result.path,
-          originalSize: originalStats.size,
-          processedSize: processedStats.size,
-          compressionRatio: ((originalStats.size - processedStats.size) / originalStats.size) * 100
+          originalSize: originalStats.size || 0,
+          processedSize: processedStats.size || 0,
+          compressionRatio: ((originalStats.size || 0 - processedStats.size || 0) / originalStats.size || 0) * 100
         });
 
       } catch (error) {
@@ -170,7 +168,7 @@ class ImageProcessor {
     options: { quality?: number; preserveMetadata?: boolean } = {}
   ): Promise<ProcessingResult> {
     try {
-      const originalStats = await RNFS.stat(inputPath);
+      const originalStats = await FileSystem.getInfoAsync(inputPath);
       const metadata = await this.extractMetadata(inputPath);
 
       // Determine optimal quality based on format
@@ -190,14 +188,14 @@ class ImageProcessor {
         options.preserveMetadata || false
       );
 
-      const processedStats = await RNFS.stat(result.path);
-      const compressionRatio = ((originalStats.size - processedStats.size) / originalStats.size) * 100;
+      const processedStats = await FileSystem.getInfoAsync(result.path);
+      const compressionRatio = ((originalStats.size || 0 - processedStats.size || 0) / originalStats.size || 0) * 100;
 
       return {
         success: true,
         outputPath: result.path,
-        originalSize: originalStats.size,
-        processedSize: processedStats.size,
+        originalSize: originalStats.size || 0,
+        processedSize: processedStats.size || 0,
         compressionRatio,
         metadata
       };
@@ -214,7 +212,7 @@ class ImageProcessor {
   // Extract comprehensive image metadata
   async extractMetadata(imagePath: string): Promise<ImageMetadata> {
     try {
-      const stats = await RNFS.stat(imagePath);
+      const stats = await FileSystem.getInfoAsync(imagePath);
       const extension = imagePath.split('.').pop()?.toLowerCase() || 'unknown';
       
       // For now, we'll use ImageResizer to get basic dimensions
@@ -239,14 +237,14 @@ class ImageProcessor {
         dimensions.height = result.height;
         
         // Clean up temp file
-        await RNFS.unlink(result.path);
+        await FileSystem.deleteAsync(result.path);
       } catch (error) {
         console.log('Could not extract dimensions:', error);
       }
 
       return {
         format: extension,
-        size: stats.size,
+        size: stats.size || 0,
         dimensions,
         colorSpace: 'sRGB', // Default assumption
         hasAlpha: extension === 'png',
@@ -272,7 +270,7 @@ class ImageProcessor {
       
       // Analyze image characteristics
       const isLargeImage = metadata.dimensions.width > 2000 || metadata.dimensions.height > 2000;
-      const isSmallFile = metadata.size < 500 * 1024; // 500KB
+      const isSmallFile = metadata.size || 0 < 500 * 1024; // 500KB
       const hasAlpha = metadata.hasAlpha;
 
       // Determine optimal settings
@@ -283,7 +281,7 @@ class ImageProcessor {
 
       if (targetSizeKB) {
         // Calculate quality to achieve target size (rough estimation)
-        const currentSizeKB = metadata.size / 1024;
+        const currentSizeKB = metadata.size || 0 / 1024;
         const ratio = targetSizeKB / currentSizeKB;
         options.quality = Math.max(30, Math.min(95, Math.round(85 * ratio)));
       }
@@ -342,7 +340,7 @@ class ImageProcessor {
             result = await this.compressImage(inputPath, outputPath, options);
             break;
           case 'thumbnail':
-            const thumbnailResults = await this.generateThumbnails(inputPath, outputDir, options.sizes);
+            const thumbnailResults = await this.generateThumbnails(inputPath, outputDir, options.size || 0s);
             result = thumbnailResults[0] || { success: false, error: 'No thumbnails generated' };
             break;
           case 'convert':
@@ -380,7 +378,8 @@ class ImageProcessor {
 
     try {
       // Check if file exists
-      const exists = await RNFS.exists(imagePath);
+      const fileInfo = await FileSystem.getInfoAsync(imagePath);
+      const exists = fileInfo.exists;
       if (!exists) {
         issues.push('File does not exist');
         isValid = false;
@@ -399,8 +398,8 @@ class ImageProcessor {
 
       // Check file size limits (100MB max)
       const maxSize = 100 * 1024 * 1024;
-      if (metadata.size > maxSize) {
-        issues.push(`File too large: ${(metadata.size / 1024 / 1024).toFixed(1)}MB (max: 100MB)`);
+      if (metadata.size || 0 > maxSize) {
+        issues.push(`File too large: ${(metadata.size || 0 / 1024 / 1024).toFixed(1)}MB (max: 100MB)`);
         isValid = false;
       }
 
@@ -436,9 +435,9 @@ class ImageProcessor {
     const settings = { ...options };
 
     // Adjust quality based on image size
-    if (metadata.size > 10 * 1024 * 1024) { // > 10MB
+    if (metadata.size || 0 > 10 * 1024 * 1024) { // > 10MB
       settings.quality = Math.min(settings.quality, 75);
-    } else if (metadata.size > 5 * 1024 * 1024) { // > 5MB
+    } else if (metadata.size || 0 > 5 * 1024 * 1024) { // > 5MB
       settings.quality = Math.min(settings.quality, 80);
     }
 
@@ -471,16 +470,17 @@ class ImageProcessor {
   // Clean up temporary files
   async cleanupTempFiles(): Promise<void> {
     try {
-      const files = await RNFS.readDir(this.tempDir);
-      const tempImageFiles = files.filter(file => 
-        file.name.startsWith('temp_') && this.isImageFile(file.name)
+      const files = await FileSystem.readDirectoryAsync(this.tempDir);
+      const tempImageFiles = files.filter(fileName => 
+        fileName.startsWith('temp_') && this.isImageFile(fileName)
       );
 
-      for (const file of tempImageFiles) {
+      for (const fileName of tempImageFiles) {
         try {
-          await RNFS.unlink(file.path);
+          const filePath = `${this.tempDir}${fileName}`;
+          await FileSystem.deleteAsync(filePath);
         } catch (error) {
-          console.log(`Could not delete temp file ${file.path}:`, error);
+          console.log(`Could not delete temp file ${fileName}:`, error);
         }
       }
 
