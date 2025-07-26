@@ -104,7 +104,7 @@ class ImageUploadService {
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ImagePicker.MediaType.Images,
         allowsMultipleSelection: (options.selectionLimit || 1) > 1,
         quality: options.quality || 0.8,
         base64: options.includeBase64 || false,
@@ -141,7 +141,7 @@ class ImageUploadService {
       }
 
       const result = await ImagePicker.launchCameraAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ImagePicker.MediaType.Images,
         quality: options.quality || 0.8,
         base64: options.includeBase64 || false,
         allowsEditing: options.allowsEditing || false,

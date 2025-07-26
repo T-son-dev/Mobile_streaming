@@ -11,6 +11,7 @@ interface QuickAccessMenuProps {
   onHomeClick?: () => void;
   onSettingsClick?: () => void;
   onOverlayClick?: () => void;
+  onMediaLibraryClick?: () => void;
 }
 
 const Colors = {
@@ -28,7 +29,8 @@ const QuickAccessMenu: React.FC<QuickAccessMenuProps> = ({
   onProModeClick,
   onHomeClick,
   onSettingsClick,
-  onOverlayClick
+  onOverlayClick,
+  onMediaLibraryClick
 }) => {
   const responsive = useResponsive();
   const isNativeMobile = responsive.isNativeMobile;
@@ -154,16 +156,24 @@ const QuickAccessMenu: React.FC<QuickAccessMenuProps> = ({
             ]}>Grid</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={[
-            styles.menuItem,
-            isNativeMobile && styles.menuItemMobile
-          ]}>
+          <TouchableOpacity 
+            style={[
+              styles.menuItem,
+              isNativeMobile && styles.menuItemMobile
+            ]}
+            onPress={() => {
+              if (onMediaLibraryClick) {
+                onMediaLibraryClick();
+              }
+              onClose();
+            }}
+          >
             <View style={[
               styles.menuIcon,
               isNativeMobile && styles.menuIconMobile
             ]}>
               <IconSymbol 
-                name="flashlight.on.fill" 
+                name="photo.stack" 
                 size={isNativeMobile ? 14 : 20} 
                 color={Colors.text} 
               />
@@ -171,7 +181,7 @@ const QuickAccessMenu: React.FC<QuickAccessMenuProps> = ({
             <Text style={[
               styles.menuLabel,
               isNativeMobile && styles.menuLabelMobile
-            ]}>Flashlight</Text>
+            ]}>Media Library</Text>
           </TouchableOpacity>
 
           <TouchableOpacity 
