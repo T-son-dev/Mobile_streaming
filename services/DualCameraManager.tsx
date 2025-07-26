@@ -41,6 +41,7 @@ export interface DualCameraState {
   layout: CameraLayout;
   resolution: ResolutionPreset;
   isRecording: boolean;
+  isStreaming: boolean;
   isInitialized: boolean;
   error: string | null;
 }
@@ -72,6 +73,7 @@ class DualCameraManager {
       layout: CameraLayout.SINGLE_BACK,
       resolution: ResolutionPreset.MEDIUM,
       isRecording: false,
+      isStreaming: false,
       isInitialized: false,
       error: null
     };
@@ -130,8 +132,9 @@ class DualCameraManager {
     try {
       console.log(`Switching to camera layout: ${layout}`);
 
-      if (this.state.isRecording) {
-        throw new Error('Cannot change layout while recording');
+      // Allow layout changes during streaming but not during file recording
+      if (this.state.isRecording && !this.state.isStreaming) {
+        throw new Error('Cannot change layout while recording to file');
       }
 
       await this.initializeCamerasForLayout(layout);
@@ -180,7 +183,7 @@ class DualCameraManager {
     try {
       zoom = Math.max(0.5, Math.min(5.0, zoom)); // Clamp between 0.5x and 5x
 
-      if (cameraType === CameraType.front) {
+      if (cameraType === 'front') {
         this.updateState({
           frontCamera: { ...this.state.frontCamera, zoom }
         });
@@ -202,7 +205,7 @@ class DualCameraManager {
 
   async setFlashMode(cameraType: CameraType, flashMode: FlashMode): Promise<boolean> {
     try {
-      if (cameraType === CameraType.front) {
+      if (cameraType === 'front') {
         this.updateState({
           frontCamera: { ...this.state.frontCamera, flashMode }
         });
@@ -222,7 +225,7 @@ class DualCameraManager {
     }
   }
 
-  async startRecording(): Promise<boolean> {
+  async startRecording(isStreaming: boolean = false): Promise<boolean> {
     try {
       if (!this.state.isInitialized) {
         throw new Error('Camera manager not initialized');
@@ -240,6 +243,7 @@ class DualCameraManager {
 
       this.updateState({ 
         isRecording: true,
+        isStreaming: isStreaming,
         error: null 
       });
 
@@ -266,6 +270,7 @@ class DualCameraManager {
 
       this.updateState({ 
         isRecording: false,
+        isStreaming: false,
         error: null 
       });
 
@@ -385,6 +390,7 @@ class DualCameraManager {
       layout: CameraLayout.SINGLE_BACK,
       resolution: ResolutionPreset.MEDIUM,
       isRecording: false,
+      isStreaming: false,
       isInitialized: false,
       error: null
     };

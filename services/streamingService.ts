@@ -355,8 +355,8 @@ class StreamingService {
     try {
       console.log('Starting RTMP stream...');
       
-      // Start camera recording
-      const cameraStarted = await dualCameraManager.startRecording();
+      // Start camera recording (with isStreaming flag set to true)
+      const cameraStarted = await dualCameraManager.startRecording(true);
       if (!cameraStarted) {
         throw new Error('Failed to start camera recording');
       }

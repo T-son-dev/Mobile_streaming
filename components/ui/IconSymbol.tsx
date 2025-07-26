@@ -55,6 +55,7 @@ const MAPPING = {
   'bolt': 'flash-on',
   'arrow.clockwise': 'refresh',
   'chevron.left': 'chevron-left',
+  'photo.stack': 'photo-library',
 } as const satisfies IconMapping;
 
 export interface IconSymbolProps {

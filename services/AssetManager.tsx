@@ -18,11 +18,18 @@ try {
 
 // Conditional imports for native modules
 let ImageResizer: any = null;
+let RNFS: any = null;
 
 try {
   ImageResizer = require('react-native-image-resizer');
 } catch (error) {
   console.warn('react-native-image-resizer not available:', error);
+}
+
+try {
+  RNFS = require('react-native-fs');
+} catch (error) {
+  console.warn('react-native-fs not available:', error);
 }
 
 export interface AssetInfo {
@@ -198,7 +205,7 @@ export class AssetManager {
           includeBase64: false,
           maxHeight: 2000,
           maxWidth: 2000,
-          quality: 0.8,
+          quality: 0.8 as any,
         };
 
         launchImageLibrary(options, (response: ImagePickerResponse) => {
@@ -280,7 +287,10 @@ export class AssetManager {
       // Get file info
       let fileInfo;
       if (RNFS) {
-        fileInfo = await FileSystem.getInfoAsync(asset.uri);
+        const info = await FileSystem.getInfoAsync(asset.uri);
+        fileInfo = {
+          size: info.exists && 'size' in info ? info.size : asset.fileSize || 1024 * 1024
+        };
       } else {
         // Fallback for environments without RNFS
         fileInfo = {
@@ -380,7 +390,7 @@ export class AssetManager {
         return {
           ...assetInfo,
           uri: resized.uri,
-          size: optimizedInfo.size || assetInfo.size,
+          size: optimizedInfo.exists && 'size' in optimizedInfo ? optimizedInfo.size : assetInfo.size,
           width: resized.width,
           height: resized.height,
           mimeType: 'image/jpeg',
@@ -500,8 +510,8 @@ export class AssetManager {
   private async saveAssets(): Promise<void> {
     try {
       const assetsArray = Array.from(this.assets.entries()).map(([id, asset]) => ({
-        id,
         ...asset,
+        id,
         createdAt: asset.createdAt.toISOString(),
       }));
       
@@ -567,7 +577,7 @@ export class AssetManager {
 
   // Utilities
   private generateAssetId(): string {
-    return `asset_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    return `asset_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
   }
 
   private formatFileSize(bytes: number): string {

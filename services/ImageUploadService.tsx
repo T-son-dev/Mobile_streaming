@@ -1,6 +1,5 @@
-import { launchImageLibrary, launchCamera, ImagePickerResponse, MediaType } from 'react-native-image-picker';
-import DocumentPicker from 'react-native-document-picker';
-import ImageCropPicker from 'react-native-image-crop-picker';
+import * as ImagePicker from 'expo-image-picker';
+import * as DocumentPicker from 'expo-document-picker';
 import { PermissionsAndroid, Platform, Alert } from 'react-native';
 import MediaStorageManager from './MediaStorageManager';
 import { MediaAsset } from '../database/AssetDatabase';
@@ -83,22 +82,10 @@ class ImageUploadService {
 
   async requestPermissions(): Promise<boolean> {
     try {
-      if (Platform.OS === 'android') {
-        const permissions = [
-          PermissionsAndroid.PERMISSIONS.CAMERA,
-          PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
-          PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
-        ];
-
-        const results = await PermissionsAndroid.requestMultiple(permissions);
-        
-        return Object.values(results).every(
-          result => result === PermissionsAndroid.RESULTS.GRANTED
-        );
-      }
+      const { status: cameraStatus } = await ImagePicker.requestCameraPermissionsAsync();
+      const { status: mediaStatus } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       
-      // iOS permissions are handled automatically by the image picker
-      return true;
+      return cameraStatus === 'granted' && mediaStatus === 'granted';
     } catch (error) {
       console.error('Permission request failed:', error);
       return false;
@@ -116,36 +103,30 @@ class ImageUploadService {
         return { success: false, error: 'Permission denied' };
       }
 
-      return new Promise((resolve) => {
-        const pickerOptions = {
-          mediaType: 'photo' as MediaType,
-          quality: (options.quality || 0.8) as any,
-          maxWidth: options.maxWidth,
-          maxHeight: options.maxHeight,
-          selectionLimit: options.selectionLimit || 1,
-          includeBase64: options.includeBase64 || false,
-        };
-
-        launchImageLibrary(pickerOptions, async (response: ImagePickerResponse) => {
-          if (response.didCancel) {
-            resolve({ success: false, error: 'User cancelled' });
-            return;
-          }
-
-          if (response.errorMessage) {
-            resolve({ success: false, error: response.errorMessage });
-            return;
-          }
-
-          if (!response.assets || response.assets.length === 0) {
-            resolve({ success: false, error: 'No images selected' });
-            return;
-          }
-
-          const result = await this.processSelectedAssets(response.assets, options);
-          resolve(result);
-        });
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsMultipleSelection: (options.selectionLimit || 1) > 1,
+        quality: options.quality || 0.8,
+        base64: options.includeBase64 || false,
+        allowsEditing: options.allowsEditing || false,
       });
+
+      if (result.canceled) {
+        return { success: false, error: 'User cancelled' };
+      }
+
+      // Convert to standard format
+      const assets = result.assets.map(asset => ({
+        uri: asset.uri,
+        fileName: asset.fileName || `image_${Date.now()}.jpg`,
+        fileSize: asset.fileSize || 0,
+        type: asset.type || 'image',
+        width: asset.width,
+        height: asset.height,
+        base64: asset.base64
+      }));
+
+      return await this.processSelectedAssets(assets, options);
     } catch (error) {
       console.error('Gallery upload error:', error);
       return { success: false, error: error.message };
@@ -159,35 +140,29 @@ class ImageUploadService {
         return { success: false, error: 'Camera permission denied' };
       }
 
-      return new Promise((resolve) => {
-        const pickerOptions = {
-          mediaType: 'photo' as MediaType,
-          quality: (options.quality || 0.8) as any,
-          maxWidth: options.maxWidth,
-          maxHeight: options.maxHeight,
-          includeBase64: options.includeBase64 || false,
-        };
-
-        launchCamera(pickerOptions, async (response: ImagePickerResponse) => {
-          if (response.didCancel) {
-            resolve({ success: false, error: 'User cancelled' });
-            return;
-          }
-
-          if (response.errorMessage) {
-            resolve({ success: false, error: response.errorMessage });
-            return;
-          }
-
-          if (!response.assets || response.assets.length === 0) {
-            resolve({ success: false, error: 'No photo taken' });
-            return;
-          }
-
-          const result = await this.processSelectedAssets(response.assets, options);
-          resolve(result);
-        });
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        quality: options.quality || 0.8,
+        base64: options.includeBase64 || false,
+        allowsEditing: options.allowsEditing || false,
       });
+
+      if (result.canceled) {
+        return { success: false, error: 'User cancelled' };
+      }
+
+      // Convert to standard format
+      const assets = [{
+        uri: result.assets[0].uri,
+        fileName: result.assets[0].fileName || `photo_${Date.now()}.jpg`,
+        fileSize: result.assets[0].fileSize || 0,
+        type: result.assets[0].type || 'image',
+        width: result.assets[0].width,
+        height: result.assets[0].height,
+        base64: result.assets[0].base64
+      }];
+
+      return await this.processSelectedAssets(assets, options);
     } catch (error) {
       console.error('Camera upload error:', error);
       return { success: false, error: error.message };
@@ -201,31 +176,27 @@ class ImageUploadService {
         return { success: false, error: 'File access permission denied' };
       }
 
-      const result = await DocumentPicker.pick({
-        type: [DocumentPicker.types.images],
-        allowMultiSelection: (options.selectionLimit || 1) > 1,
+      const result = await DocumentPicker.getDocumentAsync({
+        type: 'image/*',
+        multiple: (options.selectionLimit || 1) > 1,
       });
 
-      if (!result || result.length === 0) {
-        return { success: false, error: 'No files selected' };
+      if (result.canceled) {
+        return { success: false, error: 'User cancelled' };
       }
 
-      // Convert DocumentPicker result to ImagePicker format
-      const assets = result.map(file => ({
+      // Convert Expo DocumentPicker result to ImagePicker format
+      const assets = result.assets.map(file => ({
         uri: file.uri,
         fileName: file.name,
-        fileSize: file.size,
-        type: file.type,
+        fileSize: file.size || 0,
+        type: file.mimeType || 'image/jpeg',
         width: 0, // Will be detected later
         height: 0
       }));
 
       return await this.processSelectedAssets(assets, options);
     } catch (error) {
-      if (DocumentPicker.isCancel(error)) {
-        return { success: false, error: 'User cancelled' };
-      }
-      
       console.error('File upload error:', error);
       return { success: false, error: error.message };
     }

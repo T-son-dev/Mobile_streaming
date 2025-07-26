@@ -1,8 +1,7 @@
-import SQLite from 'react-native-sqlite-storage';
+import * as SQLite from 'expo-sqlite';
 
-// Enable debugging
-SQLite.DEBUG(true);
-SQLite.enablePromise(true);
+// Create database instance
+let db: SQLite.SQLiteDatabase | null = null;
 
 export interface MediaAsset {
   id?: number;
@@ -39,9 +38,6 @@ export interface UsageAnalytic {
 class AssetDatabase {
   private database: SQLite.SQLiteDatabase | null = null;
   private readonly databaseName = 'media_library.db';
-  private readonly databaseVersion = '1.0';
-  private readonly databaseDisplayName = 'Media Library Database';
-  private readonly databaseSize = 200000;
 
   async initDatabase(): Promise<SQLite.SQLiteDatabase> {
     if (this.database) {
@@ -49,12 +45,8 @@ class AssetDatabase {
     }
 
     try {
-      this.database = await SQLite.openDatabase({
-        name: this.databaseName,
-        version: this.databaseVersion,
-        displayName: this.databaseDisplayName,
-        size: this.databaseSize,
-      });
+      // Open database using Expo SQLite
+      this.database = await SQLite.openDatabaseAsync(this.databaseName);
 
       await this.createTables();
       await this.seedDefaultCategories();
@@ -73,7 +65,7 @@ class AssetDatabase {
     }
 
     // Create media_assets table
-    await this.database.executeSql(`
+    await this.database.execAsync(`
       CREATE TABLE IF NOT EXISTS media_assets (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         filename TEXT NOT NULL,
@@ -93,7 +85,7 @@ class AssetDatabase {
     `);
 
     // Create categories table
-    await this.database.executeSql(`
+    await this.database.execAsync(`
       CREATE TABLE IF NOT EXISTS categories (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT UNIQUE,
@@ -104,7 +96,7 @@ class AssetDatabase {
     `);
 
     // Create usage_analytics table
-    await this.database.executeSql(`
+    await this.database.execAsync(`
       CREATE TABLE IF NOT EXISTS usage_analytics (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         asset_id INTEGER,
@@ -115,10 +107,10 @@ class AssetDatabase {
     `);
 
     // Create indexes for better performance
-    await this.database.executeSql('CREATE INDEX IF NOT EXISTS idx_filename ON media_assets(filename);');
-    await this.database.executeSql('CREATE INDEX IF NOT EXISTS idx_category ON media_assets(category);');
-    await this.database.executeSql('CREATE INDEX IF NOT EXISTS idx_created_at ON media_assets(created_at);');
-    await this.database.executeSql('CREATE INDEX IF NOT EXISTS idx_last_used ON media_assets(last_used);');
+    await this.database.execAsync('CREATE INDEX IF NOT EXISTS idx_filename ON media_assets(filename);');
+    await this.database.execAsync('CREATE INDEX IF NOT EXISTS idx_category ON media_assets(category);');
+    await this.database.execAsync('CREATE INDEX IF NOT EXISTS idx_created_at ON media_assets(created_at);');
+    await this.database.execAsync('CREATE INDEX IF NOT EXISTS idx_last_used ON media_assets(last_used);');
   }
 
   private async seedDefaultCategories(): Promise<void> {
@@ -146,19 +138,19 @@ class AssetDatabase {
       await this.initDatabase();
     }
 
-    const result = await this.database!.executeSql(`
+    const result = await this.database!.runAsync(`
       INSERT INTO media_assets (
         filename, original_name, file_path, file_size, format, 
         width, height, usage_count, category, tags, is_favorite
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `, [
+    `, 
       asset.filename, asset.original_name, asset.file_path, asset.file_size,
       asset.format, asset.width || null, asset.height || null,
       asset.usage_count, asset.category || null, asset.tags || null,
       asset.is_favorite ? 1 : 0
-    ]);
+    );
 
-    return result[0].insertId;
+    return result.lastInsertRowId;
   }
 
   async getAssets(filter?: {
@@ -197,18 +189,13 @@ class AssetDatabase {
       }
     }
 
-    const result = await this.database!.executeSql(query, params);
-    const assets: MediaAsset[] = [];
-
-    for (let i = 0; i < result[0].rows.length; i++) {
-      const row = result[0].rows.item(i);
-      assets.push({
-        ...row,
-        is_favorite: Boolean(row.is_favorite)
-      });
-    }
-
-    return assets;
+    const result = await this.database!.getAllAsync<MediaAsset>(query, params);
+    
+    // Convert boolean values
+    return result.map(row => ({
+      ...row,
+      is_favorite: Boolean(row.is_favorite)
+    }));
   }
 
   async updateAsset(id: number, updates: Partial<MediaAsset>): Promise<void> {
@@ -229,7 +216,7 @@ class AssetDatabase {
     if (fields.length === 0) return;
 
     values.push(id);
-    await this.database!.executeSql(
+    await this.database!.runAsync(
       `UPDATE media_assets SET ${fields.join(', ')} WHERE id = ?`,
       values
     );
@@ -240,23 +227,18 @@ class AssetDatabase {
       await this.initDatabase();
     }
 
-    await this.database!.executeSql('DELETE FROM media_assets WHERE id = ?', [id]);
-    await this.database!.executeSql('DELETE FROM usage_analytics WHERE asset_id = ?', [id]);
+    await this.database!.runAsync('DELETE FROM media_assets WHERE id = ?', id);
+    await this.database!.runAsync('DELETE FROM usage_analytics WHERE asset_id = ?', id);
   }
 
   async incrementUsageCount(id: number): Promise<void> {
-    await this.updateAsset(id, {
-      usage_count: 0, // This will be incremented by SQL
-      last_used: new Date().toISOString()
-    });
-
     if (!this.database) {
       await this.initDatabase();
     }
 
-    await this.database!.executeSql(
-      'UPDATE media_assets SET usage_count = usage_count + 1 WHERE id = ?',
-      [id]
+    await this.database!.runAsync(
+      'UPDATE media_assets SET usage_count = usage_count + 1, last_used = datetime("now") WHERE id = ?',
+      id
     );
   }
 
@@ -266,11 +248,12 @@ class AssetDatabase {
       await this.initDatabase();
     }
 
-    const result = await this.database!.executeSql(`
-      INSERT INTO categories (name, color, icon) VALUES (?, ?, ?)
-    `, [category.name, category.color || null, category.icon || null]);
+    const result = await this.database!.runAsync(
+      `INSERT INTO categories (name, color, icon) VALUES (?, ?, ?)`,
+      category.name, category.color || null, category.icon || null
+    );
 
-    return result[0].insertId;
+    return result.lastInsertRowId;
   }
 
   async getCategories(): Promise<Category[]> {
@@ -278,16 +261,9 @@ class AssetDatabase {
       await this.initDatabase();
     }
 
-    const result = await this.database!.executeSql(
+    return await this.database!.getAllAsync<Category>(
       'SELECT * FROM categories ORDER BY name ASC'
     );
-
-    const categories: Category[] = [];
-    for (let i = 0; i < result[0].rows.length; i++) {
-      categories.push(result[0].rows.item(i));
-    }
-
-    return categories;
   }
 
   // Analytics operations
@@ -296,9 +272,10 @@ class AssetDatabase {
       await this.initDatabase();
     }
 
-    await this.database!.executeSql(`
-      INSERT INTO usage_analytics (asset_id, action) VALUES (?, ?)
-    `, [assetId, action]);
+    await this.database!.runAsync(
+      `INSERT INTO usage_analytics (asset_id, action) VALUES (?, ?)`,
+      assetId, action
+    );
 
     // Also increment usage count
     await this.incrementUsageCount(assetId);
@@ -315,13 +292,13 @@ class AssetDatabase {
     }
 
     // Get total stats
-    const totalResult = await this.database!.executeSql(`
+    const totalResult = await this.database!.getFirstAsync<{count: number, size: number}>(`
       SELECT COUNT(*) as count, COALESCE(SUM(file_size), 0) as size 
       FROM media_assets
     `);
 
     // Get category breakdown
-    const categoryResult = await this.database!.executeSql(`
+    const categoryBreakdown = await this.database!.getAllAsync<{category: string, count: number, size: number}>(`
       SELECT 
         COALESCE(category, 'Uncategorized') as category,
         COUNT(*) as count,
@@ -332,7 +309,7 @@ class AssetDatabase {
     `);
 
     // Get recent activity
-    const activityResult = await this.database!.executeSql(`
+    const recentActivity = await this.database!.getAllAsync<UsageAnalytic>(`
       SELECT ua.*, ma.filename 
       FROM usage_analytics ua
       JOIN media_assets ma ON ua.asset_id = ma.id
@@ -340,19 +317,9 @@ class AssetDatabase {
       LIMIT 10
     `);
 
-    const categoryBreakdown: { category: string; count: number; size: number }[] = [];
-    for (let i = 0; i < categoryResult[0].rows.length; i++) {
-      categoryBreakdown.push(categoryResult[0].rows.item(i));
-    }
-
-    const recentActivity: UsageAnalytic[] = [];
-    for (let i = 0; i < activityResult[0].rows.length; i++) {
-      recentActivity.push(activityResult[0].rows.item(i));
-    }
-
     return {
-      totalAssets: totalResult[0].rows.item(0).count,
-      totalSize: totalResult[0].rows.item(0).size,
+      totalAssets: totalResult?.count || 0,
+      totalSize: totalResult?.size || 0,
       categoryBreakdown,
       recentActivity
     };
@@ -360,7 +327,7 @@ class AssetDatabase {
 
   async closeDatabase(): Promise<void> {
     if (this.database) {
-      await this.database.close();
+      await this.database.closeAsync();
       this.database = null;
     }
   }

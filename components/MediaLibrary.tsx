@@ -15,7 +15,7 @@ import {
   RefreshControl
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import FastImage from 'react-native-fast-image';
+import { Image as ExpoImage } from 'expo-image';
 import MediaStorageManager from '../services/MediaStorageManager';
 import ImageUploadService from '../services/ImageUploadService';
 import { MediaAsset, Category } from '../database/AssetDatabase';
@@ -277,10 +277,10 @@ export default function MediaLibrary({
         onLongPress={() => handleAssetLongPress(item)}
         activeOpacity={0.7}
       >
-        <FastImage
+        <ExpoImage
           source={{ uri: `file://${item.file_path}` }}
           style={styles.assetImage}
-          resizeMode={FastImage.resizeMode.cover}
+          contentFit="cover"
         />
         
         {/* Overlay for selection */}
@@ -321,10 +321,10 @@ export default function MediaLibrary({
         onPress={() => handleAssetPress(item)}
         onLongPress={() => handleAssetLongPress(item)}
       >
-        <FastImage
+        <ExpoImage
           source={{ uri: `file://${item.file_path}` }}
           style={styles.listItemImage}
-          resizeMode={FastImage.resizeMode.cover}
+          contentFit="cover"
         />
         
         <View style={styles.listItemInfo}>
@@ -516,10 +516,10 @@ export default function MediaLibrary({
           />
           {previewAsset && (
             <View style={styles.previewContent}>
-              <FastImage
+              <ExpoImage
                 source={{ uri: `file://${previewAsset.file_path}` }}
                 style={styles.previewImage}
-                resizeMode={FastImage.resizeMode.contain}
+                contentFit="contain"
               />
               <View style={styles.previewInfo}>
                 <Text style={styles.previewTitle}>{previewAsset.original_name}</Text>
