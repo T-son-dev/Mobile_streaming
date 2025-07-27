@@ -1,20 +1,20 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { Colors } from '@/constants/Colors';
+import { assetManager } from '@/services/AssetManager';
+import { overlayService } from '@/services/OverlayService';
+import { ImageOverlay, Overlay, TextOverlay } from '@/types/overlay';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
-  View,
-  StyleSheet,
-  Modal,
-  Text,
-  TouchableOpacity,
-  ScrollView,
   Alert,
   Dimensions,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { Overlay, TextOverlay, ImageOverlay } from '@/types/overlay';
 import OverlayRenderer from './OverlayRenderer';
-import { overlayService } from '@/services/OverlayService';
-import { assetManager } from '@/services/AssetManager';
 import { IconSymbol } from './ui/IconSymbol';
-import { Colors } from '@/constants/Colors';
 
 interface UniversalOverlayManagerProps {
   visible: boolean;
@@ -268,31 +268,32 @@ const UniversalOverlayManager: React.FC<UniversalOverlayManagerProps> = ({
               style={styles.toolButton} 
               onPress={() => setShowTypeSelector(true)}
             >
-              <IconSymbol name="circle" size={24} color={Colors.dark.tint} />
+              <IconSymbol name="circle" size={16} color={Colors.dark.tint} />
               <Text style={styles.toolButtonText}>Add</Text>
             </TouchableOpacity>
             
             <TouchableOpacity style={styles.toolButton} onPress={handleToggleAll}>
-              <IconSymbol name="circle" size={24} color={Colors.dark.tint} />
+              <IconSymbol name="circle" size={16} color={Colors.dark.tint} />
               <Text style={styles.toolButtonText}>Toggle All</Text>
             </TouchableOpacity>
             
             {overlays.length > 0 && (
               <TouchableOpacity style={styles.toolButton} onPress={handleClearAll}>
-                <IconSymbol name="xmark" size={24} color="#ff4444" />
+                <IconSymbol name="xmark" size={16} color="#ff4444" />
                 <Text style={[styles.toolButtonText, { color: '#ff4444' }]}>Clear All</Text>
               </TouchableOpacity>
             )}
+
+            {/* Quick Stats */}
+            <View style={styles.stats}>
+              <Text style={styles.statsText}>
+                {overlays.filter(o => o.enabled).length} active • 
+                {overlays.filter(o => o.type === 'text').length} text • 
+                {overlays.filter(o => o.type === 'image').length} image
+              </Text>
+            </View>
           </ScrollView>
 
-          {/* Quick Stats */}
-          <View style={styles.stats}>
-            <Text style={styles.statsText}>
-              {overlays.filter(o => o.enabled).length} active • 
-              {overlays.filter(o => o.type === 'text').length} text • 
-              {overlays.filter(o => o.type === 'image').length} image
-            </Text>
-          </View>
         </View>
 
         {/* Type Selector Modal */}
@@ -344,12 +345,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16,
-    paddingTop: 24,
+    padding: 10,
+    paddingTop: 20,
     backgroundColor: '#1e293b',
   },
   title: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
     color: Colors.dark.text,
   },
@@ -451,12 +452,11 @@ const styles = StyleSheet.create({
   toolButton: {
     alignItems: 'center',
     marginRight: 20,
-    padding: 10,
   },
   toolButtonText: {
     color: Colors.dark.text,
-    fontSize: 12,
-    marginTop: 4,
+    fontSize: 10,
+    marginTop: 2,
   },
   stats: {
     paddingHorizontal: 20,
