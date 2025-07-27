@@ -102,7 +102,7 @@ const UniversalOverlayManager: React.FC<UniversalOverlayManagerProps> = ({
       setShowTypeSelector(false);
     } catch (error) {
       console.error('Error selecting image:', error);
-      Alert.alert('Error', 'Failed to select image: ' + error.message);
+      Alert.alert('Error', 'Failed to select image: ' + (error instanceof Error ? error.message : 'Unknown error'));
       setShowTypeSelector(false);
     }
   }, [overlays.length]);
@@ -183,12 +183,20 @@ const UniversalOverlayManager: React.FC<UniversalOverlayManagerProps> = ({
           </TouchableOpacity>
         </View>
 
-        {/* Preview Area */}
-        <View style={styles.previewContainer}>
-          <View style={styles.preview}>
+        <ScrollView style={styles.contentScroll} showsVerticalScrollIndicator={false}>
+          {/* Preview Area */}
+          <View style={styles.previewContainer}>
+          <View style={[
+            styles.preview,
+            containerSize && containerSize.width > 0 && containerSize.height > 0 && {
+              width: containerSize.width,
+              height: containerSize.height,
+              aspectRatio: containerSize.width / containerSize.height
+            }
+          ]}>
             <OverlayRenderer
-              containerWidth={screenDimensions.width * 0.8}
-              containerHeight={screenDimensions.height * 0.4}
+              containerWidth={containerSize?.width || screenDimensions.width * 0.8}
+              containerHeight={containerSize?.height || screenDimensions.height * 0.4}
               onOverlaySelect={setSelectedOverlayId}
               selectedOverlayId={selectedOverlayId}
               editingOverlayId={editingOverlayId}
@@ -251,6 +259,7 @@ const UniversalOverlayManager: React.FC<UniversalOverlayManagerProps> = ({
             ))}
           </ScrollView>
         </View>
+        </ScrollView>
 
         {/* Controls */}
         <View style={styles.controls}>
@@ -328,12 +337,15 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.dark.background,
   },
+  contentScroll: {
+    flex: 1,
+  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 20,
-    paddingTop: 50,
+    padding: 16,
+    paddingTop: 24,
     backgroundColor: '#1e293b',
   },
   title: {
@@ -345,15 +357,19 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   previewContainer: {
-    height: 200,
-    margin: 20,
+    margin: 12,
+    marginBottom: 8,
     backgroundColor: '#1e293b',
     borderRadius: 12,
     overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   preview: {
-    flex: 1,
     backgroundColor: '#000',
+    width: '100%',
+    maxWidth: '100%',
+    alignSelf: 'center',
   },
   overlayList: {
     flex: 1,
@@ -366,7 +382,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   overlayScroll: {
-    maxHeight: 200,
+    maxHeight: 120,
   },
   overlayItem: {
     flexDirection: 'row',
@@ -424,7 +440,9 @@ const styles = StyleSheet.create({
   },
   controls: {
     backgroundColor: '#1e293b',
-    paddingVertical: 20,
+    paddingVertical: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#334155',
   },
   toolbar: {
     paddingHorizontal: 20,

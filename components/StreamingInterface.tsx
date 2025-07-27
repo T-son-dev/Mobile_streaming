@@ -21,7 +21,6 @@ import VideoPreview from './VideoPreview';
 import UniversalOverlayManager from './UniversalOverlayManager';
 import OverlayRenderer from './OverlayRenderer';
 import AssetBrowser from './AssetBrowser';
-import { overlayService } from '@/services/OverlayService';
 
 // Use centralized responsive utilities instead of local device detection
 
@@ -74,6 +73,7 @@ const StreamingInterface: React.FC<StreamingInterfaceProps> = ({
   const [isMicrophoneModalOpen, setIsMicrophoneModalOpen] = useState(false);
   const [isOverlayManagerOpen, setIsOverlayManagerOpen] = useState(false);
   const [isMediaLibraryOpen, setIsMediaLibraryOpen] = useState(false);
+  const [previewDimensions, setPreviewDimensions] = useState<{ width: number; height: number } | null>(null);
   const [selectedOverlayId, setSelectedOverlayId] = useState<string | null>(null);
   const [editingOverlayId, setEditingOverlayId] = useState<string | null>(null);
   
@@ -379,12 +379,6 @@ const StreamingInterface: React.FC<StreamingInterfaceProps> = ({
               onPress={handleCameraControlsToggle}
             />
             <ShortcutButton
-              iconName="photo.stack"
-              label=""
-              isActive={isMediaLibraryOpen}
-              onPress={handleMediaLibraryToggle}
-            />
-            <ShortcutButton
               iconName="line.horizontal.3"
               label=""
               isActive={isStreaming}
@@ -415,7 +409,19 @@ const StreamingInterface: React.FC<StreamingInterfaceProps> = ({
         </View>
 
         {/* Central Video Preview */}
-        <View style={responsiveStyles.videoPreviewContainer}>
+        <View 
+          style={responsiveStyles.videoPreviewContainer}
+          onLayout={(event) => {
+            const { width, height } = event.nativeEvent.layout;
+            // Only update if dimensions actually changed to prevent infinite loops
+            setPreviewDimensions(prev => {
+              if (!prev || prev.width !== width || prev.height !== height) {
+                return { width, height };
+              }
+              return prev;
+            });
+          }}
+        >
           <VideoPreview 
             isStreaming={isStreaming}
             activeSource={sources[activeSource].name}
@@ -499,6 +505,7 @@ const StreamingInterface: React.FC<StreamingInterfaceProps> = ({
       <UniversalOverlayManager
         visible={isOverlayManagerOpen}
         onClose={() => setIsOverlayManagerOpen(false)}
+        containerSize={previewDimensions || undefined}
       />
 
       <AssetBrowser

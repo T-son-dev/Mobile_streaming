@@ -58,7 +58,12 @@ class ResolutionManager {
 
       // Set initial resolution
       if (this.currentSettings) {
-        await this.applyResolution(this.currentSettings.currentResolution);
+        try {
+          await this.applyResolution(this.currentSettings.currentResolution);
+        } catch (error) {
+          console.error('Failed to set resolution:', error);
+          // Don't fail initialization if we can't set initial resolution
+        }
       }
 
       console.log('Resolution manager initialized successfully');
@@ -75,6 +80,20 @@ class ResolutionManager {
 
       if (!this.deviceCapabilities?.supportedResolutions.includes(preset)) {
         throw new Error(`Resolution ${preset} not supported on this device`);
+      }
+
+      // Check if we can change resolution
+      const cameraState = dualCameraManager.getState();
+      const composerStats = videoComposer.getCompositionStats();
+      
+      if (cameraState.isRecording) {
+        console.error('Cannot change resolution while recording');
+        throw new Error('Cannot change resolution while recording');
+      }
+      
+      if (composerStats.isComposing) {
+        console.error('Cannot change resolution while composing');
+        throw new Error('Cannot change resolution while composing');
       }
 
       // Apply resolution to camera manager
@@ -317,6 +336,20 @@ class ResolutionManager {
   }
 
   private async applyResolution(preset: ResolutionPreset): Promise<void> {
+    // Check if we can change resolution
+    const cameraState = dualCameraManager.getState();
+    const composerStats = videoComposer.getCompositionStats();
+    
+    if (cameraState.isRecording) {
+      console.warn('Cannot apply resolution while recording - will be applied when recording stops');
+      return;
+    }
+    
+    if (composerStats.isComposing) {
+      console.warn('Cannot apply resolution while composing - will be applied when composing stops');
+      return;
+    }
+    
     await dualCameraManager.setResolution(preset);
     await videoComposer.updateResolution(preset);
   }

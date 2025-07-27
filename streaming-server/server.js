@@ -102,7 +102,7 @@ app.get('/', (req, res) => {
         }, 1000);
 
         // Get local IP
-        fetch('http://localhost:8000/api/info')
+        fetch('/api/info')
           .then(res => res.json())
           .then(data => {
             if (data.localIP) {
@@ -118,7 +118,7 @@ app.get('/', (req, res) => {
           const videoElement = document.getElementById('player');
           const flvPlayer = flvjs.createPlayer({
             type: 'flv',
-            url: 'http://localhost:8000/live/test.flv',
+            url: 'http://146.19.215.133:8000/live/test.flv',
             isLive: true,
             enableStashBuffer: false,
             stashInitialSize: 128,
@@ -157,7 +157,7 @@ app.get('/', (req, res) => {
 
         // Check active streams periodically
         setInterval(() => {
-          fetch('http://localhost:8000/api/streams')
+          fetch('/api/streams')
             .then(res => res.json())
             .then(data => {
               const streamsDiv = document.getElementById('activeStreams');
@@ -203,7 +203,43 @@ app.get('/api/info', (req, res) => {
 });
 
 app.get('/api/streams', (req, res) => {
-  res.json(getActiveStreams());
+  const streams = getActiveStreams();
+  console.log('📊 API Request - Active streams:', JSON.stringify(streams));
+  res.json(streams);
+});
+
+// Debug endpoint to check all sessions
+app.get('/api/debug', (req, res) => {
+  try {
+    let sessions = {};
+    let method = 'unknown';
+    
+    if (typeof nms.getStreams === 'function') {
+      sessions = nms.getStreams();
+      method = 'getStreams()';
+    } else if (nms.nodeStreams) {
+      sessions = nms.nodeStreams;
+      method = 'nodeStreams';
+    } else if (nms.sessions) {
+      sessions = nms.sessions;
+      method = 'sessions';
+    }
+    
+    console.log(`🔍 Debug - Sessions via ${method}:`, sessions);
+    
+    res.json({
+      method: method,
+      sessions: sessions,
+      sessionCount: Object.keys(sessions).length,
+      serverStatus: 'running'
+    });
+  } catch (error) {
+    console.error('Debug error:', error);
+    res.json({
+      error: error.message,
+      serverStatus: 'error'
+    });
+  }
 });
 
 // Test stream endpoint for mobile app
@@ -287,7 +323,9 @@ nms.on('doneConnect', (id, args) => {
 nms.on('prePublish', (id, StreamPath, args) => {
   console.log('[NodeEvent on prePublish]', `id=${id} StreamPath=${StreamPath} args=${JSON.stringify(args)}`);
   console.log('🎥 REAL Video Stream Started:', StreamPath);
-  console.log('📹 You should now see video at: http://146.19.215.133:8000/live' + StreamPath + '.flv');
+  console.log('📹 Stream URL: http://146.19.215.133:8000/live' + StreamPath + '.flv');
+  console.log('📹 Viewer URL: http://146.19.215.133:3000');
+  console.log('🔄 If you don\'t see video, try refreshing the browser page');
 });
 
 nms.on('postPublish', (id, StreamPath, args) => {
@@ -313,23 +351,41 @@ nms.on('donePlay', (id, StreamPath, args) => {
 
 // Get active streams
 function getActiveStreams() {
-  const sessions = nms.getStreams();
-  const streams = { live: {} };
-  
-  for (let [app, appStreams] of Object.entries(sessions)) {
-    if (appStreams.size > 0) {
-      streams[app] = {};
-      for (let [streamPath, stream] of appStreams) {
-        streams[app][streamPath] = {
-          publisher: stream.publisher,
-          players: stream.players ? stream.players.size : 0,
-          startTime: stream.startTime
-        };
+  try {
+    // For newer versions of node-media-server, try different methods
+    let sessions = {};
+    
+    if (typeof nms.getStreams === 'function') {
+      sessions = nms.getStreams();
+    } else if (nms.nodeStreams) {
+      sessions = nms.nodeStreams;
+    } else if (nms.sessions) {
+      sessions = nms.sessions;
+    } else {
+      console.log('⚠️  Could not access stream sessions');
+      return { live: {} };
+    }
+    
+    const streams = { live: {} };
+    
+    for (let [app, appStreams] of Object.entries(sessions)) {
+      if (appStreams && appStreams.size > 0) {
+        streams[app] = {};
+        for (let [streamPath, stream] of appStreams) {
+          streams[app][streamPath] = {
+            publisher: stream.publisher,
+            players: stream.players ? stream.players.size : 0,
+            startTime: stream.startTime
+          };
+        }
       }
     }
+    
+    return streams;
+  } catch (error) {
+    console.error('Error getting active streams:', error.message);
+    return { live: {} };
   }
-  
-  return streams;
 }
 
 // Start servers

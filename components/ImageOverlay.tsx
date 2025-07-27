@@ -247,10 +247,54 @@ const ImageOverlay: React.FC<ImageOverlayProps> = ({
       {/* Resize handles when selected */}
       {isSelected && (
         <>
-          <View style={[styles.resizeHandle, styles.handleTopLeft]} />
-          <View style={[styles.resizeHandle, styles.handleTopRight]} />
-          <View style={[styles.resizeHandle, styles.handleBottomLeft]} />
-          <View style={[styles.resizeHandle, styles.handleBottomRight]} />
+          <View 
+            style={[styles.resizeHandle, styles.handleTopLeft]} 
+            {...PanResponder.create({
+              onStartShouldSetPanResponder: () => true,
+              onMoveShouldSetPanResponder: () => true,
+              onPanResponderMove: (_, gestureState) => {
+                const newWidth = Math.max(50, overlay.size.width - gestureState.dx);
+                const newHeight = Math.max(50, overlay.size.height - gestureState.dy);
+                onUpdate({ size: { width: newWidth, height: newHeight } });
+              },
+            }).panHandlers}
+          />
+          <View 
+            style={[styles.resizeHandle, styles.handleTopRight]} 
+            {...PanResponder.create({
+              onStartShouldSetPanResponder: () => true,
+              onMoveShouldSetPanResponder: () => true,
+              onPanResponderMove: (_, gestureState) => {
+                const newWidth = Math.max(50, overlay.size.width + gestureState.dx);
+                const newHeight = Math.max(50, overlay.size.height - gestureState.dy);
+                onUpdate({ size: { width: newWidth, height: newHeight } });
+              },
+            }).panHandlers}
+          />
+          <View 
+            style={[styles.resizeHandle, styles.handleBottomLeft]} 
+            {...PanResponder.create({
+              onStartShouldSetPanResponder: () => true,
+              onMoveShouldSetPanResponder: () => true,
+              onPanResponderMove: (_, gestureState) => {
+                const newWidth = Math.max(50, overlay.size.width - gestureState.dx);
+                const newHeight = Math.max(50, overlay.size.height + gestureState.dy);
+                onUpdate({ size: { width: newWidth, height: newHeight } });
+              },
+            }).panHandlers}
+          />
+          <View 
+            style={[styles.resizeHandle, styles.handleBottomRight]} 
+            {...PanResponder.create({
+              onStartShouldSetPanResponder: () => true,
+              onMoveShouldSetPanResponder: () => true,
+              onPanResponderMove: (_, gestureState) => {
+                const newWidth = Math.max(50, overlay.size.width + gestureState.dx);
+                const newHeight = Math.max(50, overlay.size.height + gestureState.dy);
+                onUpdate({ size: { width: newWidth, height: newHeight } });
+              },
+            }).panHandlers}
+          />
         </>
       )}
     </Animated.View>

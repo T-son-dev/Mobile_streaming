@@ -49,6 +49,11 @@ const TextOverlay: React.FC<TextOverlayProps> = ({
   const [showGuides, setShowGuides] = useState(false);
   const [collision, setCollision] = useState(false);
   
+  // Sync local content with overlay content when it changes externally
+  useEffect(() => {
+    setLocalContent(overlay.content);
+  }, [overlay.content]);
+  
   const pan = useRef(new Animated.ValueXY()).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -302,24 +307,30 @@ const TextOverlay: React.FC<TextOverlayProps> = ({
             ]}
           >
             {isEditing ? (
-              <TextInput
-                style={[
-                  styles.textInput,
-                  getTextStyle(),
-                  {
-                    minWidth: 100,
-                    minHeight: overlay.style.fontSize * 1.5,
-                  },
-                ]}
-                value={localContent}
-                onChangeText={handleContentChange}
-                onSubmitEditing={handleContentSubmit}
-                onBlur={handleContentSubmit}
-                autoFocus
-                multiline
-                returnKeyType="done"
-                blurOnSubmit
-              />
+              <>
+                <TextInput
+                  style={[
+                    styles.textInput,
+                    getTextStyle(),
+                    {
+                      minWidth: 100,
+                      minHeight: overlay.style.fontSize * 1.5,
+                    },
+                  ]}
+                  value={localContent}
+                  onChangeText={handleContentChange}
+                  onSubmitEditing={handleContentSubmit}
+                  autoFocus
+                  multiline
+                  returnKeyType="default"
+                />
+                <TouchableOpacity
+                  style={styles.doneButton}
+                  onPress={handleContentSubmit}
+                >
+                  <Text style={styles.doneButtonText}>Done</Text>
+                </TouchableOpacity>
+              </>
             ) : (
               <Text
                 style={[
@@ -414,6 +425,20 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 12,
     fontWeight: 'bold',
+  },
+  doneButton: {
+    position: 'absolute',
+    top: -30,
+    right: 0,
+    backgroundColor: '#00ff88',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 4,
+  },
+  doneButtonText: {
+    color: '#000000',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });
 

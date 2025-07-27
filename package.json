@@ -71,10 +71,8 @@
     "eslint": "^8.57.0",
     "eslint-config-expo": "~9.2.0",
     "eslint-import-resolver-typescript": "^4.4.4",
-    "flipper-plugin-performance": "^5.0.0",
     "jest": "^29.2.1",
     "jest-expo": "~53.0.9",
-    "react-native-performance": "^5.1.4",
     "typescript": "~5.8.3"
   },
   "private": true

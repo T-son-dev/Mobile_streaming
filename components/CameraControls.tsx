@@ -461,7 +461,7 @@ const styles = StyleSheet.create({
   },
   triangleMobile: {
     top: -6,
-    right: 16,
+    right: 90,
     borderLeftWidth: 6,
     borderRightWidth: 6,
     borderBottomWidth: 6,
