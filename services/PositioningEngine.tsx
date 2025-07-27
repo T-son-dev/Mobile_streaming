@@ -144,7 +144,8 @@ export class PositioningEngine {
   detectCollisions(
     overlay: Overlay,
     otherOverlays: Overlay[],
-    proposedPosition?: Position
+    proposedPosition?: Position,
+    skipSuggestion: boolean = false
   ): CollisionResult {
     const testOverlay = proposedPosition
       ? { ...overlay, position: proposedPosition }
@@ -167,8 +168,8 @@ export class PositioningEngine {
       overlappingIds,
     };
 
-    // Suggest alternative position if collision detected
-    if (result.collides && this.options.collisionPrevention) {
+    // Suggest alternative position if collision detected (prevent recursion)
+    if (result.collides && this.options.collisionPrevention && !skipSuggestion) {
       result.suggestedPosition = this.findNonCollidingPosition(overlay, otherOverlays);
     }
 
@@ -194,7 +195,7 @@ export class PositioningEngine {
         };
 
         const testPosPercent = this.pixelToPercent(testPos);
-        const collision = this.detectCollisions(overlay, otherOverlays, testPosPercent);
+        const collision = this.detectCollisions(overlay, otherOverlays, testPosPercent, true);
         
         if (!collision.collides && this.isPositionValid(testPosPercent, overlay.size)) {
           return testPosPercent;

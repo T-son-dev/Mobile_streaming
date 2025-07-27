@@ -136,18 +136,19 @@ const TextOverlay: React.FC<TextOverlayProps> = ({
         
         const newPercentPos = positioningEngine.pixelToPercent(newPixelPos);
         
-        // Check for collisions
+        // Check for collisions (skip suggestion during dragging to prevent recursion)
         const collisionResult = positioningEngine.detectCollisions(
           overlay,
           otherOverlays,
-          newPercentPos
+          newPercentPos,
+          true
         );
         
         setCollision(collisionResult.collides);
         
         // Apply snapping
         const snapPoints = positioningEngine.getSnapPoints(overlay, otherOverlays);
-        const snappedPosition = positioningEngine.applySnapping(newPercentPos, snapPoints);
+        positioningEngine.applySnapping(newPercentPos, snapPoints);
         
         pan.setValue({
           x: gestureState.dx,
@@ -155,7 +156,7 @@ const TextOverlay: React.FC<TextOverlayProps> = ({
         });
       },
       
-      onPanResponderRelease: (evt, gestureState) => {
+      onPanResponderRelease: (_, gestureState) => {
         setShowGuides(false);
         
         Animated.spring(scaleAnim, {

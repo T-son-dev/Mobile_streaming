@@ -14,6 +14,7 @@ import {
   View,
 } from 'react-native';
 import OverlayRenderer from './OverlayRenderer';
+import TextStyleEditor from './TextStyleEditor';
 import { IconSymbol } from './ui/IconSymbol';
 
 interface UniversalOverlayManagerProps {
@@ -31,6 +32,7 @@ const UniversalOverlayManager: React.FC<UniversalOverlayManagerProps> = ({
   const [selectedOverlayId, setSelectedOverlayId] = useState<string | null>(null);
   const [editingOverlayId, setEditingOverlayId] = useState<string | null>(null);
   const [showTypeSelector, setShowTypeSelector] = useState(false);
+  const [showStyleEditor, setShowStyleEditor] = useState(false);
   
   const screenDimensions = containerSize || Dimensions.get('window');
 
@@ -146,6 +148,13 @@ const UniversalOverlayManager: React.FC<UniversalOverlayManagerProps> = ({
     setOverlays(overlayService.getAllOverlays());
   }, [overlays]);
 
+  const handleUpdateOverlay = useCallback((updates: Partial<Overlay>) => {
+    if (selectedOverlayId) {
+      overlayService.updateOverlay(selectedOverlayId, updates);
+      setOverlays(overlayService.getAllOverlays());
+    }
+  }, [selectedOverlayId]);
+
   const handleClearAll = useCallback(() => {
     Alert.alert(
       'Clear All Overlays',
@@ -237,6 +246,18 @@ const UniversalOverlayManager: React.FC<UniversalOverlayManagerProps> = ({
                 </TouchableOpacity>
                 
                 <View style={styles.overlayActions}>
+                  {overlay.type === 'text' && (
+                    <TouchableOpacity
+                      style={styles.actionButton}
+                      onPress={() => {
+                        setSelectedOverlayId(overlay.id);
+                        setShowStyleEditor(true);
+                      }}
+                    >
+                      <IconSymbol name="pencil" size={16} color={Colors.dark.tint} />
+                    </TouchableOpacity>
+                  )}
+                  
                   <TouchableOpacity
                     style={[styles.actionButton, overlay.enabled && styles.activeButton]}
                     onPress={() => handleToggleOverlay(overlay.id)}
@@ -327,6 +348,22 @@ const UniversalOverlayManager: React.FC<UniversalOverlayManagerProps> = ({
               </View>
             </View>
           </View>
+        </Modal>
+
+        {/* Text Style Editor Modal */}
+        <Modal
+          visible={showStyleEditor}
+          animationType="slide"
+          transparent={false}
+          onRequestClose={() => setShowStyleEditor(false)}
+        >
+          {selectedOverlayId && overlays.find(o => o.id === selectedOverlayId)?.type === 'text' ? (
+            <TextStyleEditor
+              overlay={overlays.find(o => o.id === selectedOverlayId) as TextOverlay}
+              onUpdate={handleUpdateOverlay}
+              onClose={() => setShowStyleEditor(false)}
+            />
+          ) : null}
         </Modal>
       </View>
     </Modal>
