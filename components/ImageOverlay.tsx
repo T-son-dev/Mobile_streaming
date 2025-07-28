@@ -252,10 +252,21 @@ const ImageOverlay: React.FC<ImageOverlayProps> = ({
             {...PanResponder.create({
               onStartShouldSetPanResponder: () => true,
               onMoveShouldSetPanResponder: () => true,
+              onPanResponderGrant: () => {
+                console.log('Resizing from top-left');
+              },
               onPanResponderMove: (_, gestureState) => {
                 const newWidth = Math.max(50, overlay.size.width - gestureState.dx);
                 const newHeight = Math.max(50, overlay.size.height - gestureState.dy);
-                onUpdate({ size: { width: newWidth, height: newHeight } });
+                // Also adjust position when resizing from top-left
+                const newPosition = {
+                  x: overlay.position.x + (gestureState.dx / 100) * 100, // Convert to percentage
+                  y: overlay.position.y + (gestureState.dy / 100) * 100,
+                };
+                onUpdate({ 
+                  size: { width: newWidth, height: newHeight },
+                  position: newPosition
+                });
               },
             }).panHandlers}
           />
@@ -359,28 +370,29 @@ const styles = StyleSheet.create({
   },
   resizeHandle: {
     position: 'absolute',
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    backgroundColor: '#7ED321',
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#00ff88',
     borderWidth: 2,
     borderColor: '#FFFFFF',
+    zIndex: 1000,
   },
   handleTopLeft: {
-    top: -8,
-    left: -8,
+    top: -10,
+    left: -10,
   },
   handleTopRight: {
-    top: -8,
-    right: -8,
+    top: -10,
+    right: -10,
   },
   handleBottomLeft: {
-    bottom: -8,
-    left: -8,
+    bottom: -10,
+    left: -10,
   },
   handleBottomRight: {
-    bottom: -8,
-    right: -8,
+    bottom: -10,
+    right: -10,
   },
 });
 

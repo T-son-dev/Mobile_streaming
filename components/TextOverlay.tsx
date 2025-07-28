@@ -345,6 +345,86 @@ const TextOverlay: React.FC<TextOverlayProps> = ({
             )}
           </View>
         </TouchableOpacity>
+
+        {/* Resize handles when selected and not editing */}
+        {isSelected && !isEditing && (
+          <>
+            <View 
+              style={[styles.resizeHandle, styles.handleTopLeft]} 
+              {...PanResponder.create({
+                onStartShouldSetPanResponder: () => true,
+                onMoveShouldSetPanResponder: () => true,
+                onPanResponderGrant: () => {
+                  console.log('Resizing text from top-left');
+                },
+                onPanResponderMove: (_, gestureState) => {
+                  const newWidth = Math.max(50, overlay.size.width - gestureState.dx);
+                  const newHeight = Math.max(30, overlay.size.height - gestureState.dy);
+                  const newPosition = {
+                    x: overlay.position.x + (gestureState.dx / (containerSize?.width || 400)) * 100,
+                    y: overlay.position.y + (gestureState.dy / (containerSize?.height || 600)) * 100,
+                  };
+                  onUpdate({ 
+                    size: { width: newWidth, height: newHeight },
+                    position: newPosition
+                  });
+                },
+              }).panHandlers}
+            />
+            <View 
+              style={[styles.resizeHandle, styles.handleTopRight]} 
+              {...PanResponder.create({
+                onStartShouldSetPanResponder: () => true,
+                onMoveShouldSetPanResponder: () => true,
+                onPanResponderMove: (_, gestureState) => {
+                  const newWidth = Math.max(50, overlay.size.width + gestureState.dx);
+                  const newHeight = Math.max(30, overlay.size.height - gestureState.dy);
+                  const newPosition = {
+                    x: overlay.position.x,
+                    y: overlay.position.y + (gestureState.dy / (containerSize?.height || 600)) * 100,
+                  };
+                  onUpdate({ 
+                    size: { width: newWidth, height: newHeight },
+                    position: newPosition
+                  });
+                },
+              }).panHandlers}
+            />
+            <View 
+              style={[styles.resizeHandle, styles.handleBottomLeft]} 
+              {...PanResponder.create({
+                onStartShouldSetPanResponder: () => true,
+                onMoveShouldSetPanResponder: () => true,
+                onPanResponderMove: (_, gestureState) => {
+                  const newWidth = Math.max(50, overlay.size.width - gestureState.dx);
+                  const newHeight = Math.max(30, overlay.size.height + gestureState.dy);
+                  const newPosition = {
+                    x: overlay.position.x + (gestureState.dx / (containerSize?.width || 400)) * 100,
+                    y: overlay.position.y,
+                  };
+                  onUpdate({ 
+                    size: { width: newWidth, height: newHeight },
+                    position: newPosition
+                  });
+                },
+              }).panHandlers}
+            />
+            <View 
+              style={[styles.resizeHandle, styles.handleBottomRight]} 
+              {...PanResponder.create({
+                onStartShouldSetPanResponder: () => true,
+                onMoveShouldSetPanResponder: () => true,
+                onPanResponderMove: (_, gestureState) => {
+                  const newWidth = Math.max(50, overlay.size.width + gestureState.dx);
+                  const newHeight = Math.max(30, overlay.size.height + gestureState.dy);
+                  onUpdate({ 
+                    size: { width: newWidth, height: newHeight }
+                  });
+                },
+              }).panHandlers}
+            />
+          </>
+        )}
       </Animated.View>
       
       {/* Alignment guides */}
@@ -440,6 +520,32 @@ const styles = StyleSheet.create({
     color: '#000000',
     fontSize: 14,
     fontWeight: '600',
+  },
+  resizeHandle: {
+    position: 'absolute',
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#00ff88',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+    zIndex: 1000,
+  },
+  handleTopLeft: {
+    top: -10,
+    left: -10,
+  },
+  handleTopRight: {
+    top: -10,
+    right: -10,
+  },
+  handleBottomLeft: {
+    bottom: -10,
+    left: -10,
+  },
+  handleBottomRight: {
+    bottom: -10,
+    right: -10,
   },
 });
 
